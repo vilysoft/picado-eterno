@@ -16,7 +16,7 @@ Fútbol de supervivencia para un jugador, en el navegador. Sos el 10 y te viene 
 ## Qué tiene
 
 - **3 canchas** con dificultad creciente: El Potrero, La Cancha del Club y El Coloso. Ganar una abre la siguiente.
-- **2 jugadores:** El 10, rápido y con sprint, y El Muro, que se cubre con un escudo y barre más lejos, que se desbloquea ganando El Potrero.
+- **2 jugadores:** El 10, rápido y con sprint, y El Muro, que se cubre con un escudo y barre más lejos (se desbloquea ganando El Potrero).
 - **Técnicas y físicos** para elegir al subir de nivel, y **combos** que se activan con dos mejoras al máximo.
 - **Jefes propios** en cada cancha, en el entretiempo y en el minuto 80.
 - **Vestuario** con mejoras permanentes que se compran con las fichas de cada partido.
