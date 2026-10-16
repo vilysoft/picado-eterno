@@ -1,0 +1,2375 @@
+<!doctype html>
+<html lang="es">
+<head>
+<title>Picado Eterno</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Teko:wght@500;600;700&display=swap">
+<style>
+/* Layout: el canvas es la cancha a pantalla completa; marcador LED arriba; menús como paneles centrados sobre el césped */
+:root{
+  --board:#0e1310;
+  --panel:#151c17;
+  --chalk:#eef2e6;
+  --muted:#a3b0a0;
+  --led:#ffb627;
+  --sky:#7cc4ff;
+  --grass:#9be38a;
+  --line:rgba(238,242,230,.18);
+  --display:"Teko","Barlow Condensed",Impact,"Arial Narrow",sans-serif;
+  --body:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;background:var(--board);color:var(--chalk);font-family:var(--body);overflow:hidden}
+body{touch-action:none;-webkit-user-select:none;user-select:none}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block}
+
+.top{position:fixed;left:0;right:0;top:0;padding:env(safe-area-inset-top,0px) 16px 0;pointer-events:none}
+.xpbar{height:8px;background:rgba(0,0,0,.55);margin:0 -16px}
+.xpbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffe07a,var(--led));transition:width .12s}
+.hudrow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-top:8px}
+.stat{display:flex;flex-direction:column;align-items:flex-start;background:rgba(14,19,16,.72);padding:5px 10px 0;border-radius:4px;min-width:60px}
+.stat.right{align-items:flex-end}
+.lbl{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.stat b{font-family:var(--display);font-size:30px;line-height:1;font-weight:600;font-variant-numeric:tabular-nums}
+.board{background:var(--board);border:2px solid #2a332c;border-radius:6px;padding:3px 14px 0;display:flex;align-items:baseline;gap:10px;box-shadow:0 4px 0 rgba(0,0,0,.35)}
+.board span{font-family:var(--display);font-size:20px;color:var(--muted);letter-spacing:.08em}
+.board b{font-family:var(--display);font-size:44px;line-height:1;font-weight:600;color:var(--led);text-shadow:0 0 12px rgba(255,182,39,.55);font-variant-numeric:tabular-nums;min-width:2.3ch;text-align:right}
+
+.bottom{position:fixed;left:0;right:0;bottom:0;padding:0 16px calc(env(safe-area-inset-bottom,0px) + 12px);display:flex;justify-content:space-between;align-items:flex-end;gap:12px;pointer-events:none}
+.loadout{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.chip{display:inline-flex;gap:6px;align-items:baseline;padding:4px 9px 2px;font-size:15px;border-radius:3px;background:rgba(14,19,16,.78)}
+.chip.tec{box-shadow:inset 0 0 0 1px rgba(124,196,255,.45)}
+.chip.fis{box-shadow:inset 0 0 0 1px rgba(155,227,138,.45)}
+.chip b{font-family:var(--display);font-size:19px;line-height:1;color:var(--led)}
+.chip.more{display:none}
+/* Celular: como mucho dos filas chiquitas con las técnicas y un resumen de físicos; la lista completa está en la pausa */
+@media (max-width:700px){
+  .bottom .loadout{gap:4px;overflow:hidden;max-height:50px;opacity:.85}
+  .bottom .chip{font-size:13px;padding:3px 7px 1px;flex:none}
+  .bottom .chip b{font-size:16px}
+  .bottom .chip.fis,.bottom .chip.combo{display:none}
+  .bottom .chip.more{display:inline-flex}
+  .bottom .chip .full{display:none}
+}
+.chip .short{display:none}
+@media (max-width:700px){.bottom .chip .short{display:inline}}
+@media (max-width:400px){.bottom .chip{font-size:12px;padding:3px 6px 1px;gap:4px}.bottom .chip b{font-size:15px}}
+.srows{display:grid;grid-template-columns:auto 1fr auto auto auto;gap:6px 10px;align-items:center;margin:6px 0 10px}
+.srow{display:contents}
+.srow .sname{font-size:16px}
+.srow .sbar{height:10px;background:rgba(238,242,230,.08);border-radius:2px;overflow:hidden;min-width:40px}
+.srow .sbar i{display:block;height:100%;background:var(--sky)}
+.srow.fis .sbar i{background:var(--grass)}
+.srow.combo .sbar i{background:var(--led)}
+.chip.combo{box-shadow:inset 0 0 0 1px rgba(255,182,39,.8);color:var(--led)}
+.card .combo-hint{font-size:14px;color:var(--led);letter-spacing:.02em}
+.srow .snum{font-family:var(--display);font-size:22px;line-height:1;color:var(--chalk);font-variant-numeric:tabular-nums;text-align:right}
+.srow .spct,.srow .skill{font-size:14px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.shead{display:contents}
+.shead span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.shead span:nth-child(n+3){text-align:right}
+@media (max-width:420px){.srows{gap:5px 7px}.srow .sname{font-size:14px}.srow .snum{font-size:19px}}
+.pstats{margin:14px 0 0}
+.pauseload{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 0}
+.iconbtn{pointer-events:auto;flex:none;width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:rgba(14,19,16,.8);color:var(--chalk);font-family:var(--display);font-size:24px;cursor:pointer}
+.sprintbtn{width:64px;height:64px;font-size:30px;touch-action:none;background:rgba(124,196,255,.18);border-color:rgba(124,196,255,.55)}
+.sprintbtn.on{background:rgba(124,196,255,.45)}
+.btns{display:flex;gap:10px;align-items:flex-end;flex:none}
+@media (hover:hover) and (pointer:fine){.sprintbtn{display:none}}
+.iconbtn:focus-visible{outline:3px solid var(--led);outline-offset:2px}
+
+.banner{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 92px);transform:translate(-50%,-10px);width:max-content;max-width:calc(100vw - 32px);text-align:center;text-wrap:balance;font-family:var(--display);font-size:clamp(28px,6vw,44px);line-height:1;font-weight:600;color:var(--led);text-shadow:0 2px 0 #000,0 0 18px rgba(255,182,39,.5);opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;text-transform:uppercase;letter-spacing:.02em}
+.banner.show{opacity:1;transform:translate(-50%,0)}
+
+.overlay{position:fixed;inset:0;display:flex;padding:16px;background:rgba(8,12,9,.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);overflow:auto}
+.panel{margin:auto;width:min(760px,100%);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:28px 28px 24px;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.panel.small{width:min(520px,100%)}
+.eyebrow{margin:0 0 6px;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(64px,15vw,120px);line-height:.8;margin:6px 0 14px;text-transform:uppercase;text-wrap:balance}
+h1 em{font-style:normal;color:var(--led)}
+h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);line-height:.9;margin:0 0 6px;text-wrap:balance}
+.lede{font-size:19px;line-height:1.35;max-width:58ch;margin:0 0 18px;color:#d9e0d3}
+.ficha{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;margin:0 0 22px;overflow:hidden}
+.ficha div{background:var(--panel);padding:10px 12px;min-width:0}
+.ficha dt{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.ficha dd{margin:2px 0 0;font-size:17px}
+.ficha.stats dd{font-family:var(--display);font-size:34px;line-height:1;color:var(--led);font-variant-numeric:tabular-nums}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px}
+.best{color:var(--muted);font-size:16px;margin:0}
+.btn{font-family:var(--display);font-size:26px;font-weight:600;line-height:1;padding:12px 22px 7px;border:0;border-radius:4px;background:var(--led);color:#1a1205;cursor:pointer;text-transform:uppercase;letter-spacing:.03em}
+.btn:hover{filter:brightness(1.08)}
+.btn:focus-visible{outline:3px solid var(--chalk);outline-offset:3px}
+.btn.ghost{background:transparent;color:var(--chalk);box-shadow:inset 0 0 0 1px var(--line)}
+.btn.small{font-size:20px;padding:9px 16px 5px}
+.btn:disabled{opacity:.4;cursor:default;filter:none}
+
+.earn{border:1px solid var(--line);border-radius:4px;padding:12px 14px;margin:0 0 20px}
+.earnhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:6px}
+.earnhead b,.wallet b{font-family:var(--display);font-size:40px;line-height:1;font-weight:600;color:var(--led);font-variant-numeric:tabular-nums}
+.ledger{margin:0;display:grid;gap:2px}
+.ledger div{display:flex;justify-content:space-between;gap:12px;font-size:16px;color:#d5dccf}
+.ledger dd{margin:0;font-variant-numeric:tabular-nums}
+.shophead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.wallet{display:flex;flex-direction:column;align-items:flex-end}
+.perms{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 20px}
+@media (max-width:760px){.perms{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.perms{grid-template-columns:1fr}}
+.perm{display:flex;flex-direction:column;gap:6px;padding:14px;background:#1b241e;border:1px solid var(--line);border-radius:6px;min-width:0}
+.perm.maxed{border-color:rgba(255,182,39,.45)}
+.perm .name{font-family:var(--display);font-size:28px;line-height:.9;font-weight:600}
+.perm .desc{font-size:16px;line-height:1.3;color:#d5dccf;flex:1}
+.perm .only{align-self:flex-start;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--sky);box-shadow:inset 0 0 0 1px rgba(124,196,255,.45);border-radius:3px;padding:2px 6px 1px}
+.pips{display:flex;gap:4px}
+.pips i{width:14px;height:6px;border-radius:2px;background:rgba(238,242,230,.15)}
+.pips i.on{background:var(--led)}
+.buy{align-self:flex-start;margin-top:4px;font-family:var(--display);font-size:20px;line-height:1;padding:8px 14px 4px;border-radius:4px;border:0;background:var(--led);color:#1a1205;cursor:pointer}
+.buy:disabled{background:rgba(238,242,230,.1);color:var(--muted);cursor:default}
+.buy:focus-visible{outline:3px solid var(--chalk);outline-offset:2px}
+.reroll{margin-top:14px}
+.log{max-height:min(56vh,520px);overflow:auto;margin:6px 0 20px;padding-right:6px;border-top:1px solid var(--line)}
+.log section{padding:14px 0 6px;border-bottom:1px solid var(--line)}
+.log h3{display:flex;align-items:baseline;gap:12px;margin:0 0 6px;font-family:var(--display);font-weight:600;font-size:30px;line-height:1}
+.log h3 b{color:var(--led);font-weight:600}
+.log h3 span{font-family:var(--body);font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.log ul{margin:0;padding:0;list-style:none;display:grid;gap:7px}
+.log li{display:grid;grid-template-columns:96px 1fr;gap:10px;font-size:17px;line-height:1.3;color:#d5dccf}
+.log li i{font-style:normal;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--sky);padding-top:4px}
+@media (max-width:480px){.log li{grid-template-columns:1fr;gap:0}}
+.levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 18px}
+.levels.chars{grid-template-columns:repeat(2,minmax(0,1fr))}
+.lvl .traits{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:14px;color:#d5dccf}
+.lvl .traits b{font-weight:600;color:var(--sky)}
+.lvl .traits i{font-style:normal;color:#ff8a7a}
+@media (max-width:640px){.levels{grid-template-columns:1fr}}
+.lvl{position:relative;text-align:left;display:flex;flex-direction:column;gap:4px;padding:0 14px 14px;background:#1b241e;border:1px solid var(--line);border-radius:6px;color:var(--chalk);font:inherit;cursor:pointer;min-width:0;overflow:hidden;transition:border-color .15s}
+.lvl:hover:not(:disabled){border-color:rgba(255,182,39,.55)}
+.lvl[aria-pressed="true"]{border-color:var(--led);box-shadow:inset 0 0 0 1px var(--led)}
+.lvl:disabled{cursor:default;opacity:.5}
+.lvl:focus-visible{outline:3px solid var(--chalk);outline-offset:2px}
+.lvl .sw{display:block;height:8px;margin:0 -14px 8px}
+.lvl .num{display:flex;justify-content:space-between;gap:8px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lvl .diff{color:var(--led);letter-spacing:.15em}
+.lvl .name{font-family:var(--display);font-size:30px;line-height:.9;font-weight:600}
+.lvl .desc{font-size:15px;line-height:1.25;color:#d5dccf;flex:1}
+.lvl .meta{font-size:14px;color:var(--muted)}
+
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+@media (max-width:640px){.cards{grid-template-columns:1fr}.panel{padding:22px 18px 18px}}
+.card{position:relative;text-align:left;display:flex;flex-direction:column;gap:6px;padding:16px 16px 18px;background:#1b241e;border:1px solid var(--line);border-radius:6px;color:var(--chalk);font:inherit;cursor:pointer;transition:border-color .15s,transform .15s}
+.card:hover,.card:focus-visible{border-color:var(--led);transform:translateY(-2px);outline:none}
+.card .key{position:absolute;top:10px;right:12px;font-family:var(--display);font-size:22px;line-height:1;color:var(--muted)}
+.card .tag{font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.card.tec .tag{color:var(--sky)}
+.card.fis .tag{color:var(--grass)}
+.card.heal .tag{color:var(--led)}
+.card .name{font-family:var(--display);font-size:34px;line-height:.9;font-weight:600;padding-right:20px}
+.card .desc{font-size:17px;line-height:1.3;color:#d5dccf}
+@media (prefers-reduced-motion:reduce){.banner,.card,.xpbar i{transition:none}}
+</style>
+
+<canvas id="cv"></canvas>
+
+<div id="hud" hidden>
+  <div class="top">
+    <div class="xpbar"><i id="xpfill"></i></div>
+    <div class="hudrow">
+      <div class="stat"><span class="lbl">Nivel</span><b id="lvl">1</b></div>
+      <div class="board" aria-label="Minuto del partido"><span id="half">1T</span><b id="clock">0'</b></div>
+      <div class="stat right"><span class="lbl">Rivales</span><b id="kills">0</b></div>
+    </div>
+  </div>
+  <div class="bottom">
+    <div id="loadout" class="loadout"></div>
+    <div class="btns">
+      <button id="btnSprint" class="iconbtn sprintbtn" type="button" aria-label="Mantener para sprintar">»</button>
+      <button id="btnPause" class="iconbtn" type="button" aria-label="Pausa">II</button>
+    </div>
+  </div>
+</div>
+<div id="banner" class="banner"></div>
+
+<div id="start" class="overlay">
+  <div class="panel">
+    <p class="eyebrow">Fútbol de supervivencia · 1 jugador</p>
+    <h1>Picado<br><em>Eterno</em></h1>
+    <p class="lede">Sos el 10 y te viene encima el equipo rival entero, y después otro, y otro más. La pelota la patea tu talento solo: vos corré, juntá experiencia y elegí mejoras. Aguantá los 90 minutos.</p>
+    <p class="eyebrow">Elegí tu jugador</p>
+    <div id="chars" class="levels chars"></div>
+    <p class="eyebrow">Elegí la cancha · teclas 1, 2 o 3</p>
+    <div id="levels" class="levels"></div>
+    <dl class="ficha">
+      <div><dt>Duración</dt><dd>90' = 8 min reales</dd></div>
+      <div><dt>Controles</dt><dd>WASD o flechas · en celular, arrastrá el dedo</dd></div>
+      <div><dt>Sprint</dt><dd>Shift o barra espaciadora · en celular, botón »</dd></div>
+      <div><dt>Pausa</dt><dd>P o Esc</dd></div>
+    </dl>
+    <div class="actions">
+      <button id="btnStart" class="btn" type="button">Sacar del medio</button>
+      <button id="btnStartShop" class="btn ghost" type="button">Vestuario</button>
+      <button id="btnLog" class="btn ghost" type="button">Changelog</button>
+      <p id="bestLine" class="best"></p>
+    </div>
+  </div>
+</div>
+
+<div id="changes" class="overlay" hidden>
+  <div class="panel">
+    <p class="eyebrow">Lo que cambió en cada versión</p>
+    <h2>Changelog</h2>
+    <div id="logList" class="log"></div>
+    <div class="actions">
+      <button id="btnLogBack" class="btn" type="button">Volver al menú</button>
+    </div>
+  </div>
+</div>
+
+<div id="levelup" class="overlay" hidden>
+  <div class="panel">
+    <p class="eyebrow">Elegí una mejora · teclas 1, 2 o 3</p>
+    <h2 id="luTitle">¡Subiste de nivel!</h2>
+    <div id="cards" class="cards"></div>
+    <button id="btnReroll" class="btn ghost small reroll" type="button" hidden>Cambiar opciones</button>
+  </div>
+</div>
+
+<div id="shop" class="overlay" hidden>
+  <div class="panel">
+    <p class="eyebrow">Mejoras permanentes</p>
+    <div class="shophead">
+      <h2>Vestuario</h2>
+      <div class="wallet"><span class="lbl">Tus fichas</span><b id="wallet">0</b></div>
+    </div>
+    <p class="lede">Lo que compres acá vale para todos los partidos que vengan. Se guarda en este navegador.</p>
+    <div id="perms" class="perms"></div>
+    <div class="actions">
+      <button id="btnShopPlay" class="btn" type="button">Jugar otro partido</button>
+      <button id="btnShopMenu" class="btn ghost small" type="button">Elegir cancha</button>
+      <button id="btnRefund" class="btn ghost small" type="button">Devolver todas las fichas</button>
+      <p id="shopNote" class="best"></p>
+    </div>
+  </div>
+</div>
+
+<div id="pause" class="overlay" hidden>
+  <div class="panel small">
+    <p class="eyebrow">Tiempo muerto</p>
+    <h2>Pausa</h2>
+    <div id="pauseLoadout" class="pauseload" aria-label="Tus técnicas y físicos"></div>
+    <div class="pstats"><span class="lbl">Daño hasta ahora</span><div id="pauseStats"></div></div>
+    <div class="actions" style="margin-top:18px">
+      <button id="btnResume" class="btn" type="button">Seguir jugando</button>
+      <button id="btnMute" class="btn ghost" type="button">Sonido: sí</button>
+      <button id="btnQuit" class="btn ghost" type="button">Terminar partido</button>
+    </div>
+  </div>
+</div>
+
+<div id="over" class="overlay" hidden>
+  <div class="panel small">
+    <p class="eyebrow">Planilla del partido</p>
+    <h2 id="overTitle">Fin del partido</h2>
+    <p id="overSub" class="lede"></p>
+    <dl class="ficha stats">
+      <div><dt>Tiempo</dt><dd id="oTime">0:00</dd></div>
+      <div><dt>Nivel</dt><dd id="oLvl">1</dd></div>
+      <div><dt>Rivales</dt><dd id="oKills">0</dd></div>
+    </dl>
+    <div class="earn">
+      <div class="earnhead"><span class="lbl">Daño de tus habilidades</span><b id="dmgTotal">0</b></div>
+      <div id="statList"></div>
+    </div>
+    <div class="earn">
+      <div class="earnhead"><span class="lbl">Fichas ganadas</span><b id="earnTotal">0</b></div>
+      <dl id="earnList" class="ledger"></dl>
+    </div>
+    <div class="actions">
+      <button id="btnNext" class="btn" type="button" hidden>Siguiente cancha</button>
+      <button id="btnShop" class="btn" type="button">Ir al vestuario</button>
+      <button id="btnAgain" class="btn ghost" type="button">Revancha</button>
+      <button id="btnMenu" class="btn ghost small" type="button">Elegir cancha</button>
+      <p id="overBest" class="best"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+const FW = 2800, FH = 1800;          // 105 x 68 m a ~26,7 px por metro
+const MATCH = 480;                   // 8 minutos reales = 90'
+const PACE = 600 / MATCH;            // la dificultad avanza al mismo ritmo relativo que en 10 min
+const RUN = 110;                      // franja jugable entre las líneas y el límite (tribuna, alambrado o carteles)
+const STOMP_R = 105, STOMP_WIND = .75;  // pisotón de los grandotes
+const CAM_MIN = 38, CAM_MAX = 115;       // media camilla cerrada y estirada (de centro a cada camillero)
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Celulares y tablets (pantalla táctil sin mouse): un poco más fácil, porque se juega con el dedo y se ve menos cancha
+const TOUCH = matchMedia('(hover: none) and (pointer: coarse)').matches;
+const MOB_DMG = TOUCH ? .85 : 1, MOB_RATE = TOUCH ? .9 : 1;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const rnd = (a, b) => a + Math.random() * (b - a);
+const fmt = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+const minuteOf = t => Math.min(90, Math.floor(t / MATCH * 90));
+
+// ---------- Pantalla ----------
+let VW = 0, VH = 0, DPR = 1, ZOOM = 1, viewW = 0, viewH = 0;
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  VW = innerWidth; VH = innerHeight;
+  cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
+  ZOOM = Math.max(.55, Math.min(1, Math.min(VW, VH) / 720));
+  viewW = VW / ZOOM; viewH = VH / ZOOM;
+}
+addEventListener('resize', resize); resize();
+
+// ---------- Sonido ----------
+let AC = null, muted = false;
+const lastS = {};
+function tone(f1, f2, dur, type, vol, delay = 0) {
+  const t0 = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(f1, t0);
+  o.frequency.exponentialRampToValueAtTime(Math.max(1, f2), t0 + dur);
+  g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+  o.connect(g).connect(AC.destination); o.start(t0); o.stop(t0 + dur + .02);
+}
+function sfx(n) {
+  if (muted || !AC) return;
+  const now = AC.currentTime;
+  if (lastS[n] && now - lastS[n] < .045) return;
+  lastS[n] = now;
+  switch (n) {
+    case 'kick': tone(180, 60, .09, 'sine', .25); break;
+    case 'hit': tone(420, 200, .05, 'square', .025); break;
+    case 'gem': tone(900, 1300, .05, 'triangle', .035); break;
+    case 'hurt': tone(220, 80, .18, 'sawtooth', .08); break;
+    case 'sweep': tone(320, 90, .2, 'triangle', .12); break;
+    case 'boss': tone(110, 70, .7, 'sawtooth', .1); break;
+    case 'tired': tone(300, 150, .25, 'triangle', .07); break;
+    case 'stomp': tone(90, 40, .3, 'sine', .3); tone(160, 60, .12, 'square', .04); break;
+    case 'dive': tone(520, 140, .25, 'sawtooth', .05); break;
+    case 'var': tone(880, 880, .08, 'square', .04); tone(660, 660, .08, 'square', .04, .11); break;
+    case 'combo': [392, 523, 659, 784, 1046].forEach((f, i) => tone(f, f * 1.01, .16, 'square', .05, i * .06)); break;
+    case 'shield': tone(700, 1100, .1, 'triangle', .05); break;
+    case 'zap': tone(1200, 300, .18, 'sawtooth', .05); break;
+    case 'cheer': break;
+    case 'level': [523, 659, 784, 1046].forEach((f, i) => tone(f, f, .12, 'triangle', .08, i * .07)); break;
+    case 'whistle': tone(2100, 2300, .22, 'sine', .06); tone(2100, 2350, .4, 'sine', .06, .28); break;
+  }
+}
+
+// ---------- Datos del juego ----------
+const WEAPONS = {
+  pelota: { name: 'Pelota', max: 6, desc: [
+    'Patea una pelota al rival más cercano. Rebota de rival en rival y vuelve a tus pies.',
+    '+1 rebote por pelota.', '+1 pelota en cada patada.', '+40% de daño.',
+    '+1 pelota en cada patada.', '+2 rebotes y +40% de daño.'] },
+  rondo: { name: 'Rondo', max: 5, desc: [
+    'Dos pelotas giran a tu alrededor y golpean a quien se acerque.',
+    '+1 pelota girando.', '+35% de daño.', '+1 pelota y giran más rápido.', '+1 pelota y +35% de daño.'] },
+  barrida: { name: 'Barrida', max: 5, desc: [
+    'Cada pocos segundos barrés en círculo: daña y empuja a los rivales cercanos.',
+    '+30% de área.', '+40% de daño.', '25% menos de espera entre barridas.', '+30% de área y +40% de daño.'] },
+  tiroLibre: { name: 'Tiro libre', max: 5, desc: [
+    'Un remate apuntado al rival más cercano: le pega y sigue derecho atravesando a todos.',
+    '+50% de daño.', 'Rematás 2 pelotas en abanico.', '25% menos de espera entre remates.', 'Rematás 3 pelotas y +50% de daño.'] },
+};
+const PASSIVES = {
+  potencia:    { name: 'Potencia', max: 5, desc: '+12% de daño en todas tus técnicas.' },
+  botines:     { name: 'Botines nuevos', max: 5, desc: '+10% de velocidad de carrera.' },
+  resistencia: { name: 'Resistencia', max: 5, desc: '+20 de vida máxima y te cura 20.' },
+  ritmo:       { name: 'Ritmo de juego', max: 5, desc: '8% menos de espera en todas tus técnicas. El rondo gira más rápido y pega más seguido.' },
+  vision:      { name: 'Visión de juego', max: 5, desc: '+35% de distancia para juntar experiencia.' },
+  hidratacion: { name: 'Hidratación', max: 5, desc: 'Recuperás 0,6 de vida por segundo.' },
+  fisico:      { name: 'Físico', max: 5, desc: '+12% de área en barridas, rondo y remates.' },
+  aguante:     { name: 'Aguante', max: 5, desc: '+20% de barra de sprint y se recarga un 15% más rápido.' },
+  arranque:    { name: 'Arranque explosivo', max: 5, desc: '+6% de velocidad al sprintar y gastás 10% menos de barra.' },
+  codazo:      { name: 'Codazo', max: 5, desc: 'El rival que te toca se lleva un codazo: daño de rebote (12, +6 por nivel) y sale despedido.' },
+  canilleras:  { name: 'Canilleras', max: 5, desc: 'Recibís 8% menos de daño de todo: rivales, tarjetas, pelotazos y pisotones.' },
+};
+// Personajes jugables
+const CHARS = {
+  diez: { name: 'El 10', desc: 'Rápido y con sprint. El de siempre.', r: 14, speed: 1, area: 1, sprint: true, shield: 0,
+    kit: { shirt: '#7cc4ff', sleeve: '#7cc4ff', stripe: '#f4f7fb', shorts: '#14181f' }, skin: '#d9a47c', hair: '#1b1410',
+    swatch: 'repeating-linear-gradient(90deg,#7cc4ff 0 14px,#f4f7fb 14px 28px)',
+    traits: ['<b>Sprint</b> recargable'] },
+  muro: { name: 'El Muro', desc: 'Central grandote: aguanta todo y barre más lejos.', r: 16, speed: .9, area: 1.2, sprint: false, shield: 50,
+    kit: { shirt: '#f4f7fb', sleeve: '#7cc4ff', shorts: '#14181f' }, skin: '#b97d55', hair: '#111111',
+    swatch: 'linear-gradient(90deg,#f4f7fb,#bfe3ff)',
+    traits: ['<b>Escudo</b> recargable de 50', '<b>+20%</b> de área', '<i>10% más lento</i>', '<i>Sin sprint</i>'] },
+};
+let CH = CHARS.diez;
+const charOpen = id => id === 'diez' || ALL_OPEN || !!(SAVE.chars && SAVE.chars[id]);
+// Combos: se activan cuando las dos mejoras llegan a nivel 5
+const COMBOS = {
+  amarilla: { name: 'Doble amarilla', need: [['w', 'tiroLibre'], ['p', 'potencia']],
+    desc: 'El tiro libre amonesta 4 s (+25% de daño recibido). Un segundo tiro libre lo expulsa.' },
+  tikitaka: { name: 'Tiki-taka', need: [['w', 'pelota'], ['w', 'rondo']],
+    desc: 'Cuando la pelota vuelve, pasa por el rondo y sale otra vez con todos sus rebotes.' },
+  mareo:    { name: 'Mareo', need: [['w', 'rondo'], ['w', 'barrida']],
+    desc: 'La barrida marea 2 s: los rivales caminan sin rumbo y más lento.' },
+  tapones:  { name: 'Tapones de punta', need: [['p', 'botines'], ['w', 'barrida']],
+    desc: 'La barrida hace sangrar 3 s: daño cada medio segundo.' },
+};
+const comboLv = (t, k) => (t === 'w' ? G.weapons : G.passives)[k] || 0;
+function checkCombos() {
+  const nuevos = [];
+  for (const k in COMBOS) {
+    if (G.combos[k] || !COMBOS[k].need.every(([t, n]) => comboLv(t, n) >= 5)) continue;
+    G.combos[k] = true; nuevos.push(COMBOS[k].name);
+  }
+  if (!nuevos.length) return;
+  banner('¡Combo activado: ' + nuevos.join(' + ') + '!', true);
+  G.rings.push({ x: G.p.x, y: G.p.y, R: 160, life: .6, max: .6, col: '255,182,39' });
+  sfx('combo'); cheer = 2.5;
+}
+// Canchas: cada una con su escenario, su dificultad, su rival y sus dos jefes
+const LEVELS = [
+  { id: 'potrero', name: 'El Potrero', desc: 'Tierra, alambrado y los vecinos mirando. La dificultad de siempre.',
+    head: 0, hp: 1, dmg: 1, rate: 1, reward: 1, stars: 1, bosses: ['dueno', 'tanque'],
+    swatch: 'linear-gradient(90deg,#8a6642,#ab8a63)', flash: '#ffffff', dust: '#c9a77c',
+    rival: { defensor: '#b48cff', extremo: '#e0ccff', central: '#7a45d6', shorts: '#1d1f1c' }, start: '¡Arranca el picado en el potrero!' },
+  { id: 'club', name: 'La Cancha del Club', desc: 'Césped, tribunas llenas y un rival que viene más rápido y más fuerte.',
+    head: 40, hp: 1.15, dmg: 1.1, rate: 1.1, reward: 1.35, stars: 2, bosses: ['capitan', 'tecnico'],
+    swatch: 'repeating-linear-gradient(90deg,#2f7339 0 18px,#2a6833 18px 36px)', flash: '#ffffff', dust: '#cfe3c0',
+    rival: { defensor: '#7b4bc9', extremo: '#a77be8', central: '#4a2a85', shorts: '#1d1f1c' }, start: '¡Pitazo inicial en el club!' },
+  { id: 'lujo', name: 'El Coloso', desc: 'Estadio de lujo, de noche: palcos, torres de luz y la prensa al costado.',
+    head: 80, hp: 1.3, dmg: 1.2, rate: 1.2, reward: 1.75, stars: 3, bosses: ['estrella', 'var'],
+    swatch: 'linear-gradient(90deg,#0f1830,#358a42 45%,#ffb627)', flash: '#ffb627', dust: '#cfe3c0',
+    rival: { defensor: '#eceae2', extremo: '#c9d3e3', central: '#8d9ab0', shorts: '#1f2b4a' }, start: '¡Noche de gala en El Coloso!' },
+];
+const ALL_OPEN = /[?&]todos\b/.test(location.search);   // atajo para probar: picado-eterno.html?todos
+let lvIdx = 0, LV = LEVELS[0];
+const BOSSES = {
+  dueno:    { name: 'El Dueño de la Pelota', intro: 'Entretiempo: ¡aparece el dueño de la pelota!', beat: '¡Le ganaste al dueño de la pelota!' },
+  tanque:   { name: 'El Tanque', intro: 'Minuto 80: ¡entra El Tanque del barrio!', beat: '¡Tumbaste a El Tanque!' },
+  capitan:  { name: 'El Capitán', intro: 'Entretiempo: ¡entra el capitán rival!', beat: '¡Le ganaste al capitán!' },
+  tecnico:  { name: 'El DT rival', intro: 'Minuto 80: ¡el DT rival se mete a la cancha!', beat: '¡Echaste al DT rival!' },
+  estrella: { name: 'La Estrella', intro: 'Entretiempo: ¡sale a la cancha La Estrella!', beat: '¡Le ganaste a La Estrella!' },
+  var:      { name: 'El VAR', intro: 'Minuto 80: ¡llamaron al VAR!', beat: '¡Apagaste el VAR!' },
+};
+const FOES = {
+  defensor: { r: 13, hp: 14, speed: 72, dmg: 8, xp: 1, color: '#d94a3d', nums: [2, 3, 4, 6] },
+  extremo:  { r: 11, hp: 9, speed: 128, dmg: 6, xp: 1, color: '#f07b3f', nums: [7, 11] },
+  central:  { r: 20, hp: 65, speed: 50, dmg: 14, xp: 4, color: '#8e2b2b', nums: [5, 13] },
+  arbitro:  { r: 13, hp: 32, speed: 68, dmg: 8, xp: 3, color: '#1d1f1c', nums: [] },
+  arquero:  { r: 15, hp: 26, speed: 95, dmg: 12, xp: 3, color: '#c8f03c', nums: [1] },
+  camillero: { r: 32, hp: 60, speed: 62, dmg: 12, xp: 5, color: '#f2f2ec', nums: [] },
+  capitan:  { r: 34, hp: 900, speed: 78, dmg: 22, xp: 50, color: '#5b34a8', nums: [9], boss: true },
+  dueno:    { r: 32, hp: 850, speed: 70, dmg: 20, xp: 50, color: '#e8e1cf', nums: [], boss: true },
+  tanque:   { r: 40, hp: 1500, speed: 60, dmg: 26, xp: 60, color: '#5b4636', nums: [], boss: true },
+  tecnico:  { r: 28, hp: 1300, speed: 62, dmg: 18, xp: 60, color: '#2a2e36', nums: [], boss: true },
+  estrella: { r: 30, hp: 950, speed: 118, dmg: 20, xp: 55, color: '#d4af37', nums: [10], boss: true },
+  var:      { r: 30, hp: 1500, speed: 58, dmg: 18, xp: 65, color: '#39ff9a', nums: [], boss: true },
+};
+// Equipos vistos desde arriba: camiseta, mangas, rayas, pantalón y guantes
+const KITS = {
+  jugador:  { shirt: '#7cc4ff', sleeve: '#7cc4ff', stripe: '#f4f7fb', shorts: '#14181f' },
+  defensor: { shirt: '#d94a3d', sleeve: '#d94a3d', shorts: '#f1efe8' },
+  extremo:  { shirt: '#f07b3f', sleeve: '#f07b3f', shorts: '#f1efe8' },
+  central:  { shirt: '#8e2b2b', sleeve: '#8e2b2b', shorts: '#f1efe8' },
+  arbitro:  { shirt: '#1d1f1c', sleeve: '#ffd34d', shorts: '#1d1f1c' },
+  arquero:  { shirt: '#c8f03c', sleeve: '#1d1f1c', shorts: '#1d1f1c', gloves: '#fafafa' },
+  camillero: { shirt: '#f2f2ec', sleeve: '#d23b31', shorts: '#2b2f3a' },
+  capitan:  { shirt: '#5b34a8', sleeve: '#5b34a8', stripe: '#4a2a85', shorts: '#1d1f1c' },
+  dueno:    { shirt: '#e8e1cf', sleeve: 'skin', shorts: '#2b4c8c' },
+  tanque:   { shirt: '#5b4636', sleeve: '#5b4636', stripe: '#4a3a2c', shorts: '#1d1f1c' },
+  tecnico:  { shirt: '#2a2e36', sleeve: '#2a2e36', shorts: '#2a2e36' },
+  estrella: { shirt: '#f4f1e6', sleeve: '#f4f1e6', stripe: '#d4af37', shorts: '#d4af37', boots: '#d4af37' },
+  var:      { shirt: '#111418', sleeve: '#39ff9a', shorts: '#111418' },
+};
+// Los rivales comunes se visten con los colores del equipo de cada cancha
+function kitFor(type) {
+  const R = LV.rival[type];
+  return R ? { shirt: R, sleeve: R, shorts: LV.rival.shorts } : KITS[type];
+}
+const SKINS = ['#f1c9a5', '#dcab82', '#b97d55', '#8a5636', '#5e3a24'];
+const HAIRS = ['#1b1410', '#3b2416', '#6b4423', '#c99a4c', '#111111'];
+function wp(k, l) {
+  switch (k) {
+    case 'pelota': return { count: 1 + (l >= 3) + (l >= 5), bounces: 2 + (l >= 2) + (l >= 6 ? 2 : 0), dmg: 12 * (l >= 4 ? 1.4 : 1) * (l >= 6 ? 1.4 : 1), cd: 1.15, speed: 470 };
+    case 'rondo': return { count: 2 + (l >= 2) + (l >= 4) + (l >= 5), dmg: 9 * (l >= 3 ? 1.35 : 1) * (l >= 5 ? 1.35 : 1), spin: 3 + (l >= 4 ? 1.3 : 0), R: 78 };
+    case 'barrida': return { R: 95 * (l >= 2 ? 1.3 : 1) * (l >= 5 ? 1.3 : 1), dmg: 18 * (l >= 3 ? 1.4 : 1) * (l >= 5 ? 1.4 : 1), cd: 3.2 * (l >= 4 ? .75 : 1) };
+    case 'tiroLibre': return { dmg: 24 * (l >= 2 ? 1.5 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 5 ? 3 : l >= 3 ? 2 : 1, cd: 2.6 * (l >= 4 ? .75 : 1), speed: 720 };
+  }
+}
+const xpFor = l => Math.floor(5 + l * 4 + l * l * .35);
+
+// ---------- Vestuario: mejoras permanentes ----------
+const PERMS = {
+  pretemporada: { name: 'Pretemporada', max: 6, desc: '+10 de vida máxima al arrancar.', cost: [15, 25, 40, 60, 90, 130] },
+  pegada:       { name: 'Pegada', max: 6, desc: '+6% de daño en todas tus técnicas.', cost: [20, 35, 55, 80, 120, 170] },
+  piques:       { name: 'Piques cortos', max: 6, desc: '+4% de velocidad de carrera.', cost: [15, 25, 40, 60, 90, 130] },
+  pulmones:     { name: 'Pulmones', max: 6, desc: '4% menos de espera en todas tus técnicas, rondo incluido.', cost: [20, 35, 55, 80, 120, 170] },
+  lectura:      { name: 'Lectura de juego', max: 6, desc: '+15% de distancia para juntar experiencia.', cost: [10, 20, 30, 45, 65, 90] },
+  inferiores:   { name: 'Inferiores', max: 6, desc: '+8% de experiencia por cada rival.', cost: [20, 35, 55, 80, 120, 170] },
+  calor:        { name: 'Entrada en calor', max: 3, desc: 'Arrancás cada partido con 1 mejora gratis por nivel.', cost: [40, 90, 160] },
+  pizarron:     { name: 'Pizarrón', max: 4, desc: '1 cambio de opciones por partido al subir de nivel (tecla R), por nivel.', cost: [30, 60, 100, 150] },
+  fuelle:       { name: 'Fuelle', max: 6, only: 'diez', desc: '+10% de barra de sprint y se recarga un 8% más rápido.', cost: [15, 25, 40, 60, 90, 130] },
+  zancada:      { name: 'Zancada', max: 6, only: 'diez', desc: '+3% de velocidad al sprintar y gastás 5% menos de barra.', cost: [20, 35, 55, 80, 120, 170] },
+  blindaje:     { name: 'Blindaje', max: 6, only: 'muro', desc: '+10 de escudo.', cost: [20, 35, 55, 80, 120, 170] },
+  recuperacion: { name: 'Recuperación', max: 6, only: 'muro', desc: 'El escudo se recarga 15% más rápido y empieza 0,3 s antes.', cost: [20, 35, 55, 80, 120, 170] },
+  suplente:     { name: 'Segundo aire', max: 2, desc: 'Al perder toda la vida volvés con la mitad. Una vez por partido por nivel.', cost: [150, 300] },
+};
+// Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
+const CHANGELOG = [
+  { v: '2.12', date: '16 oct 2026', items: [
+    ['Vestuario', 'Todas las mejoras tienen un nivel más. Entrada en calor llega a 3 mejoras gratis, Pizarrón a 4 cambios y Segundo aire a 2 vueltas por partido.'],
+    ['Celular', 'En pantallas táctiles el partido es un poco más fácil: los rivales pegan 15% menos y aparecen 10% menos.'],
+  ] },
+  { v: '2.11', date: '16 oct 2026', items: [
+    ['Partido', 'Después de elegir una mejora, el juego queda quieto un segundo para que veas dónde estabas. Un aro dorado alrededor del jugador marca cuánto falta.'],
+  ] },
+  { v: '2.10', date: '16 oct 2026', items: [
+    ['Vestuario', 'Mejoras nuevas solo para El Muro: Blindaje (+10 de escudo por nivel) y Recuperación (el escudo se recarga 15% más rápido y empieza 0,3 s antes por nivel).'],
+    ['Vestuario', 'Las mejoras que sirven a un solo jugador lo dicen arriba: Fuelle y Zancada son solo para El 10. No se pueden comprar las de un jugador que todavía no desbloqueaste.'],
+  ] },
+  { v: '2.9', date: '16 oct 2026', items: [
+    ['Jugadores', 'Nuevo jugador: El Muro, que se desbloquea al ganar El Potrero. Tiene un escudo de 50 que absorbe el daño antes que la vida y se recarga a los 3 s sin recibir golpes, y 20% más de área en sus técnicas. A cambio es 10% más lento y no tiene sprint.'],
+    ['Menú', 'Selector de jugador en el menú de inicio. El juego recuerda el último que elegiste.'],
+    ['Estadísticas', 'La planilla muestra cuánto daño frenó el escudo.'],
+  ] },
+  { v: '2.8', date: '16 oct 2026', items: [
+    ['Combos', 'Combos nuevos que se activan con dos mejoras en nivel 5, con aviso "¡Combo activado!":'],
+    ['Combos', 'Doble amarilla (Tiro libre + Potencia): el tiro libre amonesta 4 s, el rival recibe +25% de daño, y un segundo tiro libre lo expulsa.'],
+    ['Combos', 'Tiki-taka (Pelota + Rondo): la pelota vuelve, pasa por el rondo y sale de nuevo con todos sus rebotes.'],
+    ['Combos', 'Mareo (Rondo + Barrida): la barrida marea 2 s a los rivales comunes; caminan sin rumbo, más lento y se les corta el ataque que estaban preparando.'],
+    ['Combos', 'Tapones de punta (Botines nuevos + Barrida): la barrida hace sangrar 3 s.'],
+    ['Combos', 'Las cartas de mejora avisan cuando completan un combo, y los combos activos se ven en la pausa y en las estadísticas.'],
+    ['Arreglos', 'Los carteles hacen fila: el de combo no lo tapa otro aviso que llegue justo después.'],
+  ] },
+  { v: '2.7', date: '16 oct 2026', items: [
+    ['Técnicas', 'Ritmo de juego y Pulmones ahora también mejoran el Rondo: las pelotas giran más rápido y pueden volver a pegarle al mismo rival antes.'],
+  ] },
+  { v: '2.6', date: '15 oct 2026', items: [
+    ['Estadísticas', 'La planilla del partido muestra el daño de cada habilidad (total, porcentaje y rivales que volteó), el daño recibido, lo que frenaron las canilleras, el golpe más fuerte y el daño por minuto.'],
+    ['Estadísticas', 'En la pausa se ve el daño de cada habilidad hasta ese momento.'],
+  ] },
+  { v: '2.5', date: '15 oct 2026', items: [
+    ['Dificultad', 'En La Cancha del Club y El Coloso los árbitros, grandotes y camilleros empiezan a aparecer un 10% más tarde en el partido, y los arqueros un 25% más tarde que en El Potrero (a los 45 s). Los jefes y El Potrero no cambian.'],
+  ] },
+  { v: '2.4', date: '15 oct 2026', items: [
+    ['Mejoras', 'Codazo: el rival que te toca recibe daño de rebote (12 en el primer nivel, +6 por nivel) y sale despedido. Cada rival puede recibir uno cada medio segundo.'],
+    ['Mejoras', 'Canilleras: recibís 8% menos de daño por nivel, hasta 40%. Vale para todo: rivales, tarjetas, pelotazos, pisotones y zonas.'],
+  ] },
+  { v: '2.3', date: '15 oct 2026', items: [
+    ['Rivales', 'En El Potrero el rival juega de violeta claro en vez de rojo, para que se distinga bien de la tierra.'],
+  ] },
+  { v: '2.2', date: '15 oct 2026', items: [
+    ['Rivales', 'Camilleros, desde La Cancha del Club: dos figuras con una camilla atravesada que cada tanto avisa (la lona titila), se estira para barrer y se vuelve a cerrar. La camilla entera pega.'],
+  ] },
+  { v: '2.1', date: '14 oct 2026', items: [
+    ['Celular', 'Las fichas de técnicas y físicos de abajo ya no tapan la cancha: en celular ocupan como mucho dos filas chicas y la lista completa está en la pausa.'],
+    ['Celular', 'Los rivales que atacan de lejos (árbitros y jefes) solo tiran o embisten cuando se los ve en pantalla, y en celular vertical se quedan más cerca.'],
+    ['Celular', 'Las tarjetas rojas se ven más grandes cuando la cámara está alejada.'],
+    ['Arreglos', 'El reloj del juego ya no puede ir para atrás un instante después de tocar un botón, lo que podía colgar el partido.'],
+  ] },
+  { v: '2.0', date: '14 oct 2026', items: [
+    ['Canchas', 'Tres canchas: El Potrero (tierra), La Cancha del Club (césped y tribunas) y El Coloso (estadio de lujo de noche).'],
+    ['Canchas', 'El Potrero tiene alambrado, vecinos mirando, árboles, calle y techos del barrio alrededor.'],
+    ['Canchas', 'El Coloso tiene palcos vidriados, torres de luz, carteles LED animados, pantallas gigantes, celulares encendidos en la tribuna y prensa al costado.'],
+    ['Dificultad', 'El Potrero mantiene la dificultad de antes. El Club y El Coloso arrancan más adelante en la curva, con rivales que tienen más vida, pegan más y aparecen más seguido.'],
+    ['Rivales', 'Cada cancha tiene su equipo rival con colores propios. La hinchada visitante usa esos colores.'],
+    ['Jefes', 'Cada cancha tiene jefes propios, uno en el entretiempo y otro en el minuto 80. Todos avisan antes de atacar y muestran su nombre.'],
+    ['Progresión', 'Ganar una cancha abre la siguiente. Si ya habías llegado al minuto 90, El Club arranca abierto.'],
+    ['Menú', 'Selector de canchas (teclas 1, 2, 3) con dificultad, récord y estado. El juego recuerda la última cancha.'],
+    ['Menú', 'Botones Siguiente cancha y Elegir cancha al terminar el partido, y Elegir cancha en el vestuario. Este changelog en el menú.'],
+    ['Fichas', 'Bonus de fichas: ×1,35 en El Club y ×1,75 en El Coloso. "Capitanes vencidos" pasa a ser "Jefes vencidos".'],
+    ['Récords', 'Récord separado por cancha. El récord anterior pasa a El Potrero.'],
+  ] },
+  { v: '1.3', date: '13 oct 2026', items: [
+    ['Rivales', 'Los árbitros solo tiran tarjetas rojas, de 13 de daño, para que no se confundan con las gemas.'],
+    ['Rivales', 'Los grandotes hacen un pisotón en área: marcan un círculo rojo que se llena y pegan 30% más que al tocarte.'],
+    ['Técnicas', 'Tiro libre apunta solo al rival más cercano y sigue derecho atravesando a todos. Daño base de 35 a 24.'],
+  ] },
+  { v: '1.2', date: '13 oct 2026', items: [
+    ['Partido', 'Los partidos duran 8 minutos reales en vez de 10, con la dificultad comprimida al mismo ritmo.'],
+    ['Cancha', 'Gradas con público y carteles publicitarios que marcan el límite. Nadie pasa a la tribuna.'],
+    ['Sprint', 'Sprint más débil: +40% de velocidad, dura unos 2,4 s y tarda más en recargar.'],
+    ['Vestuario', 'Mejoras permanentes nuevas: Fuelle y Zancada.'],
+    ['Récords', 'El récord se guarda por minuto alcanzado.'],
+  ] },
+  { v: '1.1', date: '13 oct 2026', items: [
+    ['Sprint', 'Barra de sprint recargable: Shift o espacio, botón » en celular. Si se vacía quedás fundido hasta recargar 35%.'],
+    ['Mejoras', 'Mejoras de sprint al subir de nivel: Aguante y Arranque explosivo.'],
+    ['Rivales', 'Aviso "Los árbitros empiezan a revolear tarjetas" cuando entra el primer árbitro.'],
+  ] },
+  { v: '1.0', date: '10–11 oct 2026', items: [
+    ['Base', 'Versión del fin de semana: supervivencia futbolera con cuatro técnicas, siete físicos, vestuario y capitán rival.'],
+  ] },
+];
+const SAVE_KEY = 'picado-eterno-save';
+function loadSave() {
+  const out = { tokens: 0, perm: {}, unlocked: 1, best: {}, last: 0, chars: {}, char: 'diez' };
+  try {
+    const s = JSON.parse(localStorage.getItem(SAVE_KEY));
+    if (s && typeof s.tokens === 'number') Object.assign(out, { tokens: s.tokens, perm: s.perm || {}, unlocked: s.unlocked || 1, best: s.best || {}, last: s.last || 0, chars: s.chars || {}, char: s.char || 'diez' });
+  } catch (e) {}
+  // El récord viejo (de antes de las canchas) pasa a El Potrero, que tiene la misma dificultad
+  if (!out.best.potrero) {
+    const b = loadBest();
+    if (b) { out.best.potrero = { min: b.min, kills: b.kills }; if (b.min >= 90) out.unlocked = Math.max(out.unlocked, 2); }
+  }
+  // Si ya ganaste El Potrero antes de que existiera El Muro, ya lo tenés
+  if (out.unlocked >= 2) out.chars.muro = true;
+  return out;
+}
+let SAVE = loadSave();
+const isOpen = i => ALL_OPEN || i < SAVE.unlocked;
+function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) {} }
+const pl = k => SAVE.perm[k] || 0;
+function spentTotal() {
+  let n = 0;
+  for (const k in PERMS) for (let i = 0; i < pl(k); i++) n += PERMS[k].cost[i];
+  return n;
+}
+
+// ---------- Estado ----------
+let G, state = 'menu', luAt = 0, hudCache = {}, resumeAt = 0;
+const RESUME_MS = 1000;   // pausa corta al cerrar las mejoras
+function newGame() {
+  return {
+    t: 0, kills: 0, level: 1, xp: 0, xpNext: xpFor(1), pending: 0,
+    p: { x: FW / 2, y: FH / 2, r: CH.r, sh: CH.shield, shMax: CH.shield, shCd: 0, shHit: 0, hp: 100, maxHp: 100, inv: 0, fx: 1, fy: 0, step: 0, st: 100, stMax: 100, stCd: 0, tired: false, sprinting: false },
+    stats: { armor: 1, thorns: 0, dmg: 1, speed: 1, cd: 1, magnet: 1, regen: 0, area: 1, xp: 1, sprint: 1.4, stRegen: 16, stDrain: 1 },
+    bossKills: 0, free: 0, revives: 0, rerolls: 0, combos: {},
+    rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '' },   // estadísticas del partido
+    weapons: { pelota: 1 }, passives: {}, timers: { pelota: .4 }, rondoAng: 0, rondoBalls: null,
+    enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [],
+    spawnAcc: 0, nextWave: 60 / PACE, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [],
+  };
+}
+function recalc() {
+  const l = k => G.passives[k] || 0, S = G.stats;
+  S.dmg = (1 + .12 * l('potencia')) * (1 + .06 * pl('pegada'));
+  S.speed = (1 + .1 * l('botines')) * (1 + .04 * pl('piques')) * CH.speed;
+  S.cd = Math.pow(.92, l('ritmo')) * Math.pow(.96, pl('pulmones'));
+  S.magnet = (1 + .35 * l('vision')) * (1 + .15 * pl('lectura'));
+  S.regen = .6 * l('hidratacion'); S.area = (1 + .12 * l('fisico')) * CH.area;
+  S.armor = 1 - .08 * l('canilleras');          // multiplica todo el daño que recibís
+  S.thorns = l('codazo') ? 6 + 6 * l('codazo') : 0;   // daño de rebote por contacto
+  S.xp = 1 + .08 * pl('inferiores');
+  G.p.maxHp = 100 + 20 * l('resistencia') + 10 * pl('pretemporada');
+  // Escudo (El Muro)
+  G.p.shMax = CH.shield ? CH.shield + 10 * pl('blindaje') : 0;
+  S.shRegen = 14 * (1 + .15 * pl('recuperacion'));
+  S.shDelay = 3 - .3 * pl('recuperacion');
+  // Sprint
+  G.p.stMax = 100 * (1 + .2 * l('aguante')) * (1 + .1 * pl('fuelle'));
+  S.stRegen = 16 * (1 + .15 * l('aguante')) * (1 + .08 * pl('fuelle'));
+  S.sprint = 1.4 + .06 * l('arranque') + .03 * pl('zancada');
+  S.stDrain = Math.pow(.9, l('arranque')) * Math.pow(.95, pl('zancada'));
+}
+function loadBest() {
+  try {
+    const b = JSON.parse(localStorage.getItem('picado-eterno-best'));
+    if (!b) return null;
+    if (b.min == null) b.min = Math.min(90, Math.floor(b.t / 600 * 90));
+    return b;
+  } catch (e) { return null; }
+}
+function saveBest(b) { try { localStorage.setItem('picado-eterno-best', JSON.stringify(b)); } catch (e) {} }
+function showBestLine() {
+  $('bestLine').textContent = SAVE.tokens ? `Tenés ${SAVE.tokens} fichas para el vestuario.` : '';
+}
+function renderLevels() {
+  const box = $('levels'); box.innerHTML = '';
+  LEVELS.forEach((L, i) => {
+    const open = isOpen(i), b = SAVE.best[L.id];
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'lvl'; btn.disabled = !open;
+    btn.setAttribute('aria-pressed', String(i === lvIdx));
+    const meta = !open ? `Ganá en ${LEVELS[i - 1].name} para abrirla` : b ? `Récord: minuto ${b.min}' · ${b.kills} rivales` : 'Sin jugar todavía';
+    btn.innerHTML = `<span class="sw" style="background:${L.swatch}"></span>`
+      + `<span class="num"><span>Nivel ${i + 1}</span><span class="diff" aria-label="Dificultad ${L.stars} de 3">${'●'.repeat(L.stars)}${'○'.repeat(3 - L.stars)}</span></span>`
+      + `<span class="name">${L.name}</span><span class="desc">${L.desc}</span><span class="meta">${meta}</span>`;
+    btn.addEventListener('click', () => selectLevel(i));
+    box.appendChild(btn);
+  });
+}
+function renderChars() {
+  const box = $('chars'); box.innerHTML = '';
+  for (const id in CHARS) {
+    const C = CHARS[id], open = charOpen(id);
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'lvl'; btn.disabled = !open;
+    btn.setAttribute('aria-pressed', String(C === CH));
+    btn.innerHTML = `<span class="sw" style="background:${C.swatch}"></span><span class="name">${C.name}</span><span class="desc">${C.desc}</span>`
+      + `<span class="traits">${C.traits.map(t => `<span>${t}</span>`).join('')}</span>`
+      + (open ? '' : `<span class="meta">Ganá en El Potrero para desbloquearlo</span>`);
+    btn.addEventListener('click', () => selectChar(id));
+    box.appendChild(btn);
+  }
+}
+function selectChar(id) {
+  if (!CHARS[id] || !charOpen(id)) return;
+  CH = CHARS[id];
+  if (SAVE.char !== id) { SAVE.char = id; persist(); }
+  if (state === 'menu') { G = newGame(); renderChars(); }
+}
+function selectLevel(i) {
+  if (i < 0 || i >= LEVELS.length || !isOpen(i)) return;
+  lvIdx = i; LV = LEVELS[i];
+  if (state === 'menu') { G = newGame(); renderLevels(); }
+}
+function goMenu() {
+  state = 'menu'; hideAll(); $('hud').hidden = true; G = newGame();
+  renderChars(); renderLevels(); showBestLine(); $('start').hidden = false;
+}
+
+// ---------- Entrada ----------
+const keys = {};
+let joy = null, sprintTouch = null;
+addEventListener('keydown', e => {
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
+  keys[e.code] = true;
+  if (e.repeat) return;
+  if (e.target.tagName === 'BUTTON' && (e.code === 'Enter' || e.code === 'Space')) return;
+  if (state === 'changes' && (e.code === 'Escape' || e.code === 'Backspace')) goMenu();
+  else if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
+  else if (state === 'levelup' && /^Digit[123]$/.test(e.code)) pick(+e.code[5] - 1);
+  else if (state === 'levelup' && e.code === 'KeyR') reroll();
+  else if (state === 'menu' && /^Digit[123]$/.test(e.code)) selectLevel(+e.code[5] - 1);
+  else if ((state === 'menu' || state === 'over') && (e.code === 'Enter' || e.code === 'Space')) startGame();
+});
+addEventListener('keyup', e => { keys[e.code] = false; });
+const sb = $('btnSprint');
+sb.addEventListener('pointerdown', e => { e.preventDefault(); sprintTouch = e.pointerId; sb.classList.add('on'); try { sb.setPointerCapture(e.pointerId); } catch (err) {} });
+const endSprint = e => { if (e.pointerId === sprintTouch) { sprintTouch = null; sb.classList.remove('on'); } };
+sb.addEventListener('pointerup', endSprint); sb.addEventListener('pointercancel', endSprint);
+sb.addEventListener('contextmenu', e => e.preventDefault());
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; sprintTouch = null; sb.classList.remove('on'); if (state === 'play') togglePause(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play') togglePause(); });
+cv.addEventListener('pointerdown', e => {
+  if (state !== 'play' && state !== 'resume') return;   // el dedo se puede apoyar durante el segundo de espera
+  joy = { id: e.pointerId, ox: e.clientX, oy: e.clientY, x: e.clientX, y: e.clientY };
+  try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+});
+cv.addEventListener('pointermove', e => { if (joy && e.pointerId === joy.id) { joy.x = e.clientX; joy.y = e.clientY; } });
+const endJoy = e => { if (joy && e.pointerId === joy.id) joy = null; };
+cv.addEventListener('pointerup', endJoy); cv.addEventListener('pointercancel', endJoy);
+cv.addEventListener('contextmenu', e => e.preventDefault());
+
+$('btnStart').addEventListener('click', startGame);
+$('btnAgain').addEventListener('click', startGame);
+$('btnPause').addEventListener('click', togglePause);
+$('btnResume').addEventListener('click', togglePause);
+$('btnMute').addEventListener('click', () => { muted = !muted; $('btnMute').textContent = 'Sonido: ' + (muted ? 'no' : 'sí'); });
+$('btnQuit').addEventListener('click', () => { if (state === 'pause') endScreen(false); });
+$('btnShop').addEventListener('click', openShop);
+$('btnStartShop').addEventListener('click', openShop);
+$('btnShopPlay').addEventListener('click', startGame);
+$('btnShopMenu').addEventListener('click', goMenu);
+$('btnLog').addEventListener('click', openLog);
+$('btnLogBack').addEventListener('click', goMenu);
+function openLog() {
+  state = 'changes'; hideAll();
+  const esc = t => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  $('logList').innerHTML = CHANGELOG.map(r => `<section><h3><b>${r.v}</b><span>${r.date}</span></h3><ul>`
+    + r.items.map(([a, t]) => `<li><i>${a}</i><span>${esc(t)}</span></li>`).join('') + '</ul></section>').join('');
+  $('changes').hidden = false; $('logList').scrollTop = 0; $('btnLogBack').focus();
+}
+$('btnMenu').addEventListener('click', goMenu);
+$('btnNext').addEventListener('click', () => { selectLevel(lvIdx + 1); startGame(); });
+$('btnReroll').addEventListener('click', reroll);
+$('btnRefund').addEventListener('click', () => {
+  SAVE.tokens += spentTotal(); SAVE.perm = {}; persist(); renderShop();
+  $('shopNote').textContent = 'Te devolvimos todas las fichas. Podés repartirlas de nuevo.';
+});
+
+function hideAll() { ['start', 'levelup', 'pause', 'over', 'shop', 'changes'].forEach(id => $(id).hidden = true); }
+function openShop() {
+  state = 'shop'; hideAll(); $('hud').hidden = true; $('shopNote').textContent = ''; renderShop(); $('shop').hidden = false;
+}
+function renderShop() {
+  $('wallet').textContent = SAVE.tokens;
+  const box = $('perms'); box.innerHTML = '';
+  for (const k in PERMS) {
+    const P = PERMS[k], l = pl(k), maxed = l >= P.max, cost = maxed ? 0 : P.cost[l];
+    const locked = P.only && !charOpen(P.only);   // no se puede comprar para un jugador que todavía no tenés
+    const d = document.createElement('div');
+    d.className = 'perm' + (maxed ? ' maxed' : '');
+    d.innerHTML = (P.only ? `<span class="only">Solo ${CHARS[P.only].name}</span>` : '')
+      + `<span class="name">${P.name}</span><span class="desc">${P.desc}</span>`
+      + `<span class="pips" aria-label="Nivel ${l} de ${P.max}">${Array.from({ length: P.max }, (_, i) => `<i class="${i < l ? 'on' : ''}"></i>`).join('')}</span>`;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'buy'; b.id = 'buy-' + k;
+    b.textContent = maxed ? 'Completo' : locked ? `Desbloqueá a ${CHARS[P.only].name}` : `Comprar · ${cost} fichas`;
+    b.disabled = maxed || locked || SAVE.tokens < cost;
+    b.addEventListener('click', () => buy(k));
+    d.appendChild(b); box.appendChild(d);
+  }
+  $('btnRefund').disabled = spentTotal() === 0;
+}
+function buy(k) {
+  const P = PERMS[k], l = pl(k);
+  if (l >= P.max || SAVE.tokens < P.cost[l] || (P.only && !charOpen(P.only))) return;
+  SAVE.tokens -= P.cost[l]; SAVE.perm[k] = l + 1; persist(); sfx('level');
+  renderShop();
+  $('shopNote').textContent = `Compraste ${P.name} (nivel ${l + 1}).`;
+}
+function startGame() {
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+  if (AC && AC.state === 'suspended') AC.resume();
+  G = newGame(); recalc(); hudCache = {}; joy = null;
+  G.p.hp = G.p.maxHp; G.p.st = G.p.stMax; G.p.sh = G.p.shMax; G.free = pl('calor'); G.revives = pl('suplente'); G.rerolls = pl('pizarron');
+  state = 'play'; hideAll(); $('hud').hidden = false; $('btnSprint').hidden = !CH.sprint;
+  bannerQ = []; bannerLock = 0;
+  if (SAVE.last !== lvIdx) { SAVE.last = lvIdx; persist(); }
+  updateLoadout(); hud(); sfx('whistle'); banner(LV.start); cheer = 1.5;
+  last = performance.now();
+}
+function togglePause() {
+  if (state === 'play') { state = 'pause'; joy = null; renderStats($('pauseStats'), false); $('pause').hidden = false; }
+  else if (state === 'pause') { state = 'play'; $('pause').hidden = true; last = performance.now(); }
+}
+let bannerT = 0, bannerLock = 0, bannerQ = [];
+function banner(txt, important) {
+  // Un cartel importante (combo) se queda sus 2,3 s; lo que llegue mientras tanto espera en fila
+  const now = performance.now();
+  if (now < bannerLock) { bannerQ.push([txt, important]); return; }
+  const b = $('banner'); b.textContent = txt; b.classList.add('show');
+  if (important) bannerLock = now + 2300;
+  clearTimeout(bannerT);
+  bannerT = setTimeout(() => {
+    b.classList.remove('show');
+    if (bannerQ.length) { const [t, i] = bannerQ.shift(); bannerLock = 0; setTimeout(() => banner(t, i), 280); }
+  }, 2300);
+}
+
+// ---------- Lógica ----------
+function update(dt) {
+  const p = G.p, S = G.stats;
+  G.t += dt;
+  if (G.t >= MATCH) { endScreen(true); return; }
+
+  let mx = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
+  let my = (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0);
+  let mag = Math.hypot(mx, my);
+  if (mag > 0) { mx /= mag; my /= mag; mag = 1; }
+  if (joy) {
+    const dx = joy.x - joy.ox, dy = joy.y - joy.oy, d = Math.hypot(dx, dy);
+    if (d > 6) { mx = dx / d; my = dy / d; mag = Math.min(1, d / 55); }
+  }
+  // Sprint: gasta barra mientras corrés; si la vaciás quedás "fundido" hasta recargar un 35%
+  const wantSprint = CH.sprint && (keys.ShiftLeft || keys.ShiftRight || keys.Space || sprintTouch !== null) && mag > 0;
+  if (p.tired && p.st >= p.stMax * .35) p.tired = false;
+  p.sprinting = wantSprint && !p.tired && p.st > 0;
+  if (p.sprinting) {
+    p.st -= 42 * S.stDrain * dt; p.stCd = .9;
+    if (p.st <= 0) { p.st = 0; p.tired = true; sfx('tired'); }
+    if (!RM && Math.random() < dt * 14) part(p.x - p.fx * 10, p.y - p.fy * 10, LV.dust);
+  } else {
+    p.stCd -= dt;
+    if (p.stCd <= 0) p.st = Math.min(p.stMax, p.st + S.stRegen * dt);
+  }
+  const boost = p.sprinting ? S.sprint : 1;
+  if (mag > 0) { p.fx = mx; p.fy = my; p.step += dt * mag * 12 * (p.sprinting ? 1.45 : 1); }
+  const spd = 175 * S.speed * mag * boost;
+  p.x = clamp(p.x + mx * spd * dt, -RUN + p.r, FW + RUN - p.r);
+  p.y = clamp(p.y + my * spd * dt, -RUN + p.r, FH + RUN - p.r);
+  if (p.shMax) { p.shCd -= dt; p.shHit = Math.max(0, p.shHit - dt); if (p.shCd <= 0) p.sh = Math.min(p.shMax, p.sh + S.shRegen * dt); }
+  if (p.inv > 0) p.inv -= dt;
+  p.hp = Math.min(p.maxHp, p.hp + S.regen * dt);
+  G.shake = Math.max(0, G.shake - dt * 30);
+  G.hurtFlash = Math.max(0, G.hurtFlash - dt);
+
+  spawning();
+  spawnStep(dt);
+  fireWeapons(dt);
+  updateShots(dt);
+  updateEnemies(dt);
+  updateCards(dt);
+  updateHazards(dt);
+  updateFoeShots(dt);
+  updateGems(dt);
+  updateFx(dt);
+
+  if (p.hp <= 0) {
+    if (G.revives > 0) {
+      G.revives--; p.hp = p.maxHp * .5; p.inv = 2;
+      G.rings.push({ x: p.x, y: p.y, R: 220, life: .5, max: .5 });
+      for (const e of G.enemies) {
+        const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1;
+        if (d < 240) { e.kx += dx / d * 700; e.ky += dy / d * 700; }
+      }
+      banner('¡Segundo aire! Volvés a la cancha'); sfx('whistle');
+    } else { endScreen(false); return; }
+  }
+  cheer = Math.max(0, cheer - dt * .8);
+  if (G.pending > 0 || G.free > 0) openLevelUp();
+  hud();
+}
+
+// ¿Se ve este punto? Cuenta el marcador de arriba y los botones de abajo. En un celular vertical
+// se ve mucho menos de costado que en una compu, así que nadie ataca desde fuera de la pantalla.
+function onScreen(x, y, m = 20) {
+  const sx = (x - G.p.x) * ZOOM + VW / 2, sy = (y - G.p.y) * ZOOM + VH / 2;
+  return sx > m && sx < VW - m && sy > 84 + m && sy < VH - 70 - m;
+}
+// Achica la distancia a la que se quedan los que te esquivan para que entren en la pantalla
+const reach = band => clamp((Math.min(viewW, viewH) / 2 - 40) / band, .55, 1);
+const ht = () => G.t * PACE + LV.head;   // cada cancha arranca más adelante en la curva de dificultad
+const hpMult = () => 1 + ht() / 140;
+function pickType(t) {
+  const r = Math.random();
+  // Desde cuándo sale cada especial. En la segunda y tercera cancha tardan un 10% más en aparecer
+  // (medido en tiempo real de partido); los jefes no pasan por acá.
+  const after = thr => LV.id === 'potrero' ? t > thr : G.t > 1.1 * Math.max(0, (thr - LV.head) / PACE);
+  if (after(240) && r < .07) return 'arbitro';
+  // Arqueros: en esas canchas ya salían desde el arranque, así que tardan un 25% más que en El Potrero (36 s → 45 s)
+  if ((LV.id === 'potrero' ? t > 45 : G.t > 1.25 * 45 / PACE) && r > .9) return 'arquero';
+  if (LV.id !== 'potrero' && after(110) && r > .84 && G.enemies.reduce((n, e) => n + (e.type === 'camillero'), 0) < 6) return 'camillero';
+  if (after(150) && r < .2) return 'central';
+  if (t > 60 && r < .45) return 'extremo';
+  return 'defensor';
+}
+const inField = (x, y) => x > -RUN + 20 && x < FW + RUN - 20 && y > -RUN + 20 && y < FH + RUN - 20;
+function ringPos() {
+  // Aparecen fuera de pantalla pero dentro de la cancha; si el anillo cae en las gradas, se prueba otro ángulo
+  const R = Math.hypot(viewW, viewH) / 2 + 40;
+  let x, y;
+  for (let i = 0; i < 16; i++) {
+    const a = Math.random() * Math.PI * 2;
+    x = G.p.x + Math.cos(a) * R; y = G.p.y + Math.sin(a) * R;
+    if (inField(x, y)) return [x, y];
+  }
+  return [clamp(x, -RUN + 20, FW + RUN - 20), clamp(y, -RUN + 20, FH + RUN - 20)];
+}
+function spawn(type, x, y, baseHp) {
+  const d = FOES[type];
+  if (x == null) [x, y] = ringPos();
+  const hp = (baseHp || d.hp) * hpMult() * LV.hp;
+  G.enemies.push({
+    type, x, y, r: d.r, hp, maxHp: hp, speed: d.speed * rnd(.9, 1.1), dmg: d.dmg * (1 + ht() / 500) * LV.dmg * MOB_DMG, xp: d.xp,
+    color: kitFor(type).shirt, num: d.nums.length ? d.nums[Math.random() * d.nums.length | 0] : 0, boss: !!d.boss,
+    kx: 0, ky: 0, flash: 0, rcd: 0, cardCd: 1.5 + Math.random(), dead: false,
+    skin: SKINS[Math.random() * SKINS.length | 0], hair: HAIRS[Math.random() * HAIRS.length | 0], phase: Math.random() * 6.28,
+    mode: 'run', mt: type === 'camillero' ? rnd(2, 3.5) : 0, L: CAM_MIN, ang: Math.atan2(G.p.y - y, G.p.x - x), diveCd: 0, ddx: 1, ddy: 0, acd: 2.5, buff: 0, still: false, aimLine: false,
+  });
+  if (type === 'arquero' && !G.seenGk) { G.seenGk = true; banner('¡Cuidado: el arquero se te tira a los pies!'); }
+  if (type === 'camillero' && !G.seenCam) { G.seenCam = true; banner('¡Entran los camilleros: ojo con la camilla!'); }
+  if (type === 'central' && !G.seenBig) { G.seenBig = true; banner('¡Llegan los grandotes: cuidado con el pisotón!'); }
+  if (type === 'arbitro' && !G.seenRef) { G.seenRef = true; banner('Los árbitros empiezan a revolear tarjetas'); sfx('whistle'); }
+}
+function spawning() {
+  const t = G.t, tt = ht();
+  if (t >= G.nextWave) {
+    G.nextWave += 60 / PACE;
+    const n = Math.round(Math.min(40, 14 + Math.floor(tt / 12)) * MOB_RATE), R = Math.hypot(viewW, viewH) / 2 + 30;
+    for (let i = 0; i < n; i++) {
+      const a = i / n * Math.PI * 2;
+      let wx = G.p.x + Math.cos(a) * R, wy = G.p.y + Math.sin(a) * R;
+      if (!inField(wx, wy)) [wx, wy] = ringPos();
+      spawn(tt > 200 ? 'extremo' : 'defensor', wx, wy);
+    }
+    banner('¡Contraataque!');
+  }
+  if (!G.boss1 && t >= MATCH / 2) { G.boss1 = true; spawnBoss(LV.bosses[0]); sfx('whistle'); }
+  if (!G.boss2 && t >= MATCH * 80 / 90) { G.boss2 = true; spawnBoss(LV.bosses[1]); }
+}
+function spawnBoss(type) { spawn(type); banner(BOSSES[type].intro); sfx('boss'); cheer = 2; }
+function spawnStep(dt) {
+  G.spawnAcc += (1.3 + ht() * .034) * PACE * LV.rate * MOB_RATE * dt;
+  while (G.spawnAcc >= 1) { G.spawnAcc--; if (G.enemies.length < 420) spawn(pickType(ht())); }
+}
+
+function nearestEnemy(x, y, excl, maxD) {
+  let best = null, bd = maxD * maxD;
+  for (const e of G.enemies) {
+    if (e.dead || e === excl) continue;
+    const dx = e.x - x, dy = e.y - y, d2 = dx * dx + dy * dy;
+    if (d2 < bd) { bd = d2; best = e; }
+  }
+  return best;
+}
+function nearestList(x, y, n, maxD) {
+  const arr = [];
+  for (const e of G.enemies) {
+    if (e.dead) continue;
+    const d2 = (e.x - x) ** 2 + (e.y - y) ** 2;
+    if (d2 < maxD * maxD) arr.push([d2, e]);
+  }
+  arr.sort((a, b) => a[0] - b[0]);
+  return arr.slice(0, n).map(a => a[1]);
+}
+
+function fireWeapons(dt) {
+  const S = G.stats, p = G.p;
+  for (const k in G.weapons) {
+    const w = wp(k, G.weapons[k]);
+    if (k === 'rondo') { G.rondoAng += w.spin / S.cd * dt; continue; }   // Ritmo de juego: gira más rápido
+    G.timers[k] = (G.timers[k] || 0) - dt;
+    if (G.timers[k] > 0) continue;
+    if (k === 'pelota') {
+      const near = nearestList(p.x, p.y, w.count, Math.max(viewW, viewH) * .75);
+      if (!near.length) { G.timers[k] = .2; continue; }
+      for (let i = 0; i < w.count; i++) {
+        G.shots.push({ k: 'pelota', x: p.x, y: p.y, vx: 0, vy: 0, r: 7, dmg: w.dmg * S.dmg, b: w.bounces, b0: w.bounces, speed: w.speed,
+          target: near[i % near.length], last: null, state: 'go', life: 4, rot: 0 });
+      }
+      sfx('kick');
+    } else if (k === 'barrida') {
+      const R = w.R * S.area;
+      G.rings.push({ x: p.x, y: p.y, R, life: .35, max: .35 });
+      for (const e of G.enemies) {
+        const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1;
+        if (d < R + e.r) {
+          hitEnemy(e, w.dmg * S.dmg, dx / d * 320, dy / d * 320, 'barrida');
+          if (e.dead) continue;
+          if (G.combos.mareo && !e.boss) {
+            e.dizzy = 2;
+            if (e.type === 'central' || e.type === 'arquero') { e.mode = 'run'; e.diveCd = Math.max(e.diveCd, 1); }   // se le corta el pisotón o la palomita
+          }
+          if (G.combos.tapones) { e.bleed = 3; e.bleedT = .5; e.bleedDmg = w.dmg * S.dmg * .3; }
+        }
+      }
+      sfx('sweep');
+    } else if (k === 'tiroLibre') {
+      // Autoapuntado: busca al rival más cercano; si no hay nadie a tiro, remata hacia donde corrés
+      const tgt = nearestEnemy(p.x, p.y, null, 650);
+      const base = tgt ? Math.atan2(tgt.y - p.y, tgt.x - p.x) : Math.atan2(p.fy, p.fx);
+      const spread = w.n === 1 ? [0] : w.n === 2 ? [-.12, .12] : [-.2, 0, .2];
+      for (const s of spread) {
+        const a = base + s;
+        G.shots.push({ k: 'tiro', x: p.x, y: p.y, vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed,
+          r: 10 * S.area, dmg: w.dmg * S.dmg, hit: new Set(), life: 1.3, rot: 0 });
+      }
+      sfx('kick');
+    }
+    G.timers[k] = w.cd * S.cd;
+  }
+}
+
+function hitEnemy(e, dmg, kx, ky, src, exact) {
+  if (e.dead) return;
+  if (e.yellow > 0) dmg *= 1.25;
+  dmg = exact ? Math.ceil(dmg) : Math.max(1, Math.round(dmg * rnd(.9, 1.1)));   // exact: sin variación ni número flotante
+  // Para las estadísticas cuenta el daño que de verdad le sacaste (no lo que sobra al voltearlo)
+  const R = G.rec, real = Math.min(dmg, Math.max(0, e.hp));
+  R.dmg[src] = (R.dmg[src] || 0) + real; R.hits[src] = (R.hits[src] || 0) + 1;
+  if (dmg > R.maxHit) { R.maxHit = dmg; R.maxSrc = src; }
+  e.hp -= dmg; e.flash = .1;
+  const kb = e.boss ? .12 : e.type === 'central' || e.type === 'camillero' ? .45 : 1;
+  e.kx += kx * kb; e.ky += ky * kb;
+  if (!exact && G.texts.length < 70) G.texts.push({ x: e.x + rnd(-5, 5), y: e.y - e.r, txt: dmg, life: .6, big: dmg >= 60 });
+  sfx('hit');
+  if (e.hp <= 0) { R.kills[src] = (R.kills[src] || 0) + 1; kill(e); }
+}
+function kill(e) {
+  e.dead = true; G.kills++;
+  for (let i = 0; i < (e.boss ? 30 : 6); i++) part(e.x, e.y, e.color);
+  if (e.boss) {
+    G.bossKills++;
+    for (let i = 0; i < 10; i++) gem(e.x + rnd(-40, 40), e.y + rnd(-40, 40), 5);
+    G.p.hp = Math.min(G.p.maxHp, G.p.hp + G.p.maxHp * .4);
+    for (const g of G.gems) g.pull = true;
+    banner(BOSSES[e.type].beat); cheer = 3;
+  } else gem(e.x, e.y, e.xp);
+}
+function codazo(e, ux, uy) {
+  // ux, uy: del rival hacia vos. El codazo lo manda para el otro lado.
+  if (!G.stats.thorns || e.tcd > 0 || e.dead) return;
+  e.tcd = .5;
+  const p = G.p;
+  G.rings.push({ x: p.x - ux * (p.r + 4), y: p.y - uy * (p.r + 4), R: 22, life: .2, max: .2 });
+  hitEnemy(e, G.stats.thorns * G.stats.dmg, -ux * 420, -uy * 420, 'codazo');
+}
+function hurt(n) {
+  const p = G.p;
+  const raw = n;
+  n *= G.stats.armor ?? 1;
+  G.rec.blocked += raw - n;
+  if (p.shMax) {
+    p.shCd = G.stats.shDelay;   // cualquier golpe corta la recarga del escudo
+    const a = Math.min(p.sh, n);
+    if (a > 0) { p.sh -= a; n -= a; G.rec.shield += a; p.shHit = .25; }
+    if (n <= 0) { p.inv = .55; sfx('shield'); return; }   // lo frenó todo el escudo
+    if (a > 0) sfx('shield');
+  }
+  G.rec.taken += n;
+  p.hp -= n; p.inv = .55; G.hurtFlash = .25; sfx('hurt');
+  if (!RM) G.shake = 8;
+}
+
+function updateShots(dt) {
+  const p = G.p;
+  for (const s of G.shots) {
+    s.life -= dt; s.rot += dt * 15;
+    if (s.k === 'pelota') {
+      if (s.state === 'go') {
+        if (!s.target || s.target.dead) { s.target = nearestEnemy(s.x, s.y, s.last, 450); if (!s.target) s.state = 'back'; }
+        if (s.target) {
+          const t = s.target, dx = t.x - s.x, dy = t.y - s.y, d = Math.hypot(dx, dy) || 1;
+          s.vx = dx / d * s.speed; s.vy = dy / d * s.speed;
+          if (d < t.r + s.r + 4) {
+            hitEnemy(t, s.dmg, dx / d * 160, dy / d * 160, 'pelota');
+            s.last = t; s.b--;
+            if (s.b < 0) s.state = 'back';
+            else { s.target = nearestEnemy(s.x, s.y, t, 450); if (!s.target) s.state = 'back'; }
+          }
+        }
+      }
+      if (s.state === 'back') {
+        const dx = p.x - s.x, dy = p.y - s.y, d = Math.hypot(dx, dy) || 1;
+        s.vx = dx / d * s.speed * 1.2; s.vy = dy / d * s.speed * 1.2;
+        if (d < p.r + 8) {
+          const tgt = G.combos.tikitaka && !s.tiki ? nearestEnemy(p.x, p.y, null, 600) : null;
+          if (tgt) {
+            // Tiki-taka: toca en el rondo y sale de nuevo con todos los rebotes
+            s.tiki = true; s.b = s.b0; s.state = 'go'; s.target = tgt; s.last = null; s.life = 4;
+            G.rings.push({ x: p.x, y: p.y, R: 40, life: .25, max: .25, col: '255,182,39' });
+          } else s.life = 0;
+        }
+      }
+    } else {
+      const v = Math.hypot(s.vx, s.vy);
+      for (const e of G.enemies) {
+        if (e.dead || s.hit.has(e)) continue;
+        const dx = e.x - s.x, dy = e.y - s.y, rr = e.r + s.r;
+        if (dx * dx + dy * dy < rr * rr) {
+          s.hit.add(e);
+          const wasYellow = e.yellow > 0;
+          hitEnemy(e, s.dmg, s.vx / v * 260, s.vy / v * 260, 'tiroLibre');
+          if (G.combos.amarilla && !e.dead) {
+            if (!wasYellow) e.yellow = 4;
+            else {
+              // Segunda amarilla: roja. Los comunes se van; a los jefes les cuesta un golpe grande
+              e.yellow = 0;
+              G.texts.push({ x: e.x, y: e.y - e.r - 18, txt: '¡ROJA!', life: 1, big: true });
+              G.rings.push({ x: e.x, y: e.y, R: e.r + 26, life: .35, max: .35, col: '226,59,59' });
+              hitEnemy(e, e.boss ? s.dmg * 4 : e.hp + 1, 0, 0, 'amarilla', !e.boss);
+            }
+          }
+        }
+      }
+    }
+    s.x += s.vx * dt; s.y += s.vy * dt;
+  }
+  G.shots = G.shots.filter(s => s.life > 0);
+}
+
+const grid = new Map();
+function updateEnemies(dt) {
+  const p = G.p, E = G.enemies, decay = Math.pow(.004, dt), S = G.stats;
+  let rb = null, rw, rR, rbr;
+  if (G.weapons.rondo) {
+    rw = wp('rondo', G.weapons.rondo); rR = rw.R * S.area; rbr = 9 * S.area; rb = [];
+    for (let i = 0; i < rw.count; i++) {
+      const a = G.rondoAng + i * Math.PI * 2 / rw.count;
+      rb.push([p.x + Math.cos(a) * rR, p.y + Math.sin(a) * rR]);
+    }
+  }
+  G.rondoBalls = rb;
+
+  for (const e of E) {
+    if (e.dead) continue;
+    const dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy) || 1;
+    let ux = dx / d, uy = dy / d, sp = e.speed;
+    if (e.yellow > 0) e.yellow -= dt;
+    if (e.bleed > 0) {
+      e.bleed -= dt; e.bleedT -= dt;
+      if (e.bleedT <= 0) { e.bleedT = .5; hitEnemy(e, e.bleedDmg, 0, 0, 'tapones'); }
+      if (!RM && Math.random() < dt * 5) part(e.x, e.y, '#b3122a');
+      if (e.dead) continue;
+    }
+    // Mareado: camina sin rumbo, más lento, y no usa sus ataques especiales
+    const dz = e.dizzy > 0;
+    if (dz) { e.dizzy -= dt; const a = e.phase + G.t * 2.5; ux = Math.cos(a); uy = Math.sin(a); sp *= .45; }
+    if (!dz && e.type === 'arbitro') {
+      const k = reach(300);
+      if (d < 220 * k) { ux = -ux; uy = -uy; sp *= .7; }
+      else if (d < 300 * k) { const tx = -uy; uy = ux; ux = tx; sp *= .55; }
+      e.cardCd -= dt;
+      if (e.cardCd <= 0 && d < 480 && onScreen(e.x, e.y)) {
+        e.cardCd = 2.4 + Math.random();
+        G.cards.push({ x: e.x, y: e.y, vx: dx / d * 240, vy: dy / d * 240, life: 3, rot: 0 });
+      }
+    }
+    if (!dz && e.type === 'arquero') {
+      // Corre hacia vos, se agacha un instante (aviso "!"), se tira a tus pies y queda en el piso
+      e.diveCd -= dt;
+      if (e.mode === 'run') { if (d < 260 && e.diveCd <= 0) { e.mode = 'aim'; e.mt = .45; } }
+      else if (e.mode === 'aim') { sp = 0; e.mt -= dt; if (e.mt <= 0) { e.mode = 'dive'; e.mt = .42; e.ddx = ux; e.ddy = uy; sfx('dive'); } }
+      else if (e.mode === 'dive') { ux = e.ddx; uy = e.ddy; sp = 580; e.mt -= dt; if (e.mt <= 0) { e.mode = 'down'; e.mt = .9; } }
+      else if (e.mode === 'down') { sp = 0; e.mt -= dt; if (e.mt <= 0) { e.mode = 'run'; e.diveCd = 1.2; } }
+    }
+    if (!dz && e.type === 'camillero') {
+      // Camilleros: giran despacio hacia vos, avisan (la lona titila) y estiran la camilla para barrer; después la cierran
+      let da = Math.atan2(uy, ux) - e.ang;
+      da = Math.atan2(Math.sin(da), Math.cos(da));
+      e.ang += clamp(da, -1.4 * dt, 1.4 * dt);
+      ux = Math.cos(e.ang); uy = Math.sin(e.ang);
+      e.mt -= dt;
+      if (e.mode === 'run') { if (e.mt <= 0 && d < 520) { e.mode = 'warn'; e.mt = .6; } }
+      else if (e.mode === 'warn') { sp *= .4; if (e.mt <= 0) { e.mode = 'open'; e.mt = .3; } }
+      else if (e.mode === 'open') { sp *= .5; e.L = CAM_MAX - (CAM_MAX - CAM_MIN) * Math.max(0, e.mt / .3); if (e.mt <= 0) { e.L = CAM_MAX; e.mode = 'hold'; e.mt = 1.3; } }
+      else if (e.mode === 'hold') { sp *= .55; if (e.mt <= 0) { e.mode = 'close'; e.mt = .45; } }
+      else if (e.mode === 'close') { sp *= .6; e.L = CAM_MIN + (CAM_MAX - CAM_MIN) * Math.max(0, e.mt / .45); if (e.mt <= 0) { e.L = CAM_MIN; e.mode = 'run'; e.mt = rnd(2.5, 3.5); } }
+      e.r = 15 + e.L * .45;
+      // La camilla entera pega: distancia de vos al segmento entre los dos camilleros
+      const pxv = -uy, pyv = ux;
+      const along = clamp((p.x - e.x) * pxv + (p.y - e.y) * pyv, -e.L, e.L);
+      const qx = e.x + pxv * along, qy = e.y + pyv * along;
+      if ((p.x - qx) ** 2 + (p.y - qy) ** 2 < (p.r + 11) ** 2) {
+        if (p.inv <= 0) hurt(e.L > CAM_MIN + 10 ? e.dmg * 1.3 : e.dmg);
+        codazo(e, dx / d, dy / d);
+      }
+    }
+    if (!dz && e.type === 'central') {
+      // Grandote: se frena, levanta la pierna (círculo rojo que se llena) y pisa fuerte dañando todo alrededor
+      e.diveCd -= dt;
+      if (e.mode === 'run') { if (d < STOMP_R * .85 && e.diveCd <= 0) { e.mode = 'wind'; e.mt = STOMP_WIND; } }
+      else if (e.mode === 'wind') {
+        sp = 0; e.mt -= dt;
+        if (e.mt <= 0) {
+          e.mode = 'run'; e.diveCd = 3.2 + Math.random();
+          G.rings.push({ x: e.x, y: e.y, R: STOMP_R, life: .4, max: .4, col: '217,74,61' });
+          for (let i = 0; i < 8; i++) part(e.x + rnd(-STOMP_R, STOMP_R) * .6, e.y + rnd(-STOMP_R, STOMP_R) * .6, '#6b5a3a');
+          sfx('stomp');
+          if (d < STOMP_R + p.r && p.inv <= 0) hurt(e.dmg * 1.3);
+          if (!RM) G.shake = Math.max(G.shake, 5);
+        }
+      }
+    }
+    if (e.boss) [ux, uy, sp] = bossAI(e, d, ux, uy, sp, dt);
+    if (e.buff > 0) { e.buff -= dt; sp *= 1.35; }
+    e.still = sp === 0;
+    e.x += (ux * sp + e.kx) * dt; e.y += (uy * sp + e.ky) * dt;
+    e.kx *= decay; e.ky *= decay;
+    e.flash -= dt; e.rcd -= dt; e.tcd = (e.tcd || 0) - dt;
+    if (e.type !== 'camillero' && d < e.r + p.r - 2) {
+      if (p.inv <= 0) hurt(e.mode === 'dive' || e.mode === 'charge' ? e.dmg * 1.6 : e.dmg);
+      codazo(e, dx / d, dy / d);
+    }
+    if (rb && e.rcd <= 0 && Math.abs(d - rR) < e.r + rbr) {
+      for (const b of rb) {
+        const bx = e.x - b[0], by = e.y - b[1];
+        if (bx * bx + by * by < (e.r + rbr) ** 2) { hitEnemy(e, rw.dmg * S.dmg, -ux * 200, -uy * 200, 'rondo'); e.rcd = .45 * S.cd; break; }
+      }
+    }
+    if (!e.boss && d > 1500) [e.x, e.y] = ringPos();
+  }
+
+  // Separación: que no se apilen todos en un mismo punto
+  grid.clear();
+  const C = 36;
+  for (let i = 0; i < E.length; i++) {
+    const e = E[i]; if (e.dead) continue;
+    const k = (Math.floor(e.x / C) + 500) * 4096 + (Math.floor(e.y / C) + 500);
+    let a = grid.get(k); if (!a) { a = []; grid.set(k, a); } a.push(i);
+  }
+  for (let i = 0; i < E.length; i++) {
+    const e = E[i]; if (e.dead) continue;
+    const cx = Math.floor(e.x / C) + 500, cy = Math.floor(e.y / C) + 500;
+    for (let ox = -1; ox <= 1; ox++) for (let oy = -1; oy <= 1; oy++) {
+      const a = grid.get((cx + ox) * 4096 + cy + oy); if (!a) continue;
+      for (const j of a) {
+        if (j <= i) continue;
+        const o = E[j]; let dx = o.x - e.x, dy = o.y - e.y;
+        const m = e.r + o.r, d2 = dx * dx + dy * dy;
+        if (d2 < m * m && d2 > .0001) {
+          const d = Math.sqrt(d2), push = (m - d) * .5; dx /= d; dy /= d;
+          const we = e.boss ? .1 : 1, wo = o.boss ? .1 : 1;
+          e.x -= dx * push * we; e.y -= dy * push * we; o.x += dx * push * wo; o.y += dy * push * wo;
+        }
+      }
+    }
+  }
+  for (const e of E) { e.x = clamp(e.x, -RUN + e.r, FW + RUN - e.r); e.y = clamp(e.y, -RUN + e.r, FH + RUN - e.r); }
+  G.enemies = E.filter(e => !e.dead);
+}
+
+// Cada jefe tiene su propio repertorio. Todos avisan antes de pegar: "!", carril rojo, líneas de tiro o zonas marcadas.
+function startCharge(e, aimT, dur, speed, after, off) {
+  e.mode = 'aimCharge'; e.mt = aimT; e.chargeT = dur; e.chargeSp = speed; e.after = after; e.aimOff = off;
+}
+function bossAI(e, d, ux, uy, sp, dt) {
+  const p = G.p, enr = e.hp < e.maxHp * .5;
+  e.acd -= dt;
+  if (e.mode === 'aimCharge') {
+    e.mt -= dt;
+    if (e.mt > .15) { const a = Math.atan2(uy, ux) + (e.aimOff || 0); e.ddx = Math.cos(a); e.ddy = Math.sin(a); }
+    if (e.mt <= 0) { e.mode = 'charge'; e.mt = e.chargeT; sfx('dive'); }
+    return [ux, uy, 0];
+  }
+  if (e.mode === 'charge') {
+    e.mt -= dt;
+    if (!RM && Math.random() < dt * 40) part(e.x, e.y, e.type === 'estrella' ? '#ffd34d' : LV.dust);
+    if (e.mt <= 0) { e.mode = 'run'; e.acd = e.after; }
+    return [e.ddx, e.ddy, e.chargeSp];
+  }
+  if (e.mode === 'cast') {
+    e.mt -= dt;
+    if (e.aimLine && e.mt > .25) { e.ddx = ux; e.ddy = uy; }
+    if (e.mt <= 0) { e.mode = 'run'; bossCast(e, enr); }
+    return [ux, uy, 0];
+  }
+  switch (e.type) {
+    case 'dueno':   // patea pelotazos desde media distancia; de a tres cada tanto, y siempre cuando está golpeado
+      if (d < 220) sp *= .35;
+      if (e.acd <= 0 && d < 640 && onScreen(e.x, e.y)) { e.mode = 'cast'; e.mt = .7; e.aimLine = true; e.acd = enr ? 1.9 : 2.6; }
+      break;
+    case 'tanque':  // mega pisotón si estás cerca, embestida si estás lejos
+      if (enr) sp *= 1.2;
+      if (e.acd <= 0 && d < 230) {
+        e.mode = 'cast'; e.mt = 1.05; e.aimLine = false; e.acd = 2.4;
+        G.hazards.push({ kind: 'stomp', x: e.x, y: e.y, R: 190, t: 1.05, max: 1.05, dmg: e.dmg * 1.25 });
+      } else if (e.acd <= 0 && d > 330 && d < 750 && onScreen(e.x, e.y)) startCharge(e, .75, .8, 560, 1.8, 0);
+      break;
+    case 'capitan': // embiste en línea recta; golpeado, corre más y embiste más seguido
+      if (enr) sp *= 1.25;
+      if (e.acd <= 0 && d > 170 && d < 620 && onScreen(e.x, e.y)) startCharge(e, .6, .7, 600, enr ? 1.4 : 2.2, 0);
+      break;
+    case 'tecnico': // se queda lejos, hace cambios y acelera a su equipo
+      const kd = reach(430);
+      if (d < 300 * kd) { ux = -ux; uy = -uy; sp *= .8; } else if (d < 430 * kd) { const tx = -uy; uy = ux; ux = tx; sp *= .6; }
+      if (e.acd <= 0) { e.mode = 'cast'; e.mt = 1; e.aimLine = false; e.acd = enr ? 5 : 6.5; }
+      break;
+    case 'estrella': // gambetas cortas en diagonal y un abanico de tiros con comba
+      if (enr) sp *= 1.15;
+      if (e.acd <= 0) {
+        e.combo = (e.combo || 0) + 1;
+        if (e.combo % 3 === 0 && d < 680 && onScreen(e.x, e.y)) { e.mode = 'cast'; e.mt = .75; e.aimLine = true; e.acd = 1; }
+        else if (d < 540 && onScreen(e.x, e.y)) startCharge(e, .38, .34, 780, enr ? .55 : .85, (Math.random() < .5 ? -1 : 1) * .32);
+        else e.acd = .25;
+      }
+      break;
+    case 'var':     // marca zonas de revisión alrededor tuyo; golpeado, marca más y saca rojas
+      const kv = reach(470);
+      if (d < 330 * kv) { ux = -ux; uy = -uy; sp *= .8; } else if (d < 470 * kv) { const tx = uy; uy = -ux; ux = tx; sp *= .6; }
+      if (e.acd <= 0 && d < 950 && onScreen(e.x, e.y)) {
+        e.acd = enr ? 2.6 : 3.4; e.mode = 'cast'; e.mt = .45; e.aimLine = false;
+        const n = enr ? 5 : 3, lim = 85;
+        for (let i = 0; i < n; i++) {
+          const x = clamp(p.x + (i ? rnd(-280, 280) : p.fx * 60), -RUN + lim, FW + RUN - lim);
+          const y = clamp(p.y + (i ? rnd(-280, 280) : p.fy * 60), -RUN + lim, FH + RUN - lim);
+          G.hazards.push({ kind: 'var', x, y, w: 170, h: 170, t: 1.3, max: 1.3, dmg: e.dmg * 1.3, fx: 0 });
+        }
+        sfx('var');
+      }
+      if (enr) {
+        e.cardCd -= dt;
+        if (e.cardCd <= 0 && d < 560 && onScreen(e.x, e.y)) { e.cardCd = 1.7; G.cards.push({ x: e.x, y: e.y, vx: (p.x - e.x) / d * 260, vy: (p.y - e.y) / d * 260, life: 3, rot: 0 }); }
+      }
+      break;
+  }
+  return [ux, uy, sp];
+}
+function bossCast(e, enr) {
+  const a = Math.atan2(e.ddy, e.ddx);
+  if (e.type === 'dueno') {
+    e.shotN = (e.shotN || 0) + 1;
+    for (const s of (enr || e.shotN % 3 === 0 ? [-.3, 0, .3] : [0])) foeShot(e.x, e.y, a + s, 540, 14, e.dmg * .9);
+    sfx('kick');
+  } else if (e.type === 'estrella') {
+    const n = enr ? 7 : 5;
+    for (let i = 0; i < n; i++) foeShot(e.x, e.y, a + (i - (n - 1) / 2) * .17, 470, 9, e.dmg * .7);
+    sfx('kick');
+  } else if (e.type === 'tecnico') {
+    const n = enr ? 8 : 5;
+    for (let i = 0; i < n; i++) { const b = i / n * Math.PI * 2; spawn(i % 2 ? 'extremo' : 'defensor', e.x + Math.cos(b) * 90, e.y + Math.sin(b) * 90); }
+    for (const o of G.enemies) if (!o.boss && (o.x - e.x) ** 2 + (o.y - e.y) ** 2 < 450 * 450) o.buff = 4;
+    G.rings.push({ x: e.x, y: e.y, R: 450, life: .5, max: .5, col: '255,211,77' });
+    G.texts.push({ x: e.x, y: e.y - e.r - 34, txt: '¡CAMBIO!', life: 1.2, big: true });
+    sfx('whistle');
+  }
+}
+function foeShot(x, y, a, speed, r, dmg) {
+  G.foeShots.push({ x, y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, r, dmg, life: 2.4, rot: 0 });
+}
+function updateFoeShots(dt) {
+  const p = G.p;
+  for (const s of G.foeShots) {
+    s.life -= dt; s.rot += dt * 12; s.x += s.vx * dt; s.y += s.vy * dt;
+    if (!inField(s.x, s.y)) s.life = 0;
+    if ((s.x - p.x) ** 2 + (s.y - p.y) ** 2 < (p.r + s.r) ** 2 && p.inv <= 0) { hurt(s.dmg); s.life = 0; }
+  }
+  G.foeShots = G.foeShots.filter(s => s.life > 0);
+}
+function updateHazards(dt) {
+  const p = G.p;
+  for (const h of G.hazards) {
+    if (h.done) { h.fx -= dt; continue; }
+    h.t -= dt;
+    if (h.t > 0) continue;
+    h.done = true;
+    const hit = h.kind === 'var'
+      ? Math.abs(p.x - h.x) < h.w / 2 && Math.abs(p.y - h.y) < h.h / 2
+      : (p.x - h.x) ** 2 + (p.y - h.y) ** 2 < (h.R + p.r) ** 2;
+    if (hit && p.inv <= 0) hurt(h.dmg);
+    if (h.kind === 'stomp') {
+      h.fx = 0;
+      G.rings.push({ x: h.x, y: h.y, R: h.R, life: .45, max: .45, col: '217,74,61' });
+      for (let i = 0; i < 12; i++) part(h.x + rnd(-h.R, h.R) * .6, h.y + rnd(-h.R, h.R) * .6, '#6b5a3a');
+      sfx('stomp'); if (!RM) G.shake = Math.max(G.shake, 7);
+    } else { h.fx = .3; sfx('zap'); }
+  }
+  G.hazards = G.hazards.filter(h => !h.done || h.fx > 0);
+}
+
+function updateCards(dt) {
+  const p = G.p;
+  for (const c of G.cards) {
+    c.life -= dt; c.rot += dt * 9; c.x += c.vx * dt; c.y += c.vy * dt;
+    const dx = c.x - p.x, dy = c.y - p.y;
+    if (dx * dx + dy * dy < (p.r + 7) ** 2 && p.inv <= 0) { hurt(13); c.life = 0; }
+  }
+  G.cards = G.cards.filter(c => c.life > 0);
+}
+
+function gem(x, y, v) {
+  if (G.gems.length > 320) { G.gems[Math.random() * G.gems.length | 0].v += v; return; }
+  G.gems.push({ x, y, v, pull: false, sp: 0, got: false });
+}
+function updateGems(dt) {
+  const p = G.p, R = 80 * G.stats.magnet;
+  for (const g of G.gems) {
+    const dx = p.x - g.x, dy = p.y - g.y, d = Math.hypot(dx, dy) || 1;
+    if (!g.pull && d < R) g.pull = true;
+    if (g.pull) { g.sp = Math.min(900, g.sp + 1400 * dt); g.x += dx / d * g.sp * dt; g.y += dy / d * g.sp * dt; }
+    if (d < p.r + 8) { g.got = true; gainXp(g.v); sfx('gem'); }
+  }
+  G.gems = G.gems.filter(g => !g.got);
+}
+function gainXp(v) {
+  G.xp += v * G.stats.xp;
+  while (G.xp >= G.xpNext) { G.xp -= G.xpNext; G.level++; G.xpNext = xpFor(G.level); G.pending++; }
+}
+
+function part(x, y, col) {
+  if (G.parts.length > 240) return;
+  const a = Math.random() * Math.PI * 2, s = rnd(60, 220);
+  G.parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: rnd(.35, .7), col });
+}
+function updateFx(dt) {
+  for (const t of G.texts) { t.life -= dt; t.y -= 40 * dt; }
+  G.texts = G.texts.filter(t => t.life > 0);
+  const f = Math.pow(.002, dt);
+  for (const q of G.parts) { q.life -= dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vx *= f; q.vy *= f; }
+  G.parts = G.parts.filter(q => q.life > 0);
+  for (const r of G.rings) r.life -= dt;
+  G.rings = G.rings.filter(r => r.life > 0);
+}
+
+// ---------- Subir de nivel ----------
+function rollOptions() {
+  const pool = [];
+  for (const k in WEAPONS) { const l = G.weapons[k] || 0; if (l < WEAPONS[k].max) pool.push({ t: 'w', k, l: l + 1, wt: l ? 1.4 : 1 }); }
+  for (const k in PASSIVES) { const l = G.passives[k] || 0; if (!CH.sprint && (k === 'aguante' || k === 'arranque')) continue; if (l < PASSIVES[k].max) pool.push({ t: 'p', k, l: l + 1, wt: .8 }); }
+  const out = [];
+  while (out.length < 3 && pool.length) {
+    let r = Math.random() * pool.reduce((a, o) => a + o.wt, 0), i = 0;
+    while (i < pool.length - 1 && (r -= pool[i].wt) > 0) i++;
+    out.push(pool.splice(i, 1)[0]);
+  }
+  while (out.length < 3) out.push({ t: 'h' });
+  return out;
+}
+function reroll() {
+  if (state !== 'levelup' || G.rerolls <= 0) return;
+  G.rerolls--; openLevelUp(false);
+}
+function openLevelUp(sound = true) {
+  state = 'levelup'; joy = null; luAt = performance.now(); if (sound) sfx('level');
+  G.options = rollOptions();
+  $('luTitle').textContent = G.free > 0 ? 'Entrada en calor: mejora gratis' : '¡Subiste a nivel ' + (G.level - G.pending + 1) + '!';
+  $('btnReroll').hidden = G.rerolls <= 0;
+  $('btnReroll').textContent = `Cambiar opciones · quedan ${G.rerolls} (R)`;
+  const box = $('cards'); box.innerHTML = '';
+  G.options.forEach((o, i) => {
+    let name, desc, tag, cls;
+    if (o.t === 'w') { const W = WEAPONS[o.k]; name = W.name; desc = W.desc[o.l - 1]; tag = o.l === 1 ? 'Técnica nueva' : 'Técnica · nivel ' + o.l; cls = 'tec'; }
+    else if (o.t === 'p') { const P = PASSIVES[o.k]; name = P.name; desc = P.desc; tag = o.l === 1 ? 'Físico nuevo' : 'Físico · nivel ' + o.l; cls = 'fis'; }
+    else { name = 'Agua fresca'; desc = 'Recuperás 40 de vida.'; tag = 'Banco de suplentes'; cls = 'heal'; }
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'card ' + cls;
+    // ¿Esta mejora completa un combo?
+    let hint = '';
+    if (o.t !== 'h' && o.l >= 5) for (const c in COMBOS) {
+      if (G.combos[c]) continue;
+      const C = COMBOS[c];
+      if (C.need.some(([t, n]) => t === o.t && n === o.k) && C.need.every(([t, n]) => (t === o.t && n === o.k) || comboLv(t, n) >= 5)) hint += `<span class="combo-hint">★ Activa el combo ${C.name}</span>`;
+    }
+    b.innerHTML = `<span class="key">${i + 1}</span><span class="tag">${tag}</span><span class="name">${name}</span><span class="desc">${desc}</span>${hint}`;
+    b.addEventListener('click', () => pick(i));
+    box.appendChild(b);
+  });
+  $('levelup').hidden = false;
+}
+function pick(i) {
+  if (state !== 'levelup' || performance.now() - luAt < 300) return;
+  const o = G.options[i]; if (!o) return;
+  if (o.t === 'w') { G.weapons[o.k] = o.l; if (o.l === 1) G.timers[o.k] = .3; }
+  else if (o.t === 'p') { G.passives[o.k] = o.l; recalc(); if (o.k === 'resistencia') G.p.hp = Math.min(G.p.maxHp, G.p.hp + 20); if (o.k === 'aguante') G.p.st = Math.min(G.p.stMax, G.p.st + 20); }
+  else G.p.hp = Math.min(G.p.maxHp, G.p.hp + 40);
+  if (G.free > 0) G.free--; else G.pending--;
+  checkCombos();
+  updateLoadout();
+  if (G.pending > 0 || G.free > 0) openLevelUp();
+  else { $('levelup').hidden = true; state = 'resume'; resumeAt = performance.now() + RESUME_MS; }   // un segundo quieto para ubicarte
+}
+function updateLoadout() {
+  let h = '';
+  const short = { tiroLibre: 'Tiro' };
+  for (const k in G.weapons) h += `<span class="chip tec"><span class="full">${WEAPONS[k].name}</span><span class="short">${short[k] || WEAPONS[k].name}</span><b>${G.weapons[k]}</b></span>`;
+  let n = 0;
+  for (const k in G.passives) { h += `<span class="chip fis">${PASSIVES[k].name}<b>${G.passives[k]}</b></span>`; n++; }
+  for (const c in G.combos) h += `<span class="chip combo">★ ${COMBOS[c].name}</span>`;
+  $('pauseLoadout').innerHTML = h;
+  if (n) h += `<span class="chip fis more">Físicos<b>${n}</b></span>`;
+  $('loadout').innerHTML = h;
+}
+
+// ---------- HUD y fin ----------
+function setText(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $(id).textContent = v; } }
+function hud() {
+  const m = minuteOf(G.t);
+  setText('clock', m + "'"); setText('half', m < 45 ? '1T' : '2T');
+  setText('lvl', String(G.level)); setText('kills', String(G.kills));
+  const w = (G.xp / G.xpNext * 100).toFixed(1) + '%';
+  if (hudCache.xp !== w) { hudCache.xp = w; $('xpfill').style.width = w; }
+}
+const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', tiroLibre: 'Tiro libre', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta' };
+const nf = n => Math.round(n).toLocaleString('es-AR');
+function renderStats(el, full) {
+  const R = G.rec;
+  const rows = Object.keys(R.dmg).map(k => [k, R.dmg[k]]).sort((a, b) => b[1] - a[1]);
+  const total = rows.reduce((a, r) => a + r[1], 0);
+  let h = '';
+  if (!total) h = '<p class="best" style="margin:6px 0 10px">Tus habilidades todavía no tocaron a nadie.</p>';
+  else {
+    h = '<div class="srows"><div class="shead"><span>Habilidad</span><span></span><span>Daño</span><span>%</span><span>Volteó</span></div>'
+      + rows.map(([k, v]) => `<div class="srow${k === 'codazo' ? ' fis' : k === 'amarilla' || k === 'tapones' ? ' combo' : ''}"><span class="sname">${SRC_NAMES[k] || k}</span>`
+        + `<span class="sbar"><i style="width:${(v / rows[0][1] * 100).toFixed(1)}%"></i></span>`
+        + `<span class="snum">${nf(v)}</span><span class="spct">${Math.round(v / total * 100)}%</span><span class="skill">${R.kills[k] || 0}</span></div>`).join('')
+      + '</div>';
+  }
+  if (full) {
+    const lines = [['Daño recibido', nf(R.taken)]];
+    if (R.blocked >= 1) lines.push(['Frenado por las canilleras', nf(R.blocked)]);
+    if (R.shield >= 1) lines.push(['Frenado por el escudo', nf(R.shield)]);
+    if (R.maxHit) lines.push(['Golpe más fuerte', `${nf(R.maxHit)} (${SRC_NAMES[R.maxSrc] || R.maxSrc})`]);
+    const mins = Math.max(G.t, 1) / 60;
+    if (total) lines.push(['Daño por minuto real', nf(total / mins)]);
+    h += '<dl class="ledger">' + lines.map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join('') + '</dl>';
+  }
+  el.innerHTML = h;
+  return total;
+}
+function endScreen(won) {
+  state = 'over'; joy = null;
+  if (won) G.t = MATCH;
+  sfx('whistle');
+  const best = SAVE.best[LV.id];
+  const curMin = minuteOf(G.t);
+  const isBest = !best || curMin > best.min || (curMin === best.min && G.kills > best.kills);
+  if (isBest) SAVE.best[LV.id] = { min: curMin, kills: G.kills };
+  const next = LEVELS[lvIdx + 1];
+  let opened = false;
+  if (won && next && SAVE.unlocked < lvIdx + 2) { SAVE.unlocked = lvIdx + 2; opened = true; }
+  let newChar = false;
+  if (won && LV.id === 'potrero' && !SAVE.chars.muro) { SAVE.chars.muro = true; newChar = true; }
+  $('overTitle').textContent = won ? "¡Aguantaste los 90'!" : 'Fin del partido';
+  $('overSub').textContent = won
+    ? `El árbitro pita el final y seguís en pie en ${LV.name}.` + (opened ? ` ¡Se abrió ${next.name}!` : '') + (newChar ? ' ¡Desbloqueaste a El Muro, un nuevo jugador!' : '')
+    : `Te sacaron de la cancha de ${LV.name} en el minuto ${minuteOf(G.t)}'.`;
+  $('btnNext').hidden = !(won && next);
+  $('oTime').textContent = fmt(G.t); $('oLvl').textContent = G.level; $('oKills').textContent = G.kills;
+  $('dmgTotal').textContent = nf(renderStats($('statList'), true));
+  // Fichas para el vestuario según cómo te fue
+  const m = minuteOf(G.t);
+  const earn = [['Minutos jugados', Math.round(m * .8)], ['Rivales vencidos', Math.floor(G.kills / 8)], ['Nivel alcanzado', Math.round(G.level * 1.5)]];
+  if (G.bossKills) earn.push(['Jefes vencidos', G.bossKills * 15]);
+  if (won) earn.push(['Partido ganado', 40]);
+  const sub = earn.reduce((a, r) => a + r[1], 0);
+  if (LV.reward > 1) earn.push([`Bonus ${LV.name} ×${String(LV.reward).replace('.', ',')}`, Math.round(sub * (LV.reward - 1))]);
+  const total = earn.reduce((a, r) => a + r[1], 0);
+  SAVE.tokens += total; persist();
+  $('earnTotal').textContent = '+' + total;
+  $('earnList').innerHTML = earn.map(([k, v]) => `<div><dt>${k}</dt><dd>+${v}</dd></div>`).join('');
+  $('overBest').textContent = (isBest ? `¡Nuevo récord en ${LV.name}!` : `Tu récord acá: minuto ${best.min}' y ${best.kills} rivales.`) + ` Tenés ${SAVE.tokens} fichas.`;
+  hideAll(); $('hud').hidden = true; $('over').hidden = false;
+}
+
+// ---------- Dibujo ----------
+// Herramientas comunes para lo que rodea la cancha. "Profundidad" = cuánto te alejás del límite jugable.
+const SEAT = 22, BOARD = 16;
+const FANS_HOME = ['#7cc4ff', '#7cc4ff', '#f4f7fb', '#5aa9ea'];
+const FAN_SKIN = ['#1b1410', '#3b2416', '#6b4423'];   // vistos desde arriba se les ve el pelo
+const hash2 = (i, j) => { let h = (i * 374761393 + j * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+let cheer = 0;
+const depthOf = (x, y) => Math.max(-RUN - x, x - FW - RUN, -RUN - y, y - FH - RUN);
+const insideView = (cx, cy) => cx >= -RUN && cx + viewW <= FW + RUN && cy >= -RUN && cy + viewH <= FH + RUN;
+function ring(d0, d1) {
+  ctx.beginPath();
+  ctx.rect(-RUN - d1, -RUN - d1, FW + 2 * RUN + 2 * d1, FH + 2 * RUN + 2 * d1);
+  ctx.rect(-RUN - d0, -RUN - d0, FW + 2 * RUN + 2 * d0, FH + 2 * RUN + 2 * d0);
+}
+function fillRing(d0, d1, col) { ctx.fillStyle = col; ring(d0, d1); ctx.fill('evenodd'); }
+const hpick = (arr, h) => arr[(h * 997 | 0) % arr.length];
+
+function drawPitch(cx, cy) {
+  if (LV.id === 'potrero') drawDirt(cx, cy); else drawGrass(cx, cy, LV.id === 'lujo');
+  drawMarkings(LV.id);
+  if (LV.id === 'potrero') drawNeighborhood(cx, cy);
+  else if (LV.id === 'club') drawClubStands(cx, cy);
+  else drawColoso(cx, cy);
+}
+
+// ---- Suelos ----
+function drawGrass(cx, cy, lujo) {
+  ctx.fillStyle = lujo ? '#2a5c33' : '#24452b'; ctx.fillRect(cx, cy, viewW, viewH);
+  const x0 = Math.max(0, cx), x1 = Math.min(FW, cx + viewW), y0 = Math.max(0, cy), y1 = Math.min(FH, cy + viewH);
+  if (x1 > x0 && y1 > y0) {
+    const SW = 175;
+    for (let i = Math.floor(x0 / SW); i * SW < x1; i++) {
+      ctx.fillStyle = lujo ? (i % 2 ? '#358a42' : '#2e7a3a') : (i % 2 ? '#2f7339' : '#2a6833');
+      const a = Math.max(x0, i * SW), b = Math.min(x1, (i + 1) * SW);
+      ctx.fillRect(a, y0, b - a, y1 - y0);
+    }
+    if (lujo) {
+      // Corte en damero, como en las canchas de primera
+      ctx.fillStyle = 'rgba(255,255,255,.045)';
+      const SH = 180;
+      for (let j = Math.floor(y0 / SH); j * SH < y1; j++) {
+        if (j % 2 === 0) continue;
+        const a = Math.max(y0, j * SH), b = Math.min(y1, (j + 1) * SH);
+        ctx.fillRect(x0, a, x1 - x0, b - a);
+      }
+    }
+  }
+  if (lujo) {
+    // Charcos de luz de las cuatro torres
+    for (const [x, y] of [[-RUN - 250, -RUN - 250], [FW + RUN + 250, -RUN - 250], [-RUN - 250, FH + RUN + 250], [FW + RUN + 250, FH + RUN + 250]]) {
+      const g = ctx.createRadialGradient(x, y, 0, x, y, 1800);
+      g.addColorStop(0, 'rgba(255,250,225,.1)'); g.addColorStop(1, 'rgba(255,250,225,0)');
+      ctx.fillStyle = g; ctx.fillRect(cx, cy, viewW, viewH);
+    }
+  }
+}
+function drawDirt(cx, cy) {
+  ctx.fillStyle = '#9a7550'; ctx.fillRect(cx, cy, viewW, viewH);
+  const C = 80, vx1 = cx + viewW, vy1 = cy + viewH;
+  const i0 = Math.floor(cx / C) - 1, i1 = Math.ceil(vx1 / C) + 1, j0 = Math.floor(cy / C) - 1, j1 = Math.ceil(vy1 / C) + 1;
+  // Zonas más pisadas: los dos arcos y el medio
+  ctx.fillStyle = 'rgba(92,62,36,.22)'; ctx.beginPath();
+  ctx.ellipse(80, FH / 2, 260, 340, 0, 0, Math.PI * 2);
+  ctx.moveTo(FW - 80 + 260, FH / 2); ctx.ellipse(FW - 80, FH / 2, 260, 340, 0, 0, Math.PI * 2);
+  ctx.moveTo(FW / 2 + 300, FH / 2); ctx.ellipse(FW / 2, FH / 2, 300, 250, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Manchas de tierra más oscura y más clara
+  for (const [col, salt, lim] of [['#916d48', 1, .45], ['#a5825b', 2, .35]]) {
+    ctx.fillStyle = col; ctx.beginPath();
+    for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+      const h = hash2(i * 3 + salt, j * 7 - salt); if (h > lim) continue;
+      const x = (i + hash2(i, j + salt * 11)) * C, y = (j + hash2(i + salt * 5, j)) * C;
+      const rx = 12 + h * 46, ry = 8 + hash2(j, i + salt) * 24;
+      ctx.moveTo(x + rx, y); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+    }
+    ctx.fill();
+  }
+  // Piedritas
+  ctx.fillStyle = '#c9b494'; ctx.beginPath();
+  for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) for (let n = 0; n < 2; n++) {
+    const h = hash2(i * 13 + n, j * 17 - n); if (h > .6) continue;
+    ctx.rect((i + hash2(j * 5 + n, i)) * C, (j + h) * C, 3, 3);
+  }
+  ctx.fill();
+  // Matas de pasto que sobreviven en los bordes
+  ctx.fillStyle = '#6f7d3c'; ctx.beginPath();
+  for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+    const x = (i + .5) * C, y = (j + .5) * C;
+    const edge = Math.min(x + RUN, FW + RUN - x, y + RUN, FH + RUN - y);
+    if (edge > 240 || edge < 0) continue;
+    if (hash2(i + 400, j - 200) > (1 - edge / 240) * .9) continue;
+    for (let n = 0; n < 4; n++) {
+      const a = hash2(i * 5 + n, j * 3) * 6.28, r = 4 + n * 3;
+      const px = x + Math.cos(a) * r * 1.5, py = y + Math.sin(a) * r;
+      ctx.moveTo(px + 6, py); ctx.ellipse(px, py, 6, 4, 0, 0, Math.PI * 2);
+    }
+  }
+  ctx.fill();
+}
+
+// ---- Líneas y arcos ----
+function drawMarkings(kind) {
+  const dirt = kind === 'potrero', lujo = kind === 'lujo';
+  if (!dirt) {
+    ctx.fillStyle = lujo ? 'rgba(250,252,246,.22)' : 'rgba(240,244,232,.16)';
+    ctx.fillRect(-55, FH / 2 - 98, 55, 196); ctx.fillRect(FW, FH / 2 - 98, 55, 196);
+    ctx.strokeStyle = lujo ? 'rgba(250,252,246,.4)' : 'rgba(240,244,232,.25)'; ctx.lineWidth = 1; ctx.beginPath();
+    for (let y = FH / 2 - 98; y <= FH / 2 + 98; y += 14) { ctx.moveTo(-55, y); ctx.lineTo(0, y); ctx.moveTo(FW, y); ctx.lineTo(FW + 55, y); }
+    for (let x = 0; x <= 55; x += 14) { ctx.moveTo(-x, FH / 2 - 98); ctx.lineTo(-x, FH / 2 + 98); ctx.moveTo(FW + x, FH / 2 - 98); ctx.lineTo(FW + x, FH / 2 + 98); }
+    ctx.stroke();
+  }
+  // Cal: en el potrero, gastada y despareja
+  ctx.strokeStyle = dirt ? 'rgba(244,240,226,.5)' : lujo ? 'rgba(252,253,248,.95)' : 'rgba(240,244,232,.85)';
+  ctx.lineWidth = dirt ? 5 : 4;
+  if (dirt) ctx.setLineDash([46, 10, 18, 7]);
+  ctx.beginPath();
+  ctx.rect(0, 0, FW, FH);
+  ctx.moveTo(FW / 2, 0); ctx.lineTo(FW / 2, FH);
+  ctx.moveTo(FW / 2 + 244, FH / 2); ctx.arc(FW / 2, FH / 2, 244, 0, Math.PI * 2);
+  ctx.rect(0, FH / 2 - 538, 440, 1076); ctx.rect(0, FH / 2 - 245, 147, 490);
+  ctx.rect(FW - 440, FH / 2 - 538, 440, 1076); ctx.rect(FW - 147, FH / 2 - 245, 147, 490);
+  if (!dirt) { ctx.rect(-55, FH / 2 - 98, 55, 196); ctx.rect(FW, FH / 2 - 98, 55, 196); }
+  const ang = Math.acos(146 / 244);
+  ctx.moveTo(294 + 244 * Math.cos(-ang), FH / 2 + 244 * Math.sin(-ang)); ctx.arc(294, FH / 2, 244, -ang, ang);
+  ctx.moveTo(FW - 294 + 244 * Math.cos(Math.PI - ang), FH / 2 + 244 * Math.sin(Math.PI - ang)); ctx.arc(FW - 294, FH / 2, 244, Math.PI - ang, Math.PI + ang);
+  ctx.moveTo(27, 0); ctx.arc(0, 0, 27, 0, Math.PI / 2);
+  ctx.moveTo(FW, 27); ctx.arc(FW, 0, 27, Math.PI / 2, Math.PI);
+  ctx.moveTo(0, FH - 27); ctx.arc(0, FH, 27, -Math.PI / 2, 0);
+  ctx.moveTo(FW - 27, FH); ctx.arc(FW, FH, 27, Math.PI, Math.PI * 1.5);
+  ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = ctx.strokeStyle;
+  for (const [x, y] of [[FW / 2, FH / 2], [294, FH / 2], [FW - 294, FH / 2]]) { ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill(); }
+  if (dirt) {
+    // Arcos de caño, sin red
+    ctx.strokeStyle = '#e7e4da'; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath();
+    ctx.moveTo(0, FH / 2 - 98); ctx.lineTo(-40, FH / 2 - 98); ctx.lineTo(-40, FH / 2 + 98); ctx.lineTo(0, FH / 2 + 98);
+    ctx.moveTo(FW, FH / 2 - 98); ctx.lineTo(FW + 40, FH / 2 - 98); ctx.lineTo(FW + 40, FH / 2 + 98); ctx.lineTo(FW, FH / 2 + 98);
+    ctx.stroke(); ctx.lineCap = 'butt';
+  }
+}
+
+// ---- Público en tribuna (club y estadio) ----
+function drawCrowd(cx, cy, start, phones) {
+  const L = -RUN, R = FW + RUN, T = -RUN, B = FH + RUN, vx1 = cx + viewW, vy1 = cy + viewH;
+  const i0 = Math.floor(cx / SEAT), i1 = Math.ceil(vx1 / SEAT), j0 = Math.floor(cy / SEAT), j1 = Math.ceil(vy1 / SEAT);
+  const RV = LV.rival, cols = [...FANS_HOME, RV.defensor, RV.defensor, RV.extremo, RV.central];
+  const shirts = cols.map(() => []), heads = FAN_SKIN.map(() => []), lights = [];
+  const tnow = performance.now() / 1000, jump = 1.5 + cheer * 7, tq = Math.floor(tnow * 4);
+  for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+    const x = i * SEAT + SEAT / 2, y = j * SEAT + SEAT / 2;
+    const depth = Math.max(L - x, x - R, T - y, y - B);
+    if (depth < start) continue;
+    const h = hash2(i, j);
+    if (h > .82) continue;                       // asiento vacío
+    const side = x < FW / 2 ? 0 : 4;
+    const bob = RM ? 0 : Math.max(0, Math.sin(tnow * (5 + h * 4) + h * 40)) * jump;
+    shirts[side + ((h * 97) | 0) % 4].push(x, y, bob);
+    heads[((h * 53) | 0) % 3].push(x, y, bob);
+    if (phones && hash2(i * 31 + tq, j * 17) > .994) lights.push(x, y - bob);
+  }
+  shirts.forEach((a, k) => {
+    if (!a.length) return; ctx.fillStyle = cols[k]; ctx.beginPath();
+    for (let n = 0; n < a.length; n += 3) { ctx.moveTo(a[n] + 8, a[n + 1] - a[n + 2]); ctx.ellipse(a[n], a[n + 1] - a[n + 2], 8, 5.5, 0, 0, Math.PI * 2); }
+    ctx.fill();
+  });
+  heads.forEach((a, k) => {
+    if (!a.length) return; ctx.fillStyle = FAN_SKIN[k]; ctx.beginPath();
+    for (let n = 0; n < a.length; n += 3) { ctx.moveTo(a[n] + 4.5, a[n + 1] - a[n + 2]); ctx.arc(a[n], a[n + 1] - a[n + 2], 4.2, 0, Math.PI * 2); }
+    ctx.fill();
+  });
+  if (lights.length) {
+    ctx.fillStyle = 'rgba(255,255,240,.95)'; ctx.beginPath();
+    for (let n = 0; n < lights.length; n += 2) { ctx.moveTo(lights[n] + 3, lights[n + 1]); ctx.arc(lights[n], lights[n + 1], 3, 0, Math.PI * 2); }
+    ctx.fill();
+  }
+}
+
+// ---- Nivel 2: la cancha del club ----
+function drawClubStands(cx, cy) {
+  if (insideView(cx, cy)) return;
+  const L = -RUN, R = FW + RUN, T = -RUN, B = FH + RUN, vx1 = cx + viewW, vy1 = cy + viewH;
+  fillRing(0, 4000, '#3b4146');
+  const far = Math.max(L - cx, T - cy, vx1 - R, vy1 - B);
+  ctx.strokeStyle = 'rgba(0,0,0,.28)'; ctx.lineWidth = 3; ctx.beginPath();
+  for (let d = BOARD + SEAT; d < far + SEAT; d += SEAT) ctx.rect(L - d, T - d, R - L + 2 * d, B - T + 2 * d);
+  ctx.stroke();
+  drawCrowd(cx, cy, BOARD + 8, false);
+  // Carteles publicitarios al borde del campo de juego
+  const ads = [['#ffb627', '#1a1205', 'PICADO ETERNO'], ['#14181f', '#eef2e6', 'EL POTRERO'], ['#f4f7fb', '#c23a2e', 'BOTINES 10']];
+  ctx.font = '600 13px Teko, "Arial Narrow", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const PW = 220;
+  const strip = (x, y, w, h, vertical) => {
+    if (x > vx1 || x + w < cx || y > vy1 || y + h < cy) return;
+    const len = vertical ? h : w;
+    for (let o = 0; o < len; o += PW) {
+      const ad = ads[(Math.floor((vertical ? y + o : x + o) / PW) % 3 + 3) % 3], seg = Math.min(PW, len - o);
+      ctx.fillStyle = ad[0];
+      if (vertical) ctx.fillRect(x, y + o, w, seg); else ctx.fillRect(x + o, y, seg, h);
+      ctx.fillStyle = ad[1];
+      ctx.save(); ctx.translate(vertical ? x + w / 2 : x + o + seg / 2, vertical ? y + o + seg / 2 : y + h / 2);
+      if (vertical) ctx.rotate(-Math.PI / 2);
+      if (seg > 90) ctx.fillText(ad[2], 0, 1);
+      ctx.restore();
+    }
+  };
+  strip(L - BOARD, T - BOARD, R - L + 2 * BOARD, BOARD, false);
+  strip(L - BOARD, B, R - L + 2 * BOARD, BOARD, false);
+  strip(L - BOARD, T, BOARD, B - T, true);
+  strip(R, T, BOARD, B - T, true);
+  ctx.strokeStyle = 'rgba(0,0,0,.45)'; ctx.lineWidth = 2; ctx.strokeRect(L, T, R - L, B - T);
+}
+
+// ---- Nivel 1: el potrero, con alambrado, baldío, calle y casas ----
+const ROOFS = ['#8f9398', '#a4553d', '#b9b2a4', '#7e8a8f', '#94503a'];
+const NEIGH = ['#d94a3d', '#f4f7fb', '#2b4c8c', '#e3b23c', '#4f7a43', '#7cc4ff', '#8a5a9e', '#3a3d44'];
+let fencePat = null;
+function tree(x, y, r) {
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(x + 7, y + 9, r, r * .9, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#2f4a26'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#3c5e30'; ctx.beginPath();
+  for (let k = 0; k < 3; k++) { const a = k * 2.1 + r, px = x + Math.cos(a) * r * .4, py = y + Math.sin(a) * r * .4; ctx.moveTo(px + r * .5, py); ctx.arc(px, py, r * .5, 0, Math.PI * 2); }
+  ctx.fill();
+  ctx.fillStyle = '#4d7339'; ctx.beginPath(); ctx.arc(x - r * .3, y - r * .3, r * .25, 0, Math.PI * 2); ctx.fill();
+}
+function drawNeighborhood(cx, cy) {
+  if (insideView(cx, cy)) return;
+  const L = -RUN, R = FW + RUN, T = -RUN, B = FH + RUN, vx1 = cx + viewW, vy1 = cy + viewH;
+  const tnow = performance.now() / 1000;
+  // Baldío de pasto seco
+  fillRing(0, 4000, '#6c7243');
+  const C = 70, i0 = Math.floor(cx / C) - 1, i1 = Math.ceil(vx1 / C) + 1, j0 = Math.floor(cy / C) - 1, j1 = Math.ceil(vy1 / C) + 1;
+  ctx.fillStyle = '#7a7f4c'; ctx.beginPath();
+  for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+    const x = (i + .5) * C, y = (j + .5) * C, dp = depthOf(x, y);
+    if (dp < 20 || dp > 190) continue;
+    const h = hash2(i + 77, j - 31); if (h > .5) continue;
+    const rx = 14 + h * 50, ry = 10 + h * 30;
+    ctx.moveTo(x + rx, y); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+  }
+  ctx.fill();
+  // Vereda, calle, vereda y manzana
+  fillRing(340, 4000, '#5b5a52');
+  fillRing(204, 236, '#a9a497'); fillRing(316, 340, '#a9a497');
+  fillRing(236, 316, '#3c3e41');
+  ctx.strokeStyle = '#d8c25a'; ctx.lineWidth = 3; ctx.setLineDash([34, 28]);
+  ctx.beginPath(); ctx.rect(L - 276, T - 276, R - L + 552, B - T + 552); ctx.stroke(); ctx.setLineDash([]);
+  // Techos de las casas
+  const H = 150, hi0 = Math.floor(cx / H) - 1, hi1 = Math.ceil(vx1 / H), hj0 = Math.floor(cy / H) - 1, hj1 = Math.ceil(vy1 / H);
+  for (let i = hi0; i <= hi1; i++) for (let j = hj0; j <= hj1; j++) {
+    const x = i * H, y = j * H;
+    if (depthOf(x + H / 2, y + H / 2) < 340 + H / 2 + 8) continue;
+    const h = hash2(i * 3 + 1, j * 5 + 2);
+    if (h > .86) { tree(x + H / 2, y + H / 2, 30 + h * 10); continue; }
+    ctx.fillStyle = hpick(ROOFS, h); ctx.fillRect(x + 6, y + 6, H - 12, H - 12);
+    const kind = (h * 17 | 0) % 3;
+    if (kind === 0) {
+      ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.lineWidth = 2; ctx.beginPath();
+      for (let k = 14; k < H - 12; k += 10) { ctx.moveTo(x + 6 + k, y + 6); ctx.lineTo(x + 6 + k, y + H - 6); }
+      ctx.stroke();
+    } else if (kind === 1) {
+      ctx.fillStyle = 'rgba(0,0,0,.16)'; ctx.fillRect(x + 6, y + H / 2, H - 12, (H - 12) / 2);
+      ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + 6, y + H / 2); ctx.lineTo(x + H - 6, y + H / 2); ctx.stroke();
+    } else {
+      ctx.fillStyle = '#2b2d30'; ctx.beginPath(); ctx.arc(x + H * .7, y + H * .32, 13, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.beginPath(); ctx.arc(x + H * .7 - 3, y + H * .32 - 3, 5, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // Árboles en el baldío
+  const TC = 130;
+  for (let i = Math.floor(cx / TC) - 1; i <= Math.ceil(vx1 / TC); i++) for (let j = Math.floor(cy / TC) - 1; j <= Math.ceil(vy1 / TC); j++) {
+    const h = hash2(i * 9 + 3, j * 4 - 8); if (h > .2) continue;
+    const x = (i + .5) * TC + (hash2(i, j) - .5) * 40, y = (j + .5) * TC + (hash2(j, i) - .5) * 40, dp = depthOf(x, y);
+    if (dp < 75 || dp > 160) continue;
+    tree(x, y, 24 + h * 50);
+  }
+  // Vecinos mirando contra el alambrado
+  const person = (x, y, ang, h) => drawPerson(x, y, 12, ang, cheer > .3 && !RM ? tnow * 9 + h * 30 : 0, {
+    shirt: hpick(NEIGH, h), sleeve: hpick(NEIGH, h), shorts: '#2b2f3a', skin: hpick(SKINS, h * 3.1), hair: hpick(HAIRS, h * 5.3) });
+  const SP = 32;
+  for (let n = Math.floor((Math.max(L, cx) - 20) / SP); n * SP < Math.min(R, vx1 + 20); n++) {
+    const x = n * SP + 16; if (x < L + 10 || x > R - 10) continue;
+    let h = hash2(n, 901); if (h < .3 && T > cy - 80) person(x, T - 22 - h * 40, Math.PI / 2, h);
+    h = hash2(n, 902); if (h < .3 && B < vy1 + 80) person(x, B + 22 + h * 40, -Math.PI / 2, h);
+  }
+  for (let n = Math.floor((Math.max(T, cy) - 20) / SP); n * SP < Math.min(B, vy1 + 20); n++) {
+    const y = n * SP + 16; if (y < T + 10 || y > B - 10) continue;
+    let h = hash2(903, n); if (h < .3 && L > cx - 80) person(L - 22 - h * 40, y, 0, h);
+    h = hash2(904, n); if (h < .3 && R < vx1 + 80) person(R + 22 + h * 40, y, Math.PI, h);
+  }
+  // Alambrado olímpico
+  if (!fencePat) {
+    const c = document.createElement('canvas'); c.width = c.height = 8;
+    const g = c.getContext('2d'); g.strokeStyle = 'rgba(214,220,224,.8)'; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(0, 0); g.lineTo(8, 8); g.moveTo(8, 0); g.lineTo(0, 8); g.stroke();
+    fencePat = ctx.createPattern(c, 'repeat');
+  }
+  ctx.fillStyle = fencePat; ring(0, 9); ctx.fill('evenodd');
+  ctx.strokeStyle = 'rgba(190,198,204,.85)'; ctx.lineWidth = 2; ctx.strokeRect(L - 1, T - 1, R - L + 2, B - T + 2);
+  ctx.fillStyle = '#9aa1a6'; ctx.beginPath();
+  for (let x = L; x <= R; x += 120) { ctx.rect(x - 4, T - 4, 8, 8); ctx.rect(x - 4, B - 4, 8, 8); }
+  for (let y = T; y <= B; y += 120) { ctx.rect(L - 4, y - 4, 8, 8); ctx.rect(R - 4, y - 4, 8, 8); }
+  ctx.fill();
+}
+
+// ---- Nivel 3: El Coloso, estadio de lujo de noche ----
+const LEDS = [['PICADO ETERNO', '#ffb627'], ['EL COLOSO', '#39ff9a'], ['BOTINES 10', '#7cc4ff'], ['GOLAZO TV', '#ff6ad5']];
+function drawColoso(cx, cy) {
+  if (insideView(cx, cy)) return;
+  const L = -RUN, R = FW + RUN, T = -RUN, B = FH + RUN, vx1 = cx + viewW, vy1 = cy + viewH;
+  const tnow = performance.now() / 1000;
+  fillRing(16, 4000, '#161d2c');
+  const far = Math.max(L - cx, T - cy, vx1 - R, vy1 - B);
+  ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 3; ctx.beginPath();
+  for (let d = 96 + SEAT; d < far + SEAT; d += SEAT) ctx.rect(L - d, T - d, R - L + 2 * d, B - T + 2 * d);
+  ctx.stroke();
+  drawCrowd(cx, cy, 104, true);
+  drawPalcos(cx, cy);
+  drawScreens(cx, cy);
+  // Zona de prensa entre los carteles y la platea
+  fillRing(16, 96, '#1e2738');
+  ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 2; ctx.strokeRect(L - 94, T - 94, R - L + 188, B - T + 188);
+  drawPress(cx, cy, tnow);
+  drawLED(cx, cy, tnow);
+  drawTowers(cx, cy);
+}
+function drawPalcos(cx, cy) {
+  const L = -RUN, R = FW + RUN, T = -RUN, B = FH + RUN, vx1 = cx + viewW, vy1 = cy + viewH;
+  const D0 = 268, D1 = 346, UW = 150, BH = D1 - D0;
+  for (const top of [true, false]) {
+    const y0 = top ? T - D1 : B + D0, y1 = y0 + BH;
+    if (y1 < cy || y0 > vy1) continue;
+    ctx.fillStyle = '#0d121c'; ctx.fillRect(L, y0, R - L, BH);
+    const glassY = top ? y1 - 6 : y0, face = top ? Math.PI / 2 : -Math.PI / 2;
+    for (let n = 0; L + n * UW < R; n++) {
+      const x0 = L + n * UW; if (x0 + UW < cx || x0 > vx1) continue;
+      const w = Math.min(UW, R - x0);
+      ctx.fillStyle = '#3a2a22'; ctx.fillRect(x0 + 4, y0 + 4, w - 8, BH - 8);
+      ctx.fillStyle = 'rgba(255,196,110,.16)'; ctx.fillRect(x0 + 4, y0 + 4, w - 8, BH - 8);
+      const mx = x0 + w / 2, my = top ? y0 + 20 : y1 - 20;
+      ctx.fillStyle = '#6a4a33'; ctx.fillRect(mx - 22, my - 7, 44, 14);
+      ctx.fillStyle = '#ffd34d'; ctx.beginPath();
+      for (const o of [-14, -2, 10]) { ctx.moveTo(mx + o + 2.6, my); ctx.arc(mx + o, my, 2.6, 0, Math.PI * 2); }
+      ctx.fill();
+      const h = hash2(n, top ? 71 : 73), k = 2 + (h * 3 | 0);
+      for (let q = 0; q < k; q++) {
+        const hh = hash2(n * 7 + q, top ? 5 : 9), suit = hh < .5 ? '#22262e' : '#3a2f45';
+        const px = x0 + 20 + (w - 40) * (q / (k - 1)), py = top ? y1 - 24 : y0 + 24;
+        drawPerson(px, py, 9, face, 0, { shirt: suit, sleeve: suit, shorts: '#22262e', skin: hpick(SKINS, hh * 3.1), hair: hpick(HAIRS, hh * 5.3) });
+      }
+      ctx.fillStyle = '#c9ced6'; ctx.fillRect(x0, y0, 4, BH);
+      ctx.fillStyle = 'rgba(160,215,255,.55)'; ctx.fillRect(x0 + 4, glassY, w - 8, 6);
+    }
+    ctx.fillStyle = '#c9ced6'; ctx.fillRect(L, top ? y0 : y1 - 4, R - L, 4);
+  }
+}
+function drawScreens(cx, cy) {
+  const L = -RUN, R = FW + RUN, vx1 = cx + viewW, vy1 = cy + viewH;
+  const SW = 120, SH = 460, D = 400;
+  for (const left of [true, false]) {
+    const x = left ? L - D - SW : R + D, y = FH / 2 - SH / 2;
+    if (x > vx1 + 20 || x + SW < cx - 20 || y > vy1 + 20 || y + SH < cy - 20) continue;
+    ctx.fillStyle = 'rgba(124,196,255,.12)'; ctx.fillRect(x - 16, y - 16, SW + 32, SH + 32);
+    ctx.fillStyle = '#20252e'; ctx.fillRect(x - 6, y - 6, SW + 12, SH + 12);
+    ctx.fillStyle = '#05080e'; ctx.fillRect(x, y, SW, SH);
+    ctx.save(); ctx.translate(x + SW / 2, y + SH / 2); ctx.rotate(left ? -Math.PI / 2 : Math.PI / 2);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (left) { ctx.fillStyle = '#ffb627'; ctx.font = '700 64px Teko, "Arial Narrow", sans-serif'; ctx.fillText('PICADO ETERNO', 0, 4); }
+    else {
+      ctx.fillStyle = '#ffb627'; ctx.font = '700 70px Teko, "Arial Narrow", sans-serif'; ctx.fillText(minuteOf(G.t) + "'", 0, -18);
+      ctx.fillStyle = '#7cc4ff'; ctx.font = '600 30px Teko, "Arial Narrow", sans-serif'; ctx.fillText(G.kills + ' RIVALES', 0, 34);
+    }
+    ctx.restore();
+    ctx.fillStyle = 'rgba(0,0,0,.25)';
+    for (let yy = y; yy < y + SH; yy += 4) ctx.fillRect(x, yy, SW, 1.5);
+  }
+}
+function tvCamera(x, y, ang, h) {
+  const op = '#30343c';
+  drawPerson(x - Math.cos(ang) * 22, y - Math.sin(ang) * 22, 10, ang, 0, { shirt: op, sleeve: op, shorts: '#1d1f1c', skin: hpick(SKINS, h * 3.1), hair: hpick(HAIRS, h * 5.3) });
+  ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+  ctx.strokeStyle = '#8b939e'; ctx.lineWidth = 2; ctx.beginPath();
+  for (const a of [Math.PI * .66, Math.PI, Math.PI * 1.34, 0]) { ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * 15, Math.sin(a) * 15); }
+  ctx.stroke();
+  ctx.fillStyle = '#2b2f36'; ctx.fillRect(-12, -6, 24, 12);
+  ctx.fillStyle = '#0c0f14'; ctx.fillRect(11, -4.5, 9, 9);
+  ctx.fillStyle = '#ff3b30'; ctx.fillRect(-9, -4, 3, 3);
+  ctx.restore();
+}
+function reporter(x, y, h) {
+  const shirt = h < .6 ? '#f4f7fb' : '#c23a2e', op = '#30343c';
+  drawPerson(x - 16, y, 10, 0, 0, { shirt, sleeve: shirt, shorts: '#1d1f1c', skin: hpick(SKINS, h * 3.1), hair: hpick(HAIRS, h * 5.3) });
+  ctx.fillStyle = '#ffb627'; ctx.fillRect(-1 + x, y - 3, 5, 6);
+  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(x + 5, y, 2.6, 0, Math.PI * 2); ctx.fill();
+  drawPerson(x + 28, y, 10, Math.PI, 0, { shirt: op, sleeve: op, shorts: '#1d1f1c', skin: hpick(SKINS, h * 7.7), hair: hpick(HAIRS, h * 2.9) });
+  ctx.fillStyle = '#2b2f36'; ctx.fillRect(x + 10, y - 5, 12, 10);
+  ctx.fillStyle = '#0c0f14'; ctx.fillRect(x + 6, y - 3.5, 5, 7);
+}
+function photographer(x, y, ang, h) {
+  const vest = h < .45 ? '#e8792f' : '#3d4452';
+  drawPerson(x, y, 9, ang, 0, { shirt: vest, sleeve: '#30343c', shorts: '#1d1f1c', skin: hpick(SKINS, h * 3.1), hair: hpick(HAIRS, h * 5.3) });
+  ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+  ctx.fillStyle = '#1a1c20'; ctx.fillRect(6, -4, 8, 8);
+  ctx.fillStyle = '#2b2f36'; ctx.fillRect(13, -3, 12, 6);
+  ctx.restore();
+}
+function drawPress(cx, cy, tnow) {
+  const L = -RUN, R = FW + RUN, T = -RUN, B = FH + RUN, vx1 = cx + viewW, vy1 = cy + viewH;
+  // Costados: cámaras de TV y periodistas haciendo notas
+  for (const top of [true, false]) {
+    const y = top ? T - 56 : B + 56; if (y < cy - 60 || y > vy1 + 60) continue;
+    const ang = top ? Math.PI / 2 : -Math.PI / 2;
+    for (let n = Math.floor((Math.max(L, cx) - 60) / 200); n * 200 < Math.min(R, vx1 + 60); n++) {
+      const x = n * 200 + 100; if (x < L + 40 || x > R - 40) continue;
+      const h = hash2(n, top ? 11 : 13);
+      if (h < .45) tvCamera(x, y, ang, h);
+      else if (h < .75) reporter(x, y, h);
+    }
+  }
+  // Detrás de los arcos: fotógrafos con flashes
+  const flashes = [], rate = .05 + cheer * .05;
+  for (const left of [true, false]) {
+    const x = left ? L - 50 : R + 50; if (x < cx - 60 || x > vx1 + 60) continue;
+    const ang = left ? 0 : Math.PI;
+    for (let n = Math.floor((Math.max(T, cy) - 40) / 44); n * 44 < Math.min(B, vy1 + 40); n++) {
+      const y = n * 44 + 22, h = hash2(left ? 21 : 23, n);
+      if (y < T + 20 || y > B - 20 || h > .62) continue;
+      const xx = x + (h - .3) * 30;
+      photographer(xx, y, ang, h);
+      const ph = (tnow * (.35 + h * .4) + h * 13) % 1;
+      if (!RM && ph < rate) flashes.push(xx + Math.cos(ang) * 22, y, 1 - ph / rate);
+    }
+  }
+  for (let i = 0; i < flashes.length; i += 3) {
+    const a = flashes[i + 2];
+    ctx.fillStyle = `rgba(255,255,255,${.3 * a})`; ctx.beginPath(); ctx.arc(flashes[i], flashes[i + 1], 28, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = `rgba(255,255,255,${.95 * a})`; ctx.beginPath(); ctx.arc(flashes[i], flashes[i + 1], 7, 0, Math.PI * 2); ctx.fill();
+  }
+}
+function drawLED(cx, cy, tnow) {
+  const L = -RUN, R = FW + RUN, T = -RUN, B = FH + RUN, vx1 = cx + viewW, vy1 = cy + viewH;
+  const PW = 260, off = RM ? 0 : (tnow * 70) % (PW * LEDS.length * 1000);
+  ctx.font = '600 13px Teko, "Arial Narrow", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const strip = (x, y, w, h, vertical) => {
+    if (x > vx1 || x + w < cx || y > vy1 || y + h < cy) return;
+    const len = vertical ? h : w, base = vertical ? y : x;
+    const o0 = -((((base + off) % PW) + PW) % PW);
+    for (let o = o0; o < len; o += PW) {
+      const a = Math.max(0, o), b = Math.min(len, o + PW); if (b <= a) continue;
+      const ad = LEDS[((Math.round((base + o + off) / PW) % LEDS.length) + LEDS.length) % LEDS.length];
+      ctx.fillStyle = '#070b14';
+      if (vertical) ctx.fillRect(x, y + a, w, b - a); else ctx.fillRect(x + a, y, b - a, h);
+      const mid = o + PW / 2;
+      if (mid > 50 && mid < len - 50) {
+        ctx.fillStyle = ad[1]; ctx.save();
+        ctx.translate(vertical ? x + w / 2 : x + mid, vertical ? y + mid : y + h / 2);
+        if (vertical) ctx.rotate(-Math.PI / 2);
+        ctx.fillText(ad[0], 0, 1); ctx.restore();
+      }
+    }
+  };
+  strip(L - BOARD, T - BOARD, R - L + 2 * BOARD, BOARD, false);
+  strip(L - BOARD, B, R - L + 2 * BOARD, BOARD, false);
+  strip(L - BOARD, T, BOARD, B - T, true);
+  strip(R, T, BOARD, B - T, true);
+  ctx.strokeStyle = 'rgba(124,196,255,.4)'; ctx.lineWidth = 2; ctx.strokeRect(L, T, R - L, B - T);
+}
+function drawTowers(cx, cy) {
+  const L = -RUN, R = FW + RUN, T = -RUN, B = FH + RUN, vx1 = cx + viewW, vy1 = cy + viewH;
+  for (const [x, y] of [[L - 250, T - 250], [R + 250, T - 250], [L - 250, B + 250], [R + 250, B + 250]]) {
+    if (x < cx - 220 || x > vx1 + 220 || y < cy - 220 || y > vy1 + 220) continue;
+    const g = ctx.createRadialGradient(x, y, 10, x, y, 220);
+    g.addColorStop(0, 'rgba(255,248,220,.5)'); g.addColorStop(1, 'rgba(255,248,220,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 220, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(FH / 2 - y, FW / 2 - x));
+    ctx.fillStyle = '#2a2f38'; ctx.fillRect(-46, -12, 24, 24);
+    ctx.fillStyle = '#3a404a'; ctx.fillRect(-26, -66, 32, 132);
+    ctx.fillStyle = '#fffbe6';
+    for (let c = 0; c < 2; c++) for (let r = 0; r < 6; r++) ctx.fillRect(-22 + c * 14, -60 + r * 20, 10, 16);
+    ctx.restore();
+  }
+}
+function drawBall(x, y, r, rot) {
+  ctx.fillStyle = '#fbfbf7'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  ctx.lineWidth = 1.5; ctx.strokeStyle = '#1a1a1a'; ctx.stroke();
+  ctx.fillStyle = '#1a1a1a'; ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const a = rot + i * 1.2566, px = x + Math.cos(a) * r * .42, py = y + Math.sin(a) * r * .42;
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  }
+  ctx.closePath(); ctx.fill();
+}
+function shadow(x, y, r) {
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath();
+  ctx.ellipse(x + 3, y + r * .75, r * .95, r * .45, 0, 0, Math.PI * 2); ctx.fill();
+}
+// Persona vista desde arriba, mirando hacia +x: botines, pantalón, brazos, torso con camiseta y cabeza con pelo
+function ell(x, y, rx, ry, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); }
+function drawPerson(x, y, r, ang, step, o) {
+  const s = r / 14, sw = Math.sin(step), fo = sw * 6;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.scale(s, s);
+  if (o.dive) ctx.scale(1.3, .85);
+  // Piernas y botines: un pie adelante y el otro atrás al correr
+  ell(fo * .5, -4.5, 4, 2.6, o.skin); ell(-fo * .5, 4.5, 4, 2.6, o.skin);
+  const bt = o.boots || '#161616'; ell(fo + 3, -4.5, 4.8, 3, bt); ell(-fo + 3, 4.5, 4.8, 3, bt);
+  ell(-1, 0, 5.5, 8.5, o.shorts);
+  // Brazos: se balancean al revés que las piernas (o hacia adelante si se tira)
+  const ay = 12.5, axL = o.dive ? 13 : -fo * .7, axR = o.dive ? 13 : fo * .7, hy = o.dive ? 6 : ay;
+  const hand = o.gloves || o.skin, hr = o.gloves ? 4.2 : 3;
+  ell(axL + 3.5, -hy, hr, hr, hand); ell(axR + 3.5, hy, hr, hr, hand);
+  ell(axL * .4, -ay + 1, 4, 3.8, o.sleeve); ell(axR * .4, ay - 1, 4, 3.8, o.sleeve);
+  if (o.band) { ctx.fillStyle = '#ffb627'; ctx.fillRect(axL * .4 - 1.5, -ay - 2.5, 3, 7); }
+  // Torso con camiseta
+  ctx.beginPath(); ctx.ellipse(0, 0, 6.8, 11.5, 0, 0, Math.PI * 2);
+  ctx.fillStyle = o.shirt; ctx.fill();
+  if (o.stripe) {
+    ctx.save(); ctx.clip(); ctx.fillStyle = o.stripe;
+    for (const yy of [-8.5, -3.5, 1.5, 6.5]) ctx.fillRect(-8, yy, 16, 2.4);
+    ctx.restore();
+  }
+  ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.stroke();
+  // Cabeza: cara hacia adelante, pelo en la nuca
+  ell(1.5, 0, 5.6, 5.6, o.skin);
+  ctx.fillStyle = o.hair; ctx.beginPath(); ctx.arc(1.5, 0, 5.9, Math.PI * .5, Math.PI * 1.5); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function drawCamilla(e) {
+  const c = Math.cos(e.ang), s = Math.sin(e.ang), L = e.L, inner = L - 13, fl = e.flash > 0;
+  ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(e.ang);
+  if (e.mode === 'warn') {
+    // Hasta dónde va a llegar la camilla
+    ctx.strokeStyle = 'rgba(255,90,74,.85)'; ctx.lineWidth = 2; ctx.setLineDash([8, 6]);
+    ctx.strokeRect(-13, -CAM_MAX, 26, CAM_MAX * 2); ctx.setLineDash([]);
+  }
+  ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(-7, -inner + 5, 20, inner * 2);
+  ctx.fillStyle = '#9aa1a8'; ctx.fillRect(-12, -L, 3, L * 2); ctx.fillRect(9, -L, 3, L * 2);
+  const blink = e.mode === 'warn' && Math.floor(e.mt * 14) % 2 === 0;
+  ctx.fillStyle = fl ? LV.flash : blink ? '#ff5a4a' : '#ece6d4';
+  ctx.fillRect(-9, -inner, 18, inner * 2);
+  ctx.fillStyle = '#d23b31'; ctx.fillRect(-2.5, -8, 5, 16); ctx.fillRect(-8, -2.5, 16, 5);
+  if (e.L > CAM_MIN + 10) { ctx.strokeStyle = 'rgba(255,90,74,.9)'; ctx.lineWidth = 2; ctx.strokeRect(-12, -L, 24, L * 2); }
+  ctx.restore();
+  const K = KITS.camillero, step = e.still ? 0 : G.t * e.speed * .09 + e.phase;
+  for (const k of [1, -1]) {
+    const x = e.x - s * L * k, y = e.y + c * L * k;
+    shadow(x, y, 13);
+    drawPerson(x, y, 13, e.ang, step + (k > 0 ? 0 : Math.PI), {
+      shirt: fl ? LV.flash : K.shirt, sleeve: fl ? LV.flash : K.sleeve, shorts: K.shorts, skin: e.skin, hair: e.hair });
+  }
+}
+function drawFoe(e) {
+  if (e.type === 'camillero') { drawCamilla(e); return; }
+  shadow(e.x, e.y, e.r);
+  const K = kitFor(e.type), still = e.still;
+  const useDir = e.mode === 'dive' || e.mode === 'down' || e.mode === 'charge' || e.mode === 'aimCharge' || (e.mode === 'cast' && e.aimLine);
+  const ang = useDir ? Math.atan2(e.ddy, e.ddx) : Math.atan2(G.p.y - e.y, G.p.x - e.x);
+  const fl = e.flash > 0, fc = LV.flash;
+  if (e.buff > 0) { ctx.strokeStyle = 'rgba(255,211,77,.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 5, 0, Math.PI * 2); ctx.stroke(); }
+  drawPerson(e.x, e.y, e.r, ang, still ? 0 : G.t * e.speed * .09 + e.phase, {
+    shirt: fl ? fc : K.shirt, sleeve: fl ? fc : (K.sleeve === 'skin' ? e.skin : K.sleeve), stripe: fl ? null : K.stripe, shorts: K.shorts,
+    boots: K.boots, skin: e.skin, hair: e.hair, gloves: K.gloves, dive: e.mode === 'dive' || e.mode === 'down', band: e.boss,
+  });
+  if (e.yellow > 0) {
+    const yy = e.boss ? e.y - e.r - 46 : e.y - e.r - 14;
+    ctx.fillStyle = '#ffd34d'; ctx.fillRect(e.x + e.r * .5, yy - 6, 7, 10);
+    ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1; ctx.strokeRect(e.x + e.r * .5, yy - 6, 7, 10);
+  }
+  if (e.dizzy > 0) {
+    ctx.fillStyle = '#fff3b0';
+    for (let i = 0; i < 3; i++) { const a = G.t * 6 + i * 2.09; ctx.beginPath(); ctx.arc(e.x + Math.cos(a) * 9, e.y - e.r - 6 + Math.sin(a) * 3, 2.2, 0, Math.PI * 2); ctx.fill(); }
+  }
+  const warn = e.mode === 'aim' || (e.boss && (e.mode === 'aimCharge' || e.mode === 'cast'));
+  if (warn) {
+    const wy = e.boss ? e.y - e.r - 52 : e.y - e.r - 12;
+    ctx.font = '700 28px Teko, "Arial Narrow", sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.75)';
+    ctx.strokeText('!', e.x, wy); ctx.fillStyle = '#ffd34d'; ctx.fillText('!', e.x, wy);
+  }
+  if (e.boss) {
+    const w = 80, f = Math.max(0, e.hp / e.maxHp);
+    ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(e.x - w / 2, e.y - e.r - 18, w, 7);
+    ctx.fillStyle = '#ffb627'; ctx.fillRect(e.x - w / 2, e.y - e.r - 18, w * f, 7);
+    ctx.font = '600 18px Teko, "Arial Narrow", sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.75)';
+    ctx.strokeText(BOSSES[e.type].name, e.x, e.y - e.r - 30); ctx.fillStyle = '#ffe9b0'; ctx.fillText(BOSSES[e.type].name, e.x, e.y - e.r - 30);
+  }
+}
+function drawPlayer(p) {
+  shadow(p.x, p.y, p.r);
+  const cl = G.passives.canilleras || 0;
+  if (cl) {
+    ctx.strokeStyle = `rgba(124,196,255,${.2 + cl * .08})`; ctx.lineWidth = 1.5 + cl * .4;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 7, 0, Math.PI * 2); ctx.stroke();
+  }
+  drawBall(p.x + p.fx * (p.r + 9), p.y + p.fy * (p.r + 9), 5, p.step);
+  const blink = p.inv > 0 && Math.floor(p.inv * 20) % 2 === 0;
+  if (!blink) {
+    const K = CH.kit;
+    drawPerson(p.x, p.y, p.r, Math.atan2(p.fy, p.fx), p.step, {
+      shirt: K.shirt, sleeve: K.sleeve, stripe: K.stripe, shorts: K.shorts, skin: CH.skin, hair: CH.hair, band: !CH.sprint,
+    });
+  }
+  const w = 38, f = Math.max(0, p.hp / p.maxHp);
+  ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(p.x - w / 2, p.y + p.r + 8, w, 5);
+  ctx.fillStyle = f > .35 ? '#9be38a' : '#ff5a4a'; ctx.fillRect(p.x - w / 2, p.y + p.r + 8, w * f, 5);
+  if (p.shMax) {
+    // Escudo: barra blanca-celeste y una burbuja que se nota más cuanto más cargado está
+    const shf = Math.max(0, p.sh / p.shMax);
+    ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(p.x - w / 2, p.y + p.r + 15, w, 4);
+    ctx.fillStyle = p.shCd > 0 ? '#9fb6c8' : '#e6f6ff'; ctx.fillRect(p.x - w / 2, p.y + p.r + 15, w * shf, 4);
+    if (shf > 0) {
+      ctx.strokeStyle = p.shHit > 0 ? 'rgba(255,255,255,.95)' : `rgba(200,235,255,${.15 + .4 * shf})`;
+      ctx.lineWidth = p.shHit > 0 ? 3.5 : 2;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 11, 0, Math.PI * 2); ctx.stroke();
+    }
+    return;
+  }
+  const sf = Math.max(0, p.st / p.stMax);
+  ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(p.x - w / 2, p.y + p.r + 15, w, 4);
+  ctx.fillStyle = p.tired ? '#7d8a7a' : p.sprinting ? '#bfe3ff' : '#7cc4ff';
+  ctx.fillRect(p.x - w / 2, p.y + p.r + 15, w * sf, 4);
+  if (p.tired) { ctx.fillStyle = 'rgba(255,90,74,.9)'; ctx.fillRect(p.x - w / 2 + w * .35 - 1, p.y + p.r + 14, 2, 6); }
+}
+
+function drawHazard(h) {
+  const k = clamp(1 - h.t / h.max, 0, 1);
+  if (h.kind === 'stomp') {
+    if (h.done) return;
+    ctx.fillStyle = 'rgba(217,74,61,.12)'; ctx.strokeStyle = 'rgba(255,90,74,.85)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(h.x, h.y, h.R, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(217,74,61,.3)'; ctx.beginPath(); ctx.arc(h.x, h.y, h.R * k, 0, Math.PI * 2); ctx.fill();
+    return;
+  }
+  const x = h.x - h.w / 2, y = h.y - h.h / 2;
+  if (h.done) { ctx.fillStyle = `rgba(57,255,154,${.6 * h.fx / .3})`; ctx.fillRect(x, y, h.w, h.h); return; }
+  ctx.fillStyle = 'rgba(57,255,154,.08)'; ctx.fillRect(x, y, h.w, h.h);
+  ctx.fillStyle = 'rgba(57,255,154,.22)'; ctx.fillRect(x, y, h.w, h.h * k);
+  ctx.fillStyle = 'rgba(190,255,220,.9)'; ctx.fillRect(x, y + h.h * k - 1.5, h.w, 3);
+  ctx.strokeStyle = 'rgba(57,255,154,.9)'; ctx.lineWidth = 3; ctx.setLineDash([14, 8]); ctx.strokeRect(x, y, h.w, h.h); ctx.setLineDash([]);
+  ctx.font = '600 16px Teko, "Arial Narrow", sans-serif'; ctx.fillStyle = '#39ff9a'; ctx.fillText('REVISIÓN', h.x, y + 12);
+}
+function drawBossTell(e) {
+  if (e.mode === 'aimCharge') {
+    const len = e.chargeSp * e.chargeT;
+    ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(Math.atan2(e.ddy, e.ddx));
+    ctx.fillStyle = 'rgba(255,90,74,.16)'; ctx.fillRect(0, -e.r, len, e.r * 2);
+    ctx.strokeStyle = 'rgba(255,90,74,.75)'; ctx.lineWidth = 2; ctx.strokeRect(0, -e.r, len, e.r * 2);
+    ctx.restore();
+  } else if (e.mode === 'cast' && e.aimLine) {
+    const a = Math.atan2(e.ddy, e.ddx), enr = e.hp < e.maxHp * .5;
+    const n = e.type === 'estrella' ? (enr ? 7 : 5) : (enr || ((e.shotN || 0) + 1) % 3 === 0 ? 3 : 1);
+    const st = e.type === 'estrella' ? .17 : .3;
+    ctx.strokeStyle = 'rgba(255,211,77,.75)'; ctx.lineWidth = 2; ctx.setLineDash([12, 10]); ctx.beginPath();
+    for (let i = 0; i < n; i++) { const b = a + (i - (n - 1) / 2) * st; ctx.moveTo(e.x, e.y); ctx.lineTo(e.x + Math.cos(b) * 460, e.y + Math.sin(b) * 460); }
+    ctx.stroke(); ctx.setLineDash([]);
+  } else if (e.mode === 'cast' && e.type === 'tecnico') {
+    ctx.strokeStyle = 'rgba(255,211,77,.65)'; ctx.lineWidth = 3; ctx.setLineDash([16, 12]);
+    ctx.beginPath(); ctx.arc(e.x, e.y, Math.max(10, 450 * (1 - e.mt)), 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+function render() {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#1b2a1f'; ctx.fillRect(0, 0, cv.width, cv.height);
+  const p = G.p;
+  const sx = G.shake > 0 ? (Math.random() - .5) * G.shake : 0, sy = G.shake > 0 ? (Math.random() - .5) * G.shake : 0;
+  const cx = p.x - viewW / 2 + sx, cy = p.y - viewH / 2 + sy, k = DPR * ZOOM;
+  ctx.setTransform(k, 0, 0, k, -cx * k, -cy * k);
+  drawPitch(cx, cy);
+  const vis = (x, y, m) => x > cx - m && x < cx + viewW + m && y > cy - m && y < cy + viewH + m;
+
+  for (const e of G.enemies) {
+    if (e.mode !== 'wind' || !vis(e.x, e.y, STOMP_R)) continue;
+    const k = 1 - e.mt / STOMP_WIND;
+    ctx.fillStyle = 'rgba(217,74,61,.12)'; ctx.strokeStyle = 'rgba(255,90,74,.8)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(e.x, e.y, STOMP_R, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(217,74,61,.3)'; ctx.beginPath(); ctx.arc(e.x, e.y, STOMP_R * k, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const h of G.hazards) if (vis(h.x, h.y, 200)) drawHazard(h);
+  for (const e of G.enemies) if (e.boss && vis(e.x, e.y, 700)) drawBossTell(e);
+  for (const r of G.rings) {
+    const t = 1 - r.life / r.max, rad = r.R * (.3 + .7 * t), rc = r.col || '240,244,232';
+    ctx.fillStyle = `rgba(${rc},${.12 * (1 - t)})`; ctx.strokeStyle = `rgba(${rc},${.9 * (1 - t)})`;
+    ctx.lineWidth = 6 * (1 - t) + 2; ctx.beginPath(); ctx.arc(r.x, r.y, rad, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+
+  for (const big of [false, true]) {
+    ctx.fillStyle = big ? '#7cf0d0' : '#ffd34d'; ctx.beginPath();
+    const s = big ? 9 : 6;
+    for (const g of G.gems) {
+      if ((g.v >= 5) !== big || !vis(g.x, g.y, 10)) continue;
+      ctx.moveTo(g.x, g.y - s); ctx.lineTo(g.x + s * .65, g.y); ctx.lineTo(g.x, g.y + s); ctx.lineTo(g.x - s * .65, g.y); ctx.closePath();
+    }
+    ctx.fill();
+  }
+
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const e of G.enemies) if (vis(e.x, e.y, 60)) drawFoe(e);
+
+  for (const c of G.cards) {
+    ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.rot);
+    const cs = Math.max(1, .75 / ZOOM); ctx.scale(cs, cs);
+    ctx.fillStyle = '#e23b3b'; ctx.fillRect(-5, -7, 10, 14);
+    ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 1; ctx.strokeRect(-5, -7, 10, 14);
+    ctx.restore();
+  }
+
+  for (const s of G.foeShots) {
+    ctx.strokeStyle = 'rgba(255,90,74,.45)'; ctx.lineWidth = s.r * 1.3; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(s.x - s.vx * .07, s.y - s.vy * .07); ctx.lineTo(s.x, s.y); ctx.stroke();
+    drawBall(s.x, s.y, s.r, s.rot);
+    ctx.strokeStyle = '#ff5a4a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s.x, s.y, s.r + 2.5, 0, Math.PI * 2); ctx.stroke();
+  }
+  for (const s of G.shots) {
+    if (s.k === 'tiro') {
+      ctx.strokeStyle = 'rgba(255,182,39,.55)'; ctx.lineWidth = s.r * 1.4; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(s.x - s.vx * .06, s.y - s.vy * .06); ctx.lineTo(s.x, s.y); ctx.stroke();
+    }
+    drawBall(s.x, s.y, s.r, s.rot);
+  }
+  if (G.rondoBalls) { const r = 9 * G.stats.area; for (const b of G.rondoBalls) drawBall(b[0], b[1], r, G.rondoAng * 3); }
+
+  drawPlayer(p);
+  if (state === 'resume') {
+    // Aro que se vacía mientras dura la espera después de elegir una mejora
+    const k = clamp((resumeAt - performance.now()) / RESUME_MS, 0, 1);
+    ctx.strokeStyle = 'rgba(255,182,39,.9)'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 20, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * k); ctx.stroke();
+  }
+
+  for (const q of G.parts) { ctx.globalAlpha = Math.min(1, q.life * 2.5); ctx.fillStyle = q.col; ctx.fillRect(q.x - 2, q.y - 2, 4, 4); }
+  ctx.globalAlpha = 1;
+
+  ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.75)';
+  for (const t of G.texts) {
+    ctx.globalAlpha = Math.min(1, t.life * 3);
+    ctx.font = t.big ? '700 24px Teko, "Arial Narrow", sans-serif' : '600 18px Teko, "Arial Narrow", sans-serif';
+    ctx.strokeText(t.txt, t.x, t.y); ctx.fillStyle = t.big ? '#ffb627' : '#ffffff'; ctx.fillText(t.txt, t.x, t.y);
+  }
+  ctx.globalAlpha = 1;
+
+  // Capa de pantalla
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  for (const e of G.enemies) {
+    if (!e.boss || vis(e.x, e.y, 0)) continue;
+    const a = Math.atan2(e.y - p.y, e.x - p.x), ca = Math.cos(a), sa = Math.sin(a);
+    const t = Math.min((VW / 2 - 34) / Math.abs(ca || 1e-6), (VH / 2 - 70) / Math.abs(sa || 1e-6));
+    const ax = VW / 2 + ca * t, ay = VH / 2 + sa * t;
+    ctx.save(); ctx.translate(ax, ay); ctx.rotate(a);
+    ctx.fillStyle = '#ffb627'; ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-10, -12); ctx.lineTo(-10, 12); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  if (G.hurtFlash > 0) { ctx.fillStyle = `rgba(217,74,61,${G.hurtFlash})`; ctx.fillRect(0, 0, VW, VH); }
+  if (joy && state === 'play') {
+    const dx = joy.x - joy.ox, dy = joy.y - joy.oy, d = Math.hypot(dx, dy), m = Math.min(d, 55) / (d || 1);
+    ctx.strokeStyle = 'rgba(240,244,232,.45)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(joy.ox, joy.oy, 55, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = 'rgba(240,244,232,.55)';
+    ctx.beginPath(); ctx.arc(joy.ox + dx * m, joy.oy + dy * m, 20, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+// ---------- Bucle ----------
+let last = performance.now();
+function frame(now) {
+  const dt = clamp((now - last) / 1000, 0, .05); last = now;   // el reloj del cuadro puede venir un poco antes que el del toque
+  if (state === 'resume' && now >= resumeAt) state = 'play';
+  if (state === 'play') update(dt);
+  render();
+  requestAnimationFrame(frame);
+}
+lvIdx = isOpen(SAVE.last) ? SAVE.last : 0; LV = LEVELS[lvIdx];
+CH = charOpen(SAVE.char) && CHARS[SAVE.char] ? CHARS[SAVE.char] : CHARS.diez;
+G = newGame();
+renderChars();
+renderLevels();
+showBestLine();
+requestAnimationFrame(frame);
+})();
+</script>
