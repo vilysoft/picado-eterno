@@ -204,7 +204,7 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
     <dl class="ficha">
       <div><dt>Duración</dt><dd>90' = 8 min reales</dd></div>
       <div><dt>Controles</dt><dd>WASD o flechas · en celular, arrastrá el dedo</dd></div>
-      <div><dt>Sprint</dt><dd>Shift o barra espaciadora · en celular, botón »</dd></div>
+      <div><dt>Sprint / escudo</dt><dd>Mantené Shift o la barra espaciadora · en celular, el botón redondo</dd></div>
       <div><dt>Pausa</dt><dd>P o Esc</dd></div>
     </dl>
     <div class="actions">
@@ -397,10 +397,10 @@ const CHARS = {
     kit: { shirt: '#7cc4ff', sleeve: '#7cc4ff', stripe: '#f4f7fb', shorts: '#14181f' }, skin: '#d9a47c', hair: '#1b1410',
     swatch: 'repeating-linear-gradient(90deg,#7cc4ff 0 14px,#f4f7fb 14px 28px)',
     traits: ['<b>Sprint</b> recargable'] },
-  muro: { name: 'El Muro', desc: 'Central grandote: aguanta todo y barre más lejos.', r: 16, speed: .9, area: 1.2, sprint: false, shield: 50,
+  muro: { name: 'El Muro', desc: 'Central grandote: se cubre con el escudo y barre más lejos.', r: 16, speed: .9, area: 1.2, sprint: false, shield: 50,
     kit: { shirt: '#f4f7fb', sleeve: '#7cc4ff', shorts: '#14181f' }, skin: '#b97d55', hair: '#111111',
     swatch: 'linear-gradient(90deg,#f4f7fb,#bfe3ff)',
-    traits: ['<b>Escudo</b> recargable de 50', '<b>+20%</b> de área', '<i>10% más lento</i>', '<i>Sin sprint</i>'] },
+    traits: ['<b>Escudo</b> con Shift', '<b>+20%</b> de área', '<i>10% más lento</i>', '<i>Sin sprint</i>'] },
 };
 let CH = CHARS.diez;
 const charOpen = id => id === 'diez' || ALL_OPEN || !!(SAVE.chars && SAVE.chars[id]);
@@ -511,12 +511,16 @@ const PERMS = {
   pizarron:     { name: 'Pizarrón', max: 4, desc: '1 cambio de opciones por partido al subir de nivel (tecla R), por nivel.', cost: [30, 60, 100, 150] },
   fuelle:       { name: 'Fuelle', max: 6, only: 'diez', desc: '+10% de barra de sprint y se recarga un 8% más rápido.', cost: [15, 25, 40, 60, 90, 130] },
   zancada:      { name: 'Zancada', max: 6, only: 'diez', desc: '+3% de velocidad al sprintar y gastás 5% menos de barra.', cost: [20, 35, 55, 80, 120, 170] },
-  blindaje:     { name: 'Blindaje', max: 6, only: 'muro', desc: '+10 de escudo.', cost: [20, 35, 55, 80, 120, 170] },
-  recuperacion: { name: 'Recuperación', max: 6, only: 'muro', desc: 'El escudo se recarga 15% más rápido y empieza 0,3 s antes.', cost: [20, 35, 55, 80, 120, 170] },
+  blindaje:     { name: 'Blindaje', max: 6, only: 'muro', desc: '+10 de barra de escudo.', cost: [20, 35, 55, 80, 120, 170] },
+  recuperacion: { name: 'Recuperación', max: 6, only: 'muro', desc: 'El escudo se recarga 15% más rápido y empieza 0,2 s antes.', cost: [20, 35, 55, 80, 120, 170] },
   suplente:     { name: 'Segundo aire', max: 2, desc: 'Al perder toda la vida volvés con la mitad. Una vez por partido por nivel.', cost: [150, 300] },
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.13', date: '16 oct 2026', items: [
+    ['Jugadores', 'El escudo de El Muro ahora se levanta manteniendo Shift (o el botón ◈ en celular), como el sprint de El 10. Mientras está levantado frena los golpes y gasta barra; al soltarlo deja de proteger y se recarga. Si se vacía queda roto hasta recargar un 35%.'],
+    ['Vestuario', 'Recuperación ahora adelanta la recarga 0,2 s por nivel (la espera base bajó a 1,5 s). Blindaje suma 10 a la barra de escudo.'],
+  ] },
   { v: '2.12', date: '16 oct 2026', items: [
     ['Vestuario', 'Todas las mejoras tienen un nivel más. Entrada en calor llega a 3 mejoras gratis, Pizarrón a 4 cambios y Segundo aire a 2 vueltas por partido.'],
     ['Celular', 'En pantallas táctiles el partido es un poco más fácil: los rivales pegan 15% menos y aparecen 10% menos.'],
@@ -634,7 +638,7 @@ const RESUME_MS = 1000;   // pausa corta al cerrar las mejoras
 function newGame() {
   return {
     t: 0, kills: 0, level: 1, xp: 0, xpNext: xpFor(1), pending: 0,
-    p: { x: FW / 2, y: FH / 2, r: CH.r, sh: CH.shield, shMax: CH.shield, shCd: 0, shHit: 0, hp: 100, maxHp: 100, inv: 0, fx: 1, fy: 0, step: 0, st: 100, stMax: 100, stCd: 0, tired: false, sprinting: false },
+    p: { x: FW / 2, y: FH / 2, r: CH.r, sh: CH.shield, shMax: CH.shield, shCd: 0, shHit: 0, shOn: false, shBroken: false, hp: 100, maxHp: 100, inv: 0, fx: 1, fy: 0, step: 0, st: 100, stMax: 100, stCd: 0, tired: false, sprinting: false },
     stats: { armor: 1, thorns: 0, dmg: 1, speed: 1, cd: 1, magnet: 1, regen: 0, area: 1, xp: 1, sprint: 1.4, stRegen: 16, stDrain: 1 },
     bossKills: 0, free: 0, revives: 0, rerolls: 0, combos: {},
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '' },   // estadísticas del partido
@@ -657,7 +661,8 @@ function recalc() {
   // Escudo (El Muro)
   G.p.shMax = CH.shield ? CH.shield + 10 * pl('blindaje') : 0;
   S.shRegen = 14 * (1 + .15 * pl('recuperacion'));
-  S.shDelay = 3 - .3 * pl('recuperacion');
+  S.shDelay = 1.5 - .2 * pl('recuperacion');   // espera tras soltarlo antes de recargar
+  S.shDrain = 12;                                 // lo que gasta por segundo mientras está levantado
   // Sprint
   G.p.stMax = 100 * (1 + .2 * l('aguante')) * (1 + .1 * pl('fuelle'));
   S.stRegen = 16 * (1 + .15 * l('aguante')) * (1 + .08 * pl('fuelle'));
@@ -817,7 +822,9 @@ function startGame() {
   if (AC && AC.state === 'suspended') AC.resume();
   G = newGame(); recalc(); hudCache = {}; joy = null;
   G.p.hp = G.p.maxHp; G.p.st = G.p.stMax; G.p.sh = G.p.shMax; G.free = pl('calor'); G.revives = pl('suplente'); G.rerolls = pl('pizarron');
-  state = 'play'; hideAll(); $('hud').hidden = false; $('btnSprint').hidden = !CH.sprint;
+  state = 'play'; hideAll(); $('hud').hidden = false;
+  $('btnSprint').textContent = CH.sprint ? '»' : '◈';
+  $('btnSprint').setAttribute('aria-label', CH.sprint ? 'Mantener para sprintar' : 'Mantener para levantar el escudo');
   bannerQ = []; bannerLock = 0;
   if (SAVE.last !== lvIdx) { SAVE.last = lvIdx; persist(); }
   updateLoadout(); hud(); sfx('whistle'); banner(LV.start); cheer = 1.5;
@@ -856,7 +863,23 @@ function update(dt) {
     if (d > 6) { mx = dx / d; my = dy / d; mag = Math.min(1, d / 55); }
   }
   // Sprint: gasta barra mientras corrés; si la vaciás quedás "fundido" hasta recargar un 35%
-  const wantSprint = CH.sprint && (keys.ShiftLeft || keys.ShiftRight || keys.Space || sprintTouch !== null) && mag > 0;
+  const holding = keys.ShiftLeft || keys.ShiftRight || keys.Space || sprintTouch !== null;
+  const wantSprint = CH.sprint && holding && mag > 0;
+  if (p.shMax) {
+    // El Muro: mientras mantenés Shift el escudo está levantado y gasta barra; si se vacía queda roto hasta recargar un 35%
+    if (p.shBroken && p.sh >= p.shMax * .35) p.shBroken = false;
+    const was = p.shOn;
+    p.shOn = holding && !p.shBroken && p.sh > 0;
+    if (p.shOn && !was) sfx('shield');
+    if (p.shOn) {
+      p.sh -= S.shDrain * dt; p.shCd = S.shDelay;
+      if (p.sh <= 0) { p.sh = 0; p.shOn = false; p.shBroken = true; sfx('tired'); }
+    } else {
+      p.shCd -= dt;
+      if (p.shCd <= 0) p.sh = Math.min(p.shMax, p.sh + S.shRegen * dt);
+    }
+    p.shHit = Math.max(0, p.shHit - dt);
+  }
   if (p.tired && p.st >= p.stMax * .35) p.tired = false;
   p.sprinting = wantSprint && !p.tired && p.st > 0;
   if (p.sprinting) {
@@ -872,7 +895,6 @@ function update(dt) {
   const spd = 175 * S.speed * mag * boost;
   p.x = clamp(p.x + mx * spd * dt, -RUN + p.r, FW + RUN - p.r);
   p.y = clamp(p.y + my * spd * dt, -RUN + p.r, FH + RUN - p.r);
-  if (p.shMax) { p.shCd -= dt; p.shHit = Math.max(0, p.shHit - dt); if (p.shCd <= 0) p.sh = Math.min(p.shMax, p.sh + S.shRegen * dt); }
   if (p.inv > 0) p.inv -= dt;
   p.hp = Math.min(p.maxHp, p.hp + S.regen * dt);
   G.shake = Math.max(0, G.shake - dt * 30);
@@ -1084,10 +1106,11 @@ function hurt(n) {
   const raw = n;
   n *= G.stats.armor ?? 1;
   G.rec.blocked += raw - n;
-  if (p.shMax) {
-    p.shCd = G.stats.shDelay;   // cualquier golpe corta la recarga del escudo
+  if (p.shMax && p.shOn) {
+    // Escudo levantado: el golpe sale de la barra del escudo antes que de la vida
     const a = Math.min(p.sh, n);
     if (a > 0) { p.sh -= a; n -= a; G.rec.shield += a; p.shHit = .25; }
+    if (p.sh <= 0) { p.sh = 0; p.shOn = false; p.shBroken = true; }
     if (n <= 0) { p.inv = .55; sfx('shield'); return; }   // lo frenó todo el escudo
     if (a > 0) sfx('shield');
   }
@@ -2202,11 +2225,12 @@ function drawPlayer(p) {
     // Escudo: barra blanca-celeste y una burbuja que se nota más cuanto más cargado está
     const shf = Math.max(0, p.sh / p.shMax);
     ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(p.x - w / 2, p.y + p.r + 15, w, 4);
-    ctx.fillStyle = p.shCd > 0 ? '#9fb6c8' : '#e6f6ff'; ctx.fillRect(p.x - w / 2, p.y + p.r + 15, w * shf, 4);
-    if (shf > 0) {
-      ctx.strokeStyle = p.shHit > 0 ? 'rgba(255,255,255,.95)' : `rgba(200,235,255,${.15 + .4 * shf})`;
-      ctx.lineWidth = p.shHit > 0 ? 3.5 : 2;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 11, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = p.shBroken ? '#7d8a7a' : p.shOn ? '#ffffff' : '#bfe3ff'; ctx.fillRect(p.x - w / 2, p.y + p.r + 15, w * shf, 4);
+    if (p.shBroken) { ctx.fillStyle = 'rgba(255,90,74,.9)'; ctx.fillRect(p.x - w / 2 + w * .35 - 1, p.y + p.r + 14, 2, 6); }
+    if (p.shOn) {
+      ctx.fillStyle = 'rgba(200,235,255,.12)'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 12, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = p.shHit > 0 ? 'rgba(255,255,255,1)' : 'rgba(200,235,255,.85)';
+      ctx.lineWidth = p.shHit > 0 ? 4 : 2.5; ctx.stroke();
     }
     return;
   }

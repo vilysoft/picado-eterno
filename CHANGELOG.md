@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.13 · 16 oct 2026
+
+- **Jugadores:** El escudo de El Muro ahora se levanta manteniendo Shift (o el botón ◈ en celular), como el sprint de El 10. Mientras está levantado frena los golpes y gasta barra; al soltarlo deja de proteger y se recarga. Si se vacía queda roto hasta recargar un 35%.
+- **Vestuario:** Recuperación ahora adelanta la recarga 0,2 s por nivel (la espera base bajó a 1,5 s). Blindaje suma 10 a la barra de escudo.
+
 ## 2.12 · 16 oct 2026
 
 - **Vestuario:** Todas las mejoras tienen un nivel más. Entrada en calor llega a 3 mejoras gratis, Pizarrón a 4 cambios y Segundo aire a 2 vueltas por partido.
