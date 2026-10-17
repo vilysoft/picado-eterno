@@ -2,7 +2,7 @@
 
 Fútbol de supervivencia para un jugador, en el navegador. Sos el 10 y te viene encima el equipo rival entero, y después otro, y otro más. Tus técnicas patean solas: vos corré, juntá experiencia, elegí mejoras y aguantá los 90 minutos.
 
-**[Jugar ahora](https://USUARIO.github.io/picado-eterno/)**: funciona en compu y en celular, sin descargar nada.
+**[Jugar ahora](https://vilysoft.github.io/picado-eterno/)**: funciona en compu y en celular, sin descargar nada.
 
 ## Cómo se juega
 
