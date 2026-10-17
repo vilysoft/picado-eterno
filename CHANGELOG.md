@@ -2,6 +2,12 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.15 · 17 oct 2026
+
+- **Dificultad:** El Potrero es más fácil: la vida de los rivales crece un 25% más lento (un defensor llega al minuto 90 con 59 de vida en vez de 74) y los árbitros, arqueros y grandotes salen un 25% menos seguido.
+- **Combos:** La roja de Doble amarilla le pega a los jefes un 30% menos (×2,8 el daño del remate en vez de ×4).
+- **Combos:** Combo nuevo: Gol olímpico (Tres dedos + Físico). Cuando la pelota de Tres dedos termina su recorrido, estalla en un "¡GOL!" que hace 1,5 veces su daño a todos alrededor.
+
 ## 2.14 · 17 oct 2026
 
 - **Canchas:** Pausa de hidratación en El Coloso: en los minutos 30 y 60 los rivales se frenan 3 segundos y no hacen daño. El reloj se detiene y vos podés moverte y seguir pateando.

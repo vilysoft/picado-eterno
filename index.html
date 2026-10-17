@@ -415,6 +415,8 @@ const COMBOS = {
     desc: 'Cuando la pelota vuelve, pasa por el rondo y sale otra vez con todos sus rebotes.' },
   mareo:    { name: 'Mareo', need: [['w', 'rondo'], ['w', 'barrida']],
     desc: 'La barrida marea 2 s: los rivales caminan sin rumbo y más lento.' },
+  olimpico: { name: 'Gol olímpico', need: [['w', 'tresDedos'], ['p', 'fisico']],
+    desc: 'Cuando la pelota de Tres dedos termina su recorrido, estalla en un golazo que daña a todos alrededor.' },
   tapones:  { name: 'Tapones de punta', need: [['p', 'botines'], ['w', 'barrida']],
     desc: 'La barrida hace sangrar 3 s: daño cada medio segundo.' },
 };
@@ -521,6 +523,11 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.15', date: '17 oct 2026', items: [
+    ['Dificultad', 'El Potrero es más fácil: la vida de los rivales crece un 25% más lento (un defensor llega al minuto 90 con 59 de vida en vez de 74) y los árbitros, arqueros y grandotes salen un 25% menos seguido.'],
+    ['Combos', 'La roja de Doble amarilla le pega a los jefes un 30% menos (×2,8 el daño del remate en vez de ×4).'],
+    ['Combos', 'Combo nuevo: Gol olímpico (Tres dedos + Físico). Cuando la pelota de Tres dedos termina su recorrido, estalla en un "¡GOL!" que hace 1,5 veces su daño a todos alrededor.'],
+  ] },
   { v: '2.14', date: '17 oct 2026', items: [
     ['Canchas', 'Pausa de hidratación en El Coloso: en los minutos 30 y 60 los rivales se frenan 3 segundos y no hacen daño. El reloj se detiene y vos podés moverte y seguir pateando.'],
     ['Técnicas', 'Técnica nueva: Tres dedos. Un remate que sale derecho hacia el rival más cercano y después dobla 45° a un costado, atravesando a todos. En nivel 3 salen dos, una para cada lado.'],
@@ -956,17 +963,20 @@ function onScreen(x, y, m = 20) {
 // Achica la distancia a la que se quedan los que te esquivan para que entren en la pantalla
 const reach = band => clamp((Math.min(viewW, viewH) / 2 - 40) / band, .55, 1);
 const ht = () => G.t * PACE + LV.head;   // cada cancha arranca más adelante en la curva de dificultad
-const hpMult = () => 1 + ht() / 140;
+// La vida de los rivales crece con el tiempo de dificultad; en El Potrero crece un 25% más lento
+const hpMult = () => 1 + ht() / 140 * (LV.id === 'potrero' ? .75 : 1);
 function pickType(t) {
   const r = Math.random();
   // Desde cuándo sale cada especial. En la segunda y tercera cancha tardan un 10% más en aparecer
   // (medido en tiempo real de partido); los jefes no pasan por acá.
   const after = thr => LV.id === 'potrero' ? t > thr : G.t > 1.1 * Math.max(0, (thr - LV.head) / PACE);
-  if (after(240) && r < .07) return 'arbitro';
+  // En El Potrero los especiales (árbitros, arqueros y grandotes) salen un 25% menos seguido
+  const f = LV.id === 'potrero' ? .75 : 1;
+  if (after(240) && r < .07 * f) return 'arbitro';
   // Arqueros: en esas canchas ya salían desde el arranque, así que tardan un 25% más que en El Potrero (36 s → 45 s)
-  if ((LV.id === 'potrero' ? t > 45 : G.t > 1.25 * 45 / PACE) && r > .9) return 'arquero';
+  if ((LV.id === 'potrero' ? t > 45 : G.t > 1.25 * 45 / PACE) && r > 1 - .1 * f) return 'arquero';
   if (LV.id !== 'potrero' && after(110) && r > .84 && G.enemies.reduce((n, e) => n + (e.type === 'camillero'), 0) < 6) return 'camillero';
-  if (after(150) && r < .2) return 'central';
+  if (after(150) && r < .2 * f) return 'central';
   if (t > 60 && r < .45) return 'extremo';
   return 'defensor';
 }
@@ -1190,6 +1200,20 @@ function updateShots(dt) {
           s.vy = s.vx * sn + s.vy * c; s.vx = vx; s.turned += Math.abs(da);
         }
         s.trail.push(s.x, s.y); if (s.trail.length > 24) s.trail.splice(0, 2);
+        if (s.life <= 0 && G.combos.olimpico && !s.boom) {
+          // Gol olímpico: al final del recorrido la pelota estalla y le pega a todos alrededor
+          s.boom = true;
+          const R = 95 * G.stats.area;
+          G.rings.push({ x: s.x, y: s.y, R, life: .45, max: .45, col: '255,182,39' });
+          G.texts.push({ x: s.x, y: s.y - 20, txt: '¡GOL!', life: .9, big: true });
+          for (let i = 0; i < 10; i++) part(s.x, s.y, i % 2 ? '#ffb627' : '#ffffff');
+          for (const e of G.enemies) {
+            if (e.dead) continue;
+            const dx = e.x - s.x, dy = e.y - s.y, d = Math.hypot(dx, dy) || 1;
+            if (d < R + e.r) hitEnemy(e, s.dmg * 1.5, dx / d * 300, dy / d * 300, 'olimpico');
+          }
+          sfx('stomp'); cheer = Math.max(cheer, 1.2);
+        }
       }
       const v = Math.hypot(s.vx, s.vy);
       for (const e of G.enemies) {
@@ -1206,7 +1230,7 @@ function updateShots(dt) {
               e.yellow = 0;
               G.texts.push({ x: e.x, y: e.y - e.r - 18, txt: '¡ROJA!', life: 1, big: true });
               G.rings.push({ x: e.x, y: e.y, R: e.r + 26, life: .35, max: .35, col: '226,59,59' });
-              hitEnemy(e, e.boss ? s.dmg * 4 : e.hp + 1, 0, 0, 'amarilla', !e.boss);
+              hitEnemy(e, e.boss ? s.dmg * 2.8 : e.hp + 1, 0, 0, 'amarilla', !e.boss);   // a los jefes: ×2,8 (antes ×4)
             }
           }
         }
@@ -1598,7 +1622,7 @@ function hud() {
   const w = (G.xp / G.xpNext * 100).toFixed(1) + '%';
   if (hudCache.xp !== w) { hudCache.xp = w; $('xpfill').style.width = w; }
 }
-const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', tiroLibre: 'Tiro libre', tresDedos: 'Tres dedos', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta' };
+const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', tiroLibre: 'Tiro libre', tresDedos: 'Tres dedos', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta', olimpico: 'Gol olímpico' };
 const nf = n => Math.round(n).toLocaleString('es-AR');
 function renderStats(el, full) {
   const R = G.rec;
@@ -1608,7 +1632,7 @@ function renderStats(el, full) {
   if (!total) h = '<p class="best" style="margin:6px 0 10px">Tus habilidades todavía no tocaron a nadie.</p>';
   else {
     h = '<div class="srows"><div class="shead"><span>Habilidad</span><span></span><span>Daño</span><span>%</span><span>Volteó</span></div>'
-      + rows.map(([k, v]) => `<div class="srow${k === 'codazo' ? ' fis' : k === 'amarilla' || k === 'tapones' ? ' combo' : ''}"><span class="sname">${SRC_NAMES[k] || k}</span>`
+      + rows.map(([k, v]) => `<div class="srow${k === 'codazo' ? ' fis' : k === 'amarilla' || k === 'tapones' || k === 'olimpico' ? ' combo' : ''}"><span class="sname">${SRC_NAMES[k] || k}</span>`
         + `<span class="sbar"><i style="width:${(v / rows[0][1] * 100).toFixed(1)}%"></i></span>`
         + `<span class="snum">${nf(v)}</span><span class="spct">${Math.round(v / total * 100)}%</span><span class="skill">${R.kills[k] || 0}</span></div>`).join('')
       + '</div>';
