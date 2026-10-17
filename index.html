@@ -377,6 +377,9 @@ const WEAPONS = {
   tiroLibre: { name: 'Tiro libre', max: 5, desc: [
     'Un remate apuntado al rival más cercano: le pega y sigue derecho atravesando a todos.',
     '+50% de daño.', 'Rematás 2 pelotas en abanico.', '25% menos de espera entre remates.', 'Rematás 3 pelotas y +50% de daño.'] },
+  tresDedos: { name: 'Tres dedos', max: 5, desc: [
+    'Un remate con comba: sale derecho hacia el rival más cercano y después dobla 45° a un costado, atravesando a todos.',
+    '+40% de daño.', 'Rematás 2 pelotas: una dobla a la derecha y otra a la izquierda.', '25% menos de espera entre remates.', 'La comba es más larga y +50% de daño.'] },
 };
 const PASSIVES = {
   potencia:    { name: 'Potencia', max: 5, desc: '+12% de daño en todas tus técnicas.' },
@@ -494,6 +497,7 @@ function wp(k, l) {
     case 'pelota': return { count: 1 + (l >= 3) + (l >= 5), bounces: 2 + (l >= 2) + (l >= 6 ? 2 : 0), dmg: 12 * (l >= 4 ? 1.4 : 1) * (l >= 6 ? 1.4 : 1), cd: 1.15, speed: 470 };
     case 'rondo': return { count: 2 + (l >= 2) + (l >= 4) + (l >= 5), dmg: 9 * (l >= 3 ? 1.35 : 1) * (l >= 5 ? 1.35 : 1), spin: 3 + (l >= 4 ? 1.3 : 0), R: 78 };
     case 'barrida': return { R: 95 * (l >= 2 ? 1.3 : 1) * (l >= 5 ? 1.3 : 1), dmg: 18 * (l >= 3 ? 1.4 : 1) * (l >= 5 ? 1.4 : 1), cd: 3.2 * (l >= 4 ? .75 : 1) };
+    case 'tresDedos': return { dmg: 20 * (l >= 2 ? 1.4 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 3 ? 2 : 1, cd: 1.9 * (l >= 4 ? .75 : 1), speed: 620, straight: 190, life: l >= 5 ? 1.6 : 1.25 };
     case 'tiroLibre': return { dmg: 24 * (l >= 2 ? 1.5 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 5 ? 3 : l >= 3 ? 2 : 1, cd: 2.6 * (l >= 4 ? .75 : 1), speed: 720 };
   }
 }
@@ -517,6 +521,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.14', date: '17 oct 2026', items: [
+    ['Canchas', 'Pausa de hidratación en El Coloso: en los minutos 30 y 60 los rivales se frenan 3 segundos y no hacen daño. El reloj se detiene y vos podés moverte y seguir pateando.'],
+    ['Técnicas', 'Técnica nueva: Tres dedos. Un remate que sale derecho hacia el rival más cercano y después dobla 45° a un costado, atravesando a todos. En nivel 3 salen dos, una para cada lado.'],
+  ] },
   { v: '2.13', date: '16 oct 2026', items: [
     ['Jugadores', 'El escudo de El Muro ahora se levanta manteniendo Shift (o el botón ◈ en celular), como el sprint de El 10. Mientras está levantado frena los golpes y gasta barra; al soltarlo deja de proteger y se recarga. Si se vacía queda roto hasta recargar un 35%.'],
     ['Vestuario', 'Recuperación ahora adelanta la recarga 0,2 s por nivel (la espera base bajó a 1,5 s). Blindaje suma 10 a la barra de escudo.'],
@@ -634,7 +642,8 @@ function spentTotal() {
 
 // ---------- Estado ----------
 let G, state = 'menu', luAt = 0, hudCache = {}, resumeAt = 0;
-const RESUME_MS = 1000;   // pausa corta al cerrar las mejoras
+const RESUME_MS = 1000;
+const HYDRA_S = 3;          // duración de la pausa de hidratación   // pausa corta al cerrar las mejoras
 function newGame() {
   return {
     t: 0, kills: 0, level: 1, xp: 0, xpNext: xpFor(1), pending: 0,
@@ -644,7 +653,7 @@ function newGame() {
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '' },   // estadísticas del partido
     weapons: { pelota: 1 }, passives: {}, timers: { pelota: .4 }, rondoAng: 0, rondoBalls: null,
     enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [],
-    spawnAcc: 0, nextWave: 60 / PACE, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [],
+    spawnAcc: 0, nextWave: 60 / PACE, hydra: 0, hydraDone: {}, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [],
   };
 }
 function recalc() {
@@ -851,7 +860,16 @@ function banner(txt, important) {
 // ---------- Lógica ----------
 function update(dt) {
   const p = G.p, S = G.stats;
-  G.t += dt;
+  // Pausa de hidratación (solo El Coloso): en los minutos 30 y 60 los rivales se frenan 3 s y no pegan; el reloj se detiene
+  if (LV.id === 'lujo' && !G.hydra) {
+    const m = minuteOf(G.t);
+    for (const hm of [30, 60]) if (m >= hm && !G.hydraDone[hm]) {
+      G.hydraDone[hm] = true; G.hydra = HYDRA_S;
+      banner('¡Pausa de hidratación!', true); sfx('whistle'); cheer = 1.5;
+    }
+  }
+  if (G.hydra > 0) G.hydra = Math.max(0, G.hydra - dt);
+  else G.t += dt;
   if (G.t >= MATCH) { endScreen(true); return; }
 
   let mx = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
@@ -900,14 +918,16 @@ function update(dt) {
   G.shake = Math.max(0, G.shake - dt * 30);
   G.hurtFlash = Math.max(0, G.hurtFlash - dt);
 
-  spawning();
-  spawnStep(dt);
+  const frozen = G.hydra > 0;
+  if (!frozen) { spawning(); spawnStep(dt); }
   fireWeapons(dt);
   updateShots(dt);
-  updateEnemies(dt);
-  updateCards(dt);
-  updateHazards(dt);
-  updateFoeShots(dt);
+  if (!frozen) { updateEnemies(dt); updateCards(dt); updateHazards(dt); updateFoeShots(dt); }
+  else {
+    // Rivales quietos: solo se limpian los que voltees y se apaga el destello de los golpes
+    for (const e of G.enemies) { e.flash -= dt; e.still = true; }
+    G.enemies = G.enemies.filter(e => !e.dead);
+  }
   updateGems(dt);
   updateFx(dt);
 
@@ -1062,6 +1082,17 @@ function fireWeapons(dt) {
           r: 10 * S.area, dmg: w.dmg * S.dmg, hit: new Set(), life: 1.3, rot: 0 });
       }
       sfx('kick');
+    } else if (k === 'tresDedos') {
+      // Sale derecho hacia el más cercano y, pasados unos metros, dobla 45° (con 2 pelotas, una para cada lado)
+      const tgt = nearestEnemy(p.x, p.y, null, 650);
+      const a = tgt ? Math.atan2(tgt.y - p.y, tgt.x - p.x) : Math.atan2(p.fy, p.fx);
+      G.tresSide = -(G.tresSide || 1);
+      const sides = w.n === 2 ? [1, -1] : [G.tresSide];
+      for (const side of sides) {
+        G.shots.push({ k: 'tres', x: p.x, y: p.y, vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed, r: 9 * S.area,
+          dmg: w.dmg * S.dmg, hit: new Set(), life: w.life, rot: 0, dist: 0, straight: w.straight, side, turned: 0, trail: [] });
+      }
+      sfx('kick');
     }
     G.timers[k] = w.cd * S.cd;
   }
@@ -1150,6 +1181,16 @@ function updateShots(dt) {
         }
       }
     } else {
+      if (s.k === 'tres') {
+        // Comba: después del tramo recto gira 45° en unos 0,15 s
+        s.dist += Math.hypot(s.vx, s.vy) * dt;
+        if (s.dist > s.straight && s.turned < Math.PI / 4) {
+          const da = Math.min(Math.PI / 4 - s.turned, (Math.PI / 4) / .15 * dt) * s.side;
+          const c = Math.cos(da), sn = Math.sin(da), vx = s.vx * c - s.vy * sn;
+          s.vy = s.vx * sn + s.vy * c; s.vx = vx; s.turned += Math.abs(da);
+        }
+        s.trail.push(s.x, s.y); if (s.trail.length > 24) s.trail.splice(0, 2);
+      }
       const v = Math.hypot(s.vx, s.vy);
       for (const e of G.enemies) {
         if (e.dead || s.hit.has(e)) continue;
@@ -1157,8 +1198,8 @@ function updateShots(dt) {
         if (dx * dx + dy * dy < rr * rr) {
           s.hit.add(e);
           const wasYellow = e.yellow > 0;
-          hitEnemy(e, s.dmg, s.vx / v * 260, s.vy / v * 260, 'tiroLibre');
-          if (G.combos.amarilla && !e.dead) {
+          hitEnemy(e, s.dmg, s.vx / v * 260, s.vy / v * 260, s.k === 'tres' ? 'tresDedos' : 'tiroLibre');
+          if (s.k === 'tiro' && G.combos.amarilla && !e.dead) {
             if (!wasYellow) e.yellow = 4;
             else {
               // Segunda amarilla: roja. Los comunes se van; a los jefes les cuesta un golpe grande
@@ -1538,7 +1579,7 @@ function pick(i) {
 }
 function updateLoadout() {
   let h = '';
-  const short = { tiroLibre: 'Tiro' };
+  const short = { tiroLibre: 'Tiro', tresDedos: 'Tres' };
   for (const k in G.weapons) h += `<span class="chip tec"><span class="full">${WEAPONS[k].name}</span><span class="short">${short[k] || WEAPONS[k].name}</span><b>${G.weapons[k]}</b></span>`;
   let n = 0;
   for (const k in G.passives) { h += `<span class="chip fis">${PASSIVES[k].name}<b>${G.passives[k]}</b></span>`; n++; }
@@ -1557,7 +1598,7 @@ function hud() {
   const w = (G.xp / G.xpNext * 100).toFixed(1) + '%';
   if (hudCache.xp !== w) { hudCache.xp = w; $('xpfill').style.width = w; }
 }
-const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', tiroLibre: 'Tiro libre', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta' };
+const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', tiroLibre: 'Tiro libre', tresDedos: 'Tres dedos', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta' };
 const nf = n => Math.round(n).toLocaleString('es-AR');
 function renderStats(el, full) {
   const R = G.rec;
@@ -2334,6 +2375,12 @@ function render() {
     if (s.k === 'tiro') {
       ctx.strokeStyle = 'rgba(255,182,39,.55)'; ctx.lineWidth = s.r * 1.4; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(s.x - s.vx * .06, s.y - s.vy * .06); ctx.lineTo(s.x, s.y); ctx.stroke();
+    } else if (s.k === 'tres' && s.trail.length > 2) {
+      // Estela celeste que muestra la comba
+      ctx.strokeStyle = 'rgba(124,196,255,.5)'; ctx.lineWidth = s.r * 1.1; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(s.trail[0], s.trail[1]);
+      for (let i = 2; i < s.trail.length; i += 2) ctx.lineTo(s.trail[i], s.trail[i + 1]);
+      ctx.lineTo(s.x, s.y); ctx.stroke();
     }
     drawBall(s.x, s.y, s.r, s.rot);
   }
@@ -2368,6 +2415,15 @@ function render() {
     ctx.save(); ctx.translate(ax, ay); ctx.rotate(a);
     ctx.fillStyle = '#ffb627'; ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-10, -12); ctx.lineTo(-10, 12); ctx.closePath(); ctx.fill();
     ctx.restore();
+  }
+  if (G.hydra > 0) {
+    // Pausa de hidratación: tinte celeste y cuenta regresiva
+    ctx.fillStyle = 'rgba(124,196,255,.10)'; ctx.fillRect(0, 0, VW, VH);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '600 16px "Barlow Condensed", "Arial Narrow", sans-serif'; ctx.fillStyle = 'rgba(230,246,255,.9)';
+    ctx.fillText('PAUSA DE HIDRATACIÓN · LOS RIVALES NO SE MUEVEN', VW / 2, VH * .72);
+    ctx.font = '700 64px Teko, "Arial Narrow", sans-serif'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.6)';
+    const n = String(Math.ceil(G.hydra)); ctx.strokeText(n, VW / 2, VH * .72 + 46); ctx.fillStyle = '#bfe3ff'; ctx.fillText(n, VW / 2, VH * .72 + 46);
   }
   if (G.hurtFlash > 0) { ctx.fillStyle = `rgba(217,74,61,${G.hurtFlash})`; ctx.fillRect(0, 0, VW, VH); }
   if (joy && state === 'play') {

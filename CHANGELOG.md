@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.14 · 17 oct 2026
+
+- **Canchas:** Pausa de hidratación en El Coloso: en los minutos 30 y 60 los rivales se frenan 3 segundos y no hacen daño. El reloj se detiene y vos podés moverte y seguir pateando.
+- **Técnicas:** Técnica nueva: Tres dedos. Un remate que sale derecho hacia el rival más cercano y después dobla 45° a un costado, atravesando a todos. En nivel 3 salen dos, una para cada lado.
+
 ## 2.13 · 16 oct 2026
 
 - **Jugadores:** El escudo de El Muro ahora se levanta manteniendo Shift (o el botón ◈ en celular), como el sprint de El 10. Mientras está levantado frena los golpes y gasta barra; al soltarlo deja de proteger y se recarga. Si se vacía queda roto hasta recargar un 35%.
