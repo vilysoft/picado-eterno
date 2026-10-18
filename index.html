@@ -466,6 +466,8 @@ const FOES = {
   arbitro:  { r: 13, hp: 32, speed: 68, dmg: 8, xp: 3, color: '#1d1f1c', nums: [] },
   arquero:  { r: 15, hp: 26, speed: 95, dmg: 12, xp: 3, color: '#c8f03c', nums: [1] },
   camillero: { r: 32, hp: 60, speed: 62, dmg: 12, xp: 5, color: '#f2f2ec', nums: [] },
+  hincha:    { r: 13, hp: 40, speed: 820, dmg: 26, xp: 20, color: '#7b4bc9', nums: [] },
+  spidercam: { r: 16, hp: 70, speed: 95, dmg: 14, xp: 8, color: '#2b2f36', nums: [], fly: true },
   capitan:  { r: 34, hp: 900, speed: 78, dmg: 22, xp: 50, color: '#5b34a8', nums: [9], boss: true },
   dueno:    { r: 32, hp: 850, speed: 70, dmg: 20, xp: 50, color: '#e8e1cf', nums: [], boss: true },
   tanque:   { r: 40, hp: 1500, speed: 60, dmg: 26, xp: 60, color: '#5b4636', nums: [], boss: true },
@@ -482,6 +484,9 @@ const KITS = {
   arbitro:  { shirt: '#1d1f1c', sleeve: '#ffd34d', shorts: '#1d1f1c' },
   arquero:  { shirt: '#c8f03c', sleeve: '#1d1f1c', shorts: '#1d1f1c', gloves: '#fafafa' },
   camillero: { shirt: '#f2f2ec', sleeve: '#d23b31', shorts: '#2b2f3a' },
+  hincha:    { shirt: '#7b4bc9', sleeve: 'skin', stripe: '#f4f7fb', shorts: '#3b5a8a' },
+  guardia:   { shirt: '#ffd34d', sleeve: '#ffd34d', shorts: '#1d1f1c' },
+  spidercam: { shirt: '#2b2f36', sleeve: '#2b2f36', shorts: '#2b2f36' },
   capitan:  { shirt: '#5b34a8', sleeve: '#5b34a8', stripe: '#4a2a85', shorts: '#1d1f1c' },
   dueno:    { shirt: '#e8e1cf', sleeve: 'skin', shorts: '#2b4c8c' },
   tanque:   { shirt: '#5b4636', sleeve: '#5b4636', stripe: '#4a3a2c', shorts: '#1d1f1c' },
@@ -525,6 +530,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.18', date: '18 oct 2026', items: [
+    ['Rivales', 'Hincha invasor en La Cancha del Club: desde el minuto 60, como mucho 2 veces por partido, un hincha salta a la cancha y la cruza a toda velocidad perseguido por un guardia. Antes de entrar se marca su franja en el piso. Si te agarra, pega fuerte; si lo volteás, deja muchas gemas.'],
+    ['Rivales', 'Spidercam en El Coloso: la cámara aérea flota sobre la cancha colgada de cables, no choca, y cada tanto marca un círculo y baja de golpe. Solo la alcanzan los remates (Pelota, Tiro libre y Tres dedos); barrida, rondo y codazo no llegan.'],
+  ] },
   { v: '2.17', date: '17 oct 2026', items: [
     ['Técnicas', 'Rondo más fuerte desde el arranque: empieza con 3 pelotas en vez de 2 y hace 20% más de daño.'],
     ['Técnicas', 'Rondo tiene un nivel 6, Despeje: cada pelota empuja bien lejos a los rivales que toca.'],
@@ -670,7 +679,7 @@ function newGame() {
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '' },   // estadísticas del partido
     weapons: { pelota: 1 }, passives: {}, timers: { pelota: .4 }, rondoAng: 0, rondoBalls: null,
     enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [],
-    spawnAcc: 0, nextWave: 60 / PACE, hydra: 0, hydraDone: {}, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [],
+    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, hydra: 0, hydraDone: {}, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [],
   };
 }
 function recalc() {
@@ -885,6 +894,23 @@ function update(dt) {
       banner('¡Pausa de hidratación!', true); sfx('whistle'); cheer = 1.5;
     }
   }
+  if (LV.id === 'club' && G.invaders < 2 && minuteOf(G.t) >= 60) {
+    if (G.invNext == null) G.invNext = G.t + rnd(2, 10);
+    if (G.t >= G.invNext && !G.lane) startInvader();
+  }
+  if (G.lane) {
+    // Franja de aviso: cuando se termina, el hincha sale corriendo por ahí
+    G.lane.t -= dt;
+    if (G.lane.t <= 0) {
+      const L = G.lane; G.lane = null;
+      spawn('hincha', L.x0, L.y0);
+      const e = G.enemies[G.enemies.length - 1];
+      const len = Math.hypot(L.x1 - L.x0, L.y1 - L.y0);
+      e.ddx = (L.x1 - L.x0) / len; e.ddy = (L.y1 - L.y0) / len; e.ex = L.x1; e.ey = L.y1;
+      e.dmg = FOES.hincha.dmg * LV.dmg * MOB_DMG; e.speed = FOES.hincha.speed;
+      sfx('dive'); cheer = 2.5;
+    }
+  }
   if (G.hydra > 0) G.hydra = Math.max(0, G.hydra - dt);
   else G.t += dt;
   if (G.t >= MATCH) { endScreen(true); return; }
@@ -986,6 +1012,8 @@ function pickType(t) {
   // Arqueros: en esas canchas ya salían desde el arranque, así que tardan un 25% más que en El Potrero (36 s → 45 s)
   if ((LV.id === 'potrero' ? t > 45 : G.t > 1.25 * 45 / PACE) && r > 1 - .1 * f) return 'arquero';
   if (LV.id !== 'potrero' && after(110) && r > .84 && G.enemies.reduce((n, e) => n + (e.type === 'camillero'), 0) < 6) return 'camillero';
+  // Spidercam: solo en El Coloso, como mucho 2 a la vez
+  if (LV.id === 'lujo' && after(220) && r > .80 && r <= .84 && G.enemies.reduce((n, e) => n + (e.type === 'spidercam'), 0) < 2) return 'spidercam';
   if (after(150) && r < .2 * f) return 'central';
   if (t > 60 && r < .45) return 'extremo';
   return 'defensor';
@@ -1011,9 +1039,10 @@ function spawn(type, x, y, baseHp) {
     color: kitFor(type).shirt, num: d.nums.length ? d.nums[Math.random() * d.nums.length | 0] : 0, boss: !!d.boss,
     kx: 0, ky: 0, flash: 0, rcd: 0, cardCd: 1.5 + Math.random(), dead: false,
     skin: SKINS[Math.random() * SKINS.length | 0], hair: HAIRS[Math.random() * HAIRS.length | 0], phase: Math.random() * 6.28,
-    mode: 'run', mt: type === 'camillero' ? rnd(2, 3.5) : 0, L: CAM_MIN, ang: Math.atan2(G.p.y - y, G.p.x - x), diveCd: 0, ddx: 1, ddy: 0, acd: 2.5, buff: 0, still: false, aimLine: false,
+    mode: 'run', mt: type === 'camillero' ? rnd(2, 3.5) : 0, L: CAM_MIN, ang: Math.atan2(G.p.y - y, G.p.x - x), diveCd: 0, ddx: 1, ddy: 0, acd: 2.5, buff: 0, still: false, aimLine: false, fly: !!d.fly,
   });
   if (type === 'arquero' && !G.seenGk) { G.seenGk = true; banner('¡Cuidado: el arquero se te tira a los pies!'); }
+  if (type === 'spidercam' && !G.seenCamTV) { G.seenCamTV = true; banner('¡Baja la Spidercam: ojo con la sombra!'); }
   if (type === 'camillero' && !G.seenCam) { G.seenCam = true; banner('¡Entran los camilleros: ojo con la camilla!'); }
   if (type === 'central' && !G.seenBig) { G.seenBig = true; banner('¡Llegan los grandotes: cuidado con el pisotón!'); }
   if (type === 'arbitro' && !G.seenRef) { G.seenRef = true; banner('Los árbitros empiezan a revolear tarjetas'); sfx('whistle'); }
@@ -1033,6 +1062,22 @@ function spawning() {
   }
   if (!G.boss1 && t >= MATCH / 2) { G.boss1 = true; spawnBoss(LV.bosses[0]); sfx('whistle'); }
   if (!G.boss2 && t >= MATCH * 80 / 90) { G.boss2 = true; spawnBoss(LV.bosses[1]); }
+}
+function startInvader() {
+  // Cruza la cancha de lado a lado pasando por donde estás vos, en horizontal o en vertical
+  const p = G.p, L = -RUN + 16, R = FW + RUN - 16, T = -RUN + 16, B = FH + RUN - 16;
+  G.invaders++; G.invNext = G.t + rnd(20, 32);
+  let lane;
+  if (Math.random() < .6) {
+    const y = clamp(p.y, T + 20, B - 20), fromLeft = Math.random() < .5;
+    lane = { x0: fromLeft ? L : R, y0: y, x1: fromLeft ? R : L, y1: y };
+  } else {
+    const x = clamp(p.x, L + 20, R - 20), fromTop = Math.random() < .5;
+    lane = { x0: x, y0: fromTop ? T : B, x1: x, y1: fromTop ? B : T };
+  }
+  lane.t = lane.max = 1.3;
+  G.lane = lane;
+  banner('¡Un hincha se metió a la cancha!'); sfx('whistle');
 }
 function spawnBoss(type) { spawn(type); banner(BOSSES[type].intro); sfx('boss'); cheer = 2; }
 function spawnStep(dt) {
@@ -1132,8 +1177,9 @@ function fireWeapons(dt) {
   }
 }
 
+const GROUND = { barrida: 1, onda: 1, rondo: 1, codazo: 1 };   // técnicas a ras del piso: no llegan a lo que vuela
 function hitEnemy(e, dmg, kx, ky, src, exact) {
-  if (e.dead) return;
+  if (e.dead || (e.fly && GROUND[src])) return;
   if (e.yellow > 0) dmg *= 1.25;
   dmg = exact ? Math.ceil(dmg) : Math.max(1, Math.round(dmg * rnd(.9, 1.1)));   // exact: sin variación ni número flotante
   // Para las estadísticas cuenta el daño que de verdad le sacaste (no lo que sobra al voltearlo)
@@ -1141,7 +1187,7 @@ function hitEnemy(e, dmg, kx, ky, src, exact) {
   R.dmg[src] = (R.dmg[src] || 0) + real; R.hits[src] = (R.hits[src] || 0) + 1;
   if (dmg > R.maxHit) { R.maxHit = dmg; R.maxSrc = src; }
   e.hp -= dmg; e.flash = .1;
-  const kb = e.boss ? .12 : e.type === 'central' || e.type === 'camillero' ? .45 : 1;
+  const kb = e.boss || e.type === 'hincha' ? .12 : e.type === 'central' || e.type === 'camillero' || e.fly ? .45 : 1;
   e.kx += kx * kb; e.ky += ky * kb;
   if (!exact && G.texts.length < 70) G.texts.push({ x: e.x + rnd(-5, 5), y: e.y - e.r, txt: dmg, life: .6, big: dmg >= 60 });
   sfx('hit');
@@ -1157,6 +1203,7 @@ function kill(e) {
     for (const g of G.gems) g.pull = true;
     banner(BOSSES[e.type].beat); cheer = 3;
   } else gem(e.x, e.y, e.xp);
+  if (e.type === 'hincha') { banner('¡Seguridad se lleva al hincha!'); cheer = 2; }
 }
 function codazo(e, ux, uy) {
   // ux, uy: del rival hacia vos. El codazo lo manda para el otro lado.
@@ -1290,7 +1337,7 @@ function updateEnemies(dt) {
       if (e.dead) continue;
     }
     // Mareado: camina sin rumbo, más lento, y no usa sus ataques especiales
-    const dz = e.dizzy > 0;
+    const dz = e.dizzy > 0 && !e.fly && e.type !== 'hincha';
     if (dz) { e.dizzy -= dt; const a = e.phase + G.t * 2.5; ux = Math.cos(a); uy = Math.sin(a); sp *= .45; }
     if (!dz && e.type === 'arbitro') {
       const k = reach(300);
@@ -1309,6 +1356,27 @@ function updateEnemies(dt) {
       else if (e.mode === 'aim') { sp = 0; e.mt -= dt; if (e.mt <= 0) { e.mode = 'dive'; e.mt = .42; e.ddx = ux; e.ddy = uy; sfx('dive'); } }
       else if (e.mode === 'dive') { ux = e.ddx; uy = e.ddy; sp = 580; e.mt -= dt; if (e.mt <= 0) { e.mode = 'down'; e.mt = .9; } }
       else if (e.mode === 'down') { sp = 0; e.mt -= dt; if (e.mt <= 0) { e.mode = 'run'; e.diveCd = 1.2; } }
+    }
+    if (e.type === 'hincha') {
+      // Corre en línea recta por su franja; al llegar al otro lado se va (sin contar como volteado)
+      ux = e.ddx; uy = e.ddy; sp = e.speed;
+      if ((e.x - e.ex) * e.ddx + (e.y - e.ey) * e.ddy > -8) { e.dead = true; continue; }
+    }
+    if (e.type === 'spidercam') {
+      // Spidercam: flota cerca tuyo y cada tanto marca un círculo y baja de golpe
+      e.acd -= dt;
+      if (e.mode === 'run') {
+        if (d < 170) sp *= .25;
+        if (e.acd <= 0 && d < 520 && onScreen(e.x, e.y)) {
+          e.mode = 'drop'; e.mt = 1.1; e.tx = p.x; e.ty = p.y;
+          G.hazards.push({ kind: 'stomp', x: p.x, y: p.y, R: 80, t: 1.1, max: 1.1, dmg: e.dmg * 1.6 });
+        }
+      } else if (e.mode === 'drop') {
+        e.mt -= dt;
+        const tx = e.tx - e.x, ty = e.ty - e.y, td = Math.hypot(tx, ty);
+        if (td > 3) { ux = tx / td; uy = ty / td; sp = Math.min(600, td / Math.max(.08, e.mt - .25)); } else sp = 0;
+        if (e.mt <= 0) { e.mode = 'run'; e.acd = 3.2 + Math.random(); }
+      }
     }
     if (!dz && e.type === 'camillero') {
       // Camilleros: giran despacio hacia vos, avisan (la lona titila) y estiran la camilla para barrer; después la cierran
@@ -1354,7 +1422,7 @@ function updateEnemies(dt) {
     e.x += (ux * sp + e.kx) * dt; e.y += (uy * sp + e.ky) * dt;
     e.kx *= decay; e.ky *= decay;
     e.flash -= dt; e.rcd -= dt; e.tcd = (e.tcd || 0) - dt;
-    if (e.type !== 'camillero' && d < e.r + p.r - 2) {
+    if (e.type !== 'camillero' && !e.fly && d < e.r + p.r - 2) {   // la Spidercam vuela: no choca
       if (p.inv <= 0) hurt(e.mode === 'dive' || e.mode === 'charge' ? e.dmg * 1.6 : e.dmg);
       codazo(e, dx / d, dy / d);
     }
@@ -1369,14 +1437,14 @@ function updateEnemies(dt) {
         }
       }
     }
-    if (!e.boss && d > 1500) [e.x, e.y] = ringPos();
+    if (!e.boss && e.type !== 'hincha' && d > 1500) [e.x, e.y] = ringPos();
   }
 
   // Separación: que no se apilen todos en un mismo punto
   grid.clear();
   const C = 36;
   for (let i = 0; i < E.length; i++) {
-    const e = E[i]; if (e.dead) continue;
+    const e = E[i]; if (e.dead || e.fly) continue;   // lo que vuela no empuja ni es empujado
     const k = (Math.floor(e.x / C) + 500) * 4096 + (Math.floor(e.y / C) + 500);
     let a = grid.get(k); if (!a) { a = []; grid.set(k, a); } a.push(i);
   }
@@ -1391,7 +1459,7 @@ function updateEnemies(dt) {
         const m = e.r + o.r, d2 = dx * dx + dy * dy;
         if (d2 < m * m && d2 > .0001) {
           const d = Math.sqrt(d2), push = (m - d) * .5; dx /= d; dy /= d;
-          const we = e.boss ? .1 : 1, wo = o.boss ? .1 : 1;
+          const we = e.boss || e.type === 'hincha' ? .1 : 1, wo = o.boss || o.type === 'hincha' ? .1 : 1;
           e.x -= dx * push * we; e.y -= dy * push * we; o.x += dx * push * wo; o.y += dy * push * wo;
         }
       }
@@ -2262,15 +2330,40 @@ function drawCamilla(e) {
       shirt: fl ? LV.flash : K.shirt, sleeve: fl ? LV.flash : K.sleeve, shorts: K.shorts, skin: e.skin, hair: e.hair });
   }
 }
+function drawSpidercam(e) {
+  const L = -RUN, R = FW + RUN, T = -RUN, B = FH + RUN;
+  const alt = e.mode === 'drop' ? 38 * clamp((e.mt - .1) / .9, 0, 1) : 38;   // baja hasta el piso cuando ataca
+  const cx = e.x, cy = e.y - alt, fl = e.flash > 0;
+  ctx.strokeStyle = 'rgba(15,18,24,.4)'; ctx.lineWidth = 1.2; ctx.beginPath();
+  for (const [x, y] of [[L - 250, T - 250], [R + 250, T - 250], [L - 250, B + 250], [R + 250, B + 250]]) { ctx.moveTo(cx, cy); ctx.lineTo(x, y); }
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(e.x, e.y, 15, 8, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = fl ? LV.flash : '#2b2f36'; ctx.fillRect(cx - 14, cy - 10, 28, 20);
+  ctx.fillStyle = '#4a5160'; ctx.fillRect(cx - 19, cy - 4, 5, 8); ctx.fillRect(cx + 14, cy - 4, 5, 8);
+  ctx.fillStyle = '#0c0f14'; ctx.beginPath(); ctx.arc(cx, cy + 4, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#7cc4ff'; ctx.beginPath(); ctx.arc(cx - 1.5, cy + 2.5, 2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = Math.floor(G.t * 4) % 2 ? '#ff3b30' : '#7a1d18'; ctx.fillRect(cx + 8, cy - 8, 3, 3);
+  if (e.hp < e.maxHp) {
+    ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(cx - 16, cy - 17, 32, 4);
+    ctx.fillStyle = '#ffb627'; ctx.fillRect(cx - 16, cy - 17, 32 * Math.max(0, e.hp / e.maxHp), 4);
+  }
+}
 function drawFoe(e) {
   if (e.type === 'camillero') { drawCamilla(e); return; }
+  if (e.type === 'spidercam') { drawSpidercam(e); return; }
+  if (e.type === 'hincha') {
+    // El guardia de seguridad lo persigue de atrás
+    const gx = e.x - e.ddx * 46, gy = e.y - e.ddy * 46, K = KITS.guardia;
+    shadow(gx, gy, 13);
+    drawPerson(gx, gy, 13, Math.atan2(e.ddy, e.ddx), G.t * 40 + 1, { shirt: K.shirt, sleeve: K.sleeve, shorts: K.shorts, skin: '#b97d55', hair: '#111111' });
+  }
   shadow(e.x, e.y, e.r);
   const K = kitFor(e.type), still = e.still;
-  const useDir = e.mode === 'dive' || e.mode === 'down' || e.mode === 'charge' || e.mode === 'aimCharge' || (e.mode === 'cast' && e.aimLine);
+  const useDir = e.type === 'hincha' || e.mode === 'dive' || e.mode === 'down' || e.mode === 'charge' || e.mode === 'aimCharge' || (e.mode === 'cast' && e.aimLine);
   const ang = useDir ? Math.atan2(e.ddy, e.ddx) : Math.atan2(G.p.y - e.y, G.p.x - e.x);
   const fl = e.flash > 0, fc = LV.flash;
   if (e.buff > 0) { ctx.strokeStyle = 'rgba(255,211,77,.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 5, 0, Math.PI * 2); ctx.stroke(); }
-  drawPerson(e.x, e.y, e.r, ang, still ? 0 : G.t * e.speed * .09 + e.phase, {
+  drawPerson(e.x, e.y, e.r, ang, still ? 0 : G.t * Math.min(e.speed, 300) * .09 + e.phase, {
     shirt: fl ? fc : K.shirt, sleeve: fl ? fc : (K.sleeve === 'skin' ? e.skin : K.sleeve), stripe: fl ? null : K.stripe, shorts: K.shorts,
     boots: K.boots, skin: e.skin, hair: e.hair, gloves: K.gloves, dive: e.mode === 'dive' || e.mode === 'down', band: e.boss,
   });
@@ -2390,6 +2483,18 @@ function render() {
   }
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   for (const h of G.hazards) if (vis(h.x, h.y, 200)) drawHazard(h);
+  if (G.lane) {
+    const Ln = G.lane, ang = Math.atan2(Ln.y1 - Ln.y0, Ln.x1 - Ln.x0), len = Math.hypot(Ln.x1 - Ln.x0, Ln.y1 - Ln.y0);
+    const blink = Math.floor(Ln.t * 8) % 2 === 0;
+    ctx.save(); ctx.translate(Ln.x0, Ln.y0); ctx.rotate(ang);
+    ctx.fillStyle = blink ? 'rgba(255,90,74,.22)' : 'rgba(255,90,74,.12)'; ctx.fillRect(0, -26, len, 52);
+    ctx.strokeStyle = 'rgba(255,90,74,.8)'; ctx.lineWidth = 2; ctx.setLineDash([16, 10]); ctx.strokeRect(0, -26, len, 52); ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,90,74,.55)';
+    for (let x = 60; x < len; x += 140) { ctx.beginPath(); ctx.moveTo(x, -12); ctx.lineTo(x + 18, 0); ctx.lineTo(x, 12); ctx.closePath(); ctx.fill(); }
+    ctx.restore();
+    ctx.font = '700 34px Teko, "Arial Narrow", sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.75)';
+    ctx.strokeText('!', Ln.x0, Ln.y0); ctx.fillStyle = '#ffd34d'; ctx.fillText('!', Ln.x0, Ln.y0);
+  }
   for (const e of G.enemies) if (e.boss && vis(e.x, e.y, 700)) drawBossTell(e);
   for (const r of G.rings) {
     const t = 1 - r.life / r.max, rad = r.R * (.3 + .7 * t), rc = r.col || '240,244,232';
@@ -2408,7 +2513,7 @@ function render() {
   }
 
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  for (const e of G.enemies) if (vis(e.x, e.y, 60)) drawFoe(e);
+  for (const e of G.enemies) if (!e.fly && vis(e.x, e.y, 60)) drawFoe(e);
 
   for (const c of G.cards) {
     ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.rot);
@@ -2440,6 +2545,7 @@ function render() {
   if (G.rondoBalls) { const r = 9 * G.stats.area; for (const b of G.rondoBalls) drawBall(b[0], b[1], r, G.rondoAng * 3); }
 
   drawPlayer(p);
+  for (const e of G.enemies) if (e.fly && vis(e.x, e.y, 80)) drawFoe(e);
   if (state === 'resume') {
     // Aro que se vacía mientras dura la espera después de elegir una mejora
     const k = clamp((resumeAt - performance.now()) / RESUME_MS, 0, 1);

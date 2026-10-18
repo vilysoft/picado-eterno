@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.18 · 18 oct 2026
+
+- **Rivales:** Hincha invasor en La Cancha del Club: desde el minuto 60, como mucho 2 veces por partido, un hincha salta a la cancha y la cruza a toda velocidad perseguido por un guardia. Antes de entrar se marca su franja en el piso. Si te agarra, pega fuerte; si lo volteás, deja muchas gemas.
+- **Rivales:** Spidercam en El Coloso: la cámara aérea flota sobre la cancha colgada de cables, no choca, y cada tanto marca un círculo y baja de golpe. Solo la alcanzan los remates (Pelota, Tiro libre y Tres dedos); barrida, rondo y codazo no llegan.
+
 ## 2.17 · 17 oct 2026
 
 - **Técnicas:** Rondo más fuerte desde el arranque: empieza con 3 pelotas en vez de 2 y hace 20% más de daño.
