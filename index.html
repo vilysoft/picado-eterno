@@ -638,6 +638,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.24', date: '18 oct 2026', items: [
+    ['Rivales', 'En El Potrero cambia el orden: los grandotes llegan primero (desde el minuto 7) y los arqueros después (desde el minuto 22).'],
+  ] },
   { v: '2.23', date: '18 oct 2026', items: [
     ['Rivales', 'Te aprieta la barra en El Potrero: desde el minuto 60, como mucho 2 veces por partido y con al menos 10 minutos entre una y otra, entra un grupo de hinchas con gorros que te viene a buscar corriendo. Son débiles, pero son muchos y llegan rápido. Cada uno deja 3 gemas.'],
   ] },
@@ -1151,11 +1154,12 @@ function pickType(t) {
   const f = LV.id === 'potrero' ? .75 : 1;
   if (after(240) && r < .07 * f) return 'arbitro';
   // Arqueros: en esas canchas ya salían desde el arranque, así que tardan un 25% más que en El Potrero (36 s → 45 s)
-  if ((LV.id === 'potrero' ? t > 45 : G.t > 1.25 * 45 / PACE) && r > 1 - .1 * f) return 'arquero';
+  // En El Potrero el orden va al revés: primero los grandotes (minuto 7) y después los arqueros (minuto 22)
+  if ((LV.id === 'potrero' ? t > 150 : G.t > 1.25 * 45 / PACE) && r > 1 - .1 * f) return 'arquero';
   if (LV.id !== 'potrero' && after(110) && r > .84 && G.enemies.reduce((n, e) => n + (e.type === 'camillero'), 0) < 6) return 'camillero';
   // Spidercam: solo en El Coloso, como mucho 2 a la vez
   if (LV.id === 'lujo' && after(220) && r > .808 && r <= .84 && G.enemies.reduce((n, e) => n + (e.type === 'spidercam'), 0) < 2) return 'spidercam';
-  if (after(150) && r < .2 * f) return 'central';
+  if ((LV.id === 'potrero' ? t > 45 : after(150)) && r < .2 * f) return 'central';
   if (t > 60 && r < .45) return 'extremo';
   return 'defensor';
 }

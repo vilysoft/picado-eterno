@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.24 · 18 oct 2026
+
+- **Rivales:** En El Potrero cambia el orden: los grandotes llegan primero (desde el minuto 7) y los arqueros después (desde el minuto 22).
+
 ## 2.23 · 18 oct 2026
 
 - **Rivales:** Te aprieta la barra en El Potrero: desde el minuto 60, como mucho 2 veces por partido y con al menos 10 minutos entre una y otra, entra un grupo de hinchas con gorros que te viene a buscar corriendo. Son débiles, pero son muchos y llegan rápido. Cada uno deja 3 gemas.
