@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.21 · 18 oct 2026
+
+- **Menú:** El botón ♪ Música está arriba de todo en el menú. La música arranca apagada y se prende con ese botón.
+
 ## 2.20 · 18 oct 2026
 
 - **Sonido:** Música en el menú y en el vestuario: un tema en loop estilo 16 bits, con batería marcada. Se apaga al empezar el partido y se puede silenciar con el botón Música del menú.

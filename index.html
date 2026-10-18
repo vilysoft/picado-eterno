@@ -98,6 +98,10 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
 .ficha dt{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .ficha dd{margin:2px 0 0;font-size:17px}
 .ficha.stats dd{font-family:var(--display);font-size:34px;line-height:1;color:var(--led);font-variant-numeric:tabular-nums}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}
+.topbar .eyebrow{margin:0}
+.btn.music{flex:none;padding:6px 14px;font-size:14px}
+.btn.music[aria-pressed="true"]{border-color:var(--led);color:var(--led)}
 .actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px}
 .best{color:var(--muted);font-size:16px;margin:0}
 .btn{font-family:var(--display);font-size:26px;font-weight:600;line-height:1;padding:12px 22px 7px;border:0;border-radius:4px;background:var(--led);color:#1a1205;cursor:pointer;text-transform:uppercase;letter-spacing:.03em}
@@ -194,7 +198,10 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
 
 <div id="start" class="overlay">
   <div class="panel">
-    <p class="eyebrow">Fútbol de supervivencia · 1 jugador</p>
+    <div class="topbar">
+      <p class="eyebrow">Fútbol de supervivencia · 1 jugador</p>
+      <button id="btnMusic" class="btn ghost small music" type="button" aria-pressed="false">♪ Música: no</button>
+    </div>
     <h1>Picado<br><em>Eterno</em></h1>
     <p class="lede">Sos el 10 y te viene encima el equipo rival entero, y después otro, y otro más. La pelota la patea tu talento solo: vos corré, juntá experiencia y elegí mejoras. Aguantá los 90 minutos.</p>
     <p class="eyebrow">Elegí tu jugador</p>
@@ -211,7 +218,6 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
       <button id="btnStart" class="btn" type="button">Sacar del medio</button>
       <button id="btnStartShop" class="btn ghost" type="button">Vestuario</button>
       <button id="btnLog" class="btn ghost" type="button">Changelog</button>
-      <button id="btnMusic" class="btn ghost" type="button">Música: sí</button>
       <p id="bestLine" class="best"></p>
     </div>
   </div>
@@ -366,7 +372,7 @@ function sfx(n) {
 // ---------- Música del menú ----------
 // Loop de 8 compases a 130 BPM en Fa# mayor, armado en vivo con Web Audio (estilo 16 bits).
 // Cada compás arranca con un tresillo 3+3+2; la segunda vuelta suma el arpegio y un redoble al final.
-const MUS = { on: true, playing: false, step: 0, next: 0, bus: null, timer: 0 };
+const MUS = { on: false, playing: false, step: 0, next: 0, bus: null, timer: 0 };
 const SIXT = 60 / 130 / 4;
 const mf = m => 440 * Math.pow(2, (m - 69) / 12);
 // [paso, nota MIDI, largo en semicorcheas]
@@ -629,6 +635,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.21', date: '18 oct 2026', items: [
+    ['Menú', 'El botón ♪ Música está arriba de todo en el menú. La música arranca apagada y se prende con ese botón.'],
+  ] },
   { v: '2.20', date: '18 oct 2026', items: [
     ['Sonido', 'Música en el menú y en el vestuario: un tema en loop estilo 16 bits, con batería marcada. Se apaga al empezar el partido y se puede silenciar con el botón Música del menú.'],
   ] },
@@ -751,7 +760,7 @@ function loadSave() {
   const out = { tokens: 0, perm: {}, unlocked: 1, best: {}, last: 0, chars: {}, char: 'diez' };
   try {
     const s = JSON.parse(localStorage.getItem(SAVE_KEY));
-    if (s && typeof s.tokens === 'number') Object.assign(out, { tokens: s.tokens, perm: s.perm || {}, unlocked: s.unlocked || 1, best: s.best || {}, last: s.last || 0, chars: s.chars || {}, char: s.char || 'diez', music: s.music !== false });
+    if (s && typeof s.tokens === 'number') Object.assign(out, { tokens: s.tokens, perm: s.perm || {}, unlocked: s.unlocked || 1, best: s.best || {}, last: s.last || 0, chars: s.chars || {}, char: s.char || 'diez' });
   } catch (e) {}
   // El récord viejo (de antes de las canchas) pasa a El Potrero, que tiene la misma dificultad
   if (!out.best.potrero) {
@@ -905,10 +914,11 @@ $('btnAgain').addEventListener('click', startGame);
 $('btnPause').addEventListener('click', togglePause);
 $('btnResume').addEventListener('click', togglePause);
 $('btnMute').addEventListener('click', () => { muted = !muted; $('btnMute').textContent = 'Sonido: ' + (muted ? 'no' : 'sí'); });
-MUS.on = SAVE.music !== false;
-const musicLabel = () => { $('btnMusic').textContent = 'Música: ' + (MUS.on ? 'sí' : 'no'); };
+// La música arranca apagada: los navegadores no dejan sonar nada hasta que tocás algo, así que la prende el jugador
+MUS.on = false;
+const musicLabel = () => { $('btnMusic').textContent = '♪ Música: ' + (MUS.on ? 'sí' : 'no'); $('btnMusic').setAttribute('aria-pressed', MUS.on); };
 musicLabel();
-$('btnMusic').addEventListener('click', () => { MUS.on = !MUS.on; SAVE.music = MUS.on; persist(); musicLabel(); });
+$('btnMusic').addEventListener('click', () => { MUS.on = !MUS.on; if (MUS.on && muted) { muted = false; $('btnMute').textContent = 'Sonido: sí'; } musicLabel(); });
 $('btnQuit').addEventListener('click', () => { if (state === 'pause') endScreen(false); });
 $('btnShop').addEventListener('click', openShop);
 $('btnStartShop').addEventListener('click', openShop);
