@@ -211,6 +211,7 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
       <button id="btnStart" class="btn" type="button">Sacar del medio</button>
       <button id="btnStartShop" class="btn ghost" type="button">Vestuario</button>
       <button id="btnLog" class="btn ghost" type="button">Changelog</button>
+      <button id="btnMusic" class="btn ghost" type="button">Música: sí</button>
       <p id="bestLine" class="best"></p>
     </div>
   </div>
@@ -361,6 +362,104 @@ function sfx(n) {
     case 'whistle': tone(2100, 2300, .22, 'sine', .06); tone(2100, 2350, .4, 'sine', .06, .28); break;
   }
 }
+
+// ---------- Música del menú ----------
+// Loop de 8 compases a 130 BPM en Fa# mayor, armado en vivo con Web Audio (estilo 16 bits).
+// Cada compás arranca con un tresillo 3+3+2; la segunda vuelta suma el arpegio y un redoble al final.
+const MUS = { on: true, playing: false, step: 0, next: 0, bus: null, timer: 0 };
+const SIXT = 60 / 130 / 4;
+const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+// [paso, nota MIDI, largo en semicorcheas]
+const MEL = [
+  [[0, 66, 3], [3, 66, 3], [6, 66, 2], [8, 70, 2], [10, 73, 2], [12, 71, 2], [14, 73, 2]],
+  [[0, 75, 3], [3, 75, 3], [6, 74, 2], [8, 75, 2], [10, 73, 2], [12, 75, 4]],
+  [[0, 66, 3], [3, 66, 3], [6, 66, 2], [8, 70, 6], [14, 71, 2]],
+  [[0, 65, 3], [3, 65, 3], [6, 65, 10]],
+];
+const CHORD = [[42, 66, 70, 73], [47, 71, 75, 78], [42, 66, 70, 73], [49, 73, 77, 80]];   // F#, B, F#, C#
+let pulseWave = null;
+function musicBus() {
+  if (MUS.bus) return MUS.bus;
+  const master = AC.createGain(); master.gain.value = 0;
+  const comp = AC.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
+  master.connect(comp).connect(AC.destination);
+  const echo = AC.createDelay(1), fb = AC.createGain(), wet = AC.createGain();
+  echo.delayTime.value = SIXT * 3; fb.gain.value = .32; wet.gain.value = .35;
+  echo.connect(fb).connect(echo); echo.connect(wet).connect(master);
+  const noise = AC.createBuffer(1, AC.sampleRate * .3, AC.sampleRate), nd = noise.getChannelData(0);
+  for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  const n = 32, re = new Float32Array(n), im = new Float32Array(n);
+  for (let k = 1; k < n; k++) im[k] = 2 / (k * Math.PI) * Math.sin(k * Math.PI * .25);   // pulso al 25%
+  pulseWave = AC.createPeriodicWave(re, im);
+  return MUS.bus = { master, echo, noise };
+}
+function fm(t, f, dur, vol, ratio, index, dest, echo) {
+  const c = AC.createOscillator(), m = AC.createOscillator(), mg = AC.createGain(), g = AC.createGain();
+  c.frequency.value = f; m.frequency.value = f * ratio;
+  mg.gain.setValueAtTime(f * index, t); mg.gain.exponentialRampToValueAtTime(f * index * .15, t + dur);
+  m.connect(mg).connect(c.frequency);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .006);
+  g.gain.setTargetAtTime(vol * .55, t + .02, .08); g.gain.setTargetAtTime(0, t + dur * .92, .03);
+  c.connect(g); g.connect(dest); if (echo) g.connect(echo);
+  c.start(t); m.start(t); c.stop(t + dur + .2); m.stop(t + dur + .2);
+}
+function pulse(t, f, dur, vol, dest) {
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.setPeriodicWave(pulseWave); o.frequency.value = f;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g).connect(dest); o.start(t); o.stop(t + dur + .02);
+}
+function drum(t, kind, dest, noise) {
+  if (kind === 'k') {
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(45, t + .12);
+    g.gain.setValueAtTime(.55, t); g.gain.exponentialRampToValueAtTime(.001, t + .16);
+    o.connect(g).connect(dest); o.start(t); o.stop(t + .18); return;
+  }
+  const src = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+  src.buffer = noise;
+  const sn = kind === 's';
+  f.type = sn ? 'bandpass' : 'highpass'; f.frequency.value = sn ? 1800 : 7000; f.Q.value = sn ? .8 : .5;
+  const v = sn ? .32 : kind === 'H' ? .07 : .045, d = sn ? .14 : .035;
+  g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+  src.connect(f).connect(g).connect(dest); src.start(t); src.stop(t + d + .02);
+  if (sn) { const o = AC.createOscillator(), og = AC.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(140, t + .06);
+    og.gain.setValueAtTime(.12, t); og.gain.exponentialRampToValueAtTime(.001, t + .08); o.connect(og).connect(dest); o.start(t); o.stop(t + .1); }
+}
+function musicStep(i, t) {
+  const B = MUS.bus, bar = (i >> 4) & 3, pass = (i >> 6) & 1, s = i & 15, ch = CHORD[bar];
+  for (const [at, note, len] of MEL[bar]) if (at === s) {
+    fm(t, mf(note), len * SIXT, .2, 1, 2.2, B.master, B.echo);
+    fm(t, mf(note + 12), len * SIXT * .6, .035, 2, 1, B.master, null);   // brillo arriba
+  }
+  if (s % 2 === 0) fm(t, mf(ch[0] - 12 + (s % 4 ? 12 : 0)), SIXT * 1.7, .26, .5, 1.4, B.master, null);   // bajo en octavas
+  if (pass) pulse(t, mf(ch[1 + (s % 3)] + 12), SIXT * .9, .05, B.master);
+  if (s === 0 || s === 6 || s === 8 || (s === 14 && bar !== 3)) drum(t, 'k', B.master);
+  if (s === 4 || s === 12) drum(t, 's', B.master, B.noise);
+  if (pass && bar === 3 && s >= 13) drum(t, 's', B.master, B.noise);   // redoble antes de volver
+  if (s % 2 === 0) drum(t, s % 4 ? 'h' : 'H', B.master, B.noise);
+}
+function musicWanted() { return MUS.on && !muted && (state === 'menu' || state === 'shop' || state === 'changes'); }
+function musicTick() {
+  if (!AC || AC.state !== 'running') return;
+  const want = musicWanted(), now = AC.currentTime;
+  if (want && !MUS.playing) {
+    const B = musicBus(); MUS.playing = true; MUS.step = 0; MUS.next = now + .08;
+    B.master.gain.cancelScheduledValues(now); B.master.gain.setValueAtTime(B.master.gain.value, now); B.master.gain.linearRampToValueAtTime(.5, now + .4);
+  } else if (!want && MUS.playing) {
+    const g = MUS.bus.master.gain; MUS.playing = false;
+    g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(0, now + .35);
+  }
+  if (!MUS.playing) return;
+  if (MUS.next < now - .2) MUS.next = now + .05;   // volvimos de una pestaña dormida: retomar sin ráfaga
+  while (MUS.next < now + .15) { musicStep(MUS.step, MUS.next); MUS.step = (MUS.step + 1) % 128; MUS.next += SIXT; }
+}
+function audioUnlock() {
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+  if (AC && AC.state === 'suspended') AC.resume();
+  if (AC && !MUS.timer) MUS.timer = setInterval(musicTick, 30);
+}
+['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, audioUnlock, { capture: true }));
 
 // ---------- Datos del juego ----------
 const WEAPONS = {
@@ -530,6 +629,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.20', date: '18 oct 2026', items: [
+    ['Sonido', 'Música en el menú y en el vestuario: un tema en loop estilo 16 bits, con batería marcada. Se apaga al empezar el partido y se puede silenciar con el botón Música del menú.'],
+  ] },
   { v: '2.19', date: '18 oct 2026', items: [
     ['Canchas', 'La pausa de hidratación de El Coloso dura 6 segundos en vez de 3.'],
     ['Rivales', 'La Spidercam aparece un 20% menos seguido y se mueve un 20% más lento.'],
@@ -649,7 +751,7 @@ function loadSave() {
   const out = { tokens: 0, perm: {}, unlocked: 1, best: {}, last: 0, chars: {}, char: 'diez' };
   try {
     const s = JSON.parse(localStorage.getItem(SAVE_KEY));
-    if (s && typeof s.tokens === 'number') Object.assign(out, { tokens: s.tokens, perm: s.perm || {}, unlocked: s.unlocked || 1, best: s.best || {}, last: s.last || 0, chars: s.chars || {}, char: s.char || 'diez' });
+    if (s && typeof s.tokens === 'number') Object.assign(out, { tokens: s.tokens, perm: s.perm || {}, unlocked: s.unlocked || 1, best: s.best || {}, last: s.last || 0, chars: s.chars || {}, char: s.char || 'diez', music: s.music !== false });
   } catch (e) {}
   // El récord viejo (de antes de las canchas) pasa a El Potrero, que tiene la misma dificultad
   if (!out.best.potrero) {
@@ -803,6 +905,10 @@ $('btnAgain').addEventListener('click', startGame);
 $('btnPause').addEventListener('click', togglePause);
 $('btnResume').addEventListener('click', togglePause);
 $('btnMute').addEventListener('click', () => { muted = !muted; $('btnMute').textContent = 'Sonido: ' + (muted ? 'no' : 'sí'); });
+MUS.on = SAVE.music !== false;
+const musicLabel = () => { $('btnMusic').textContent = 'Música: ' + (MUS.on ? 'sí' : 'no'); };
+musicLabel();
+$('btnMusic').addEventListener('click', () => { MUS.on = !MUS.on; SAVE.music = MUS.on; persist(); musicLabel(); });
 $('btnQuit').addEventListener('click', () => { if (state === 'pause') endScreen(false); });
 $('btnShop').addEventListener('click', openShop);
 $('btnStartShop').addEventListener('click', openShop);
