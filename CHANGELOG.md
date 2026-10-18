@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.25 · 18 oct 2026
+
+- **Jefes:** El jefe del minuto 80 de El Potrero tiene un ataque nuevo cuando está golpeado: va hasta el alambrado, arranca un pedazo y te revolea escombros en abanico. El hueco en el alambrado queda hasta el final del partido.
+- **Dificultad:** En El Potrero salen un 10% menos de rivales, tanto en el goteo de siempre como en los contraataques.
+
 ## 2.24 · 18 oct 2026
 
 - **Rivales:** En El Potrero cambia el orden: los grandotes llegan primero (desde el minuto 7) y los arqueros después (desde el minuto 22).

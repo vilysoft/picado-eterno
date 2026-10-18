@@ -542,7 +542,7 @@ function checkCombos() {
 // Canchas: cada una con su escenario, su dificultad, su rival y sus dos jefes
 const LEVELS = [
   { id: 'potrero', name: 'El Potrero', desc: 'Tierra, alambrado y los vecinos mirando. La dificultad de siempre.',
-    head: 0, hp: 1, dmg: 1, rate: 1, reward: 1, stars: 1, bosses: ['dueno', 'tanque'],
+    head: 0, hp: 1, dmg: 1, rate: .9, wave: .9, reward: 1, stars: 1, bosses: ['dueno', 'tanque'],
     swatch: 'linear-gradient(90deg,#8a6642,#ab8a63)', flash: '#ffffff', dust: '#c9a77c',
     rival: { defensor: '#b48cff', extremo: '#e0ccff', central: '#7a45d6', shorts: '#1d1f1c' }, start: '¡Arranca el picado en el potrero!' },
   { id: 'club', name: 'La Cancha del Club', desc: 'Césped, tribunas llenas y un rival que viene más rápido y más fuerte.',
@@ -638,6 +638,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.25', date: '18 oct 2026', items: [
+    ['Jefes', 'El jefe del minuto 80 de El Potrero tiene un ataque nuevo cuando está golpeado: va hasta el alambrado, arranca un pedazo y te revolea escombros en abanico. El hueco en el alambrado queda hasta el final del partido.'],
+    ['Dificultad', 'En El Potrero salen un 10% menos de rivales, tanto en el goteo de siempre como en los contraataques.'],
+  ] },
   { v: '2.24', date: '18 oct 2026', items: [
     ['Rivales', 'En El Potrero cambia el orden: los grandotes llegan primero (desde el minuto 7) y los arqueros después (desde el minuto 22).'],
   ] },
@@ -809,7 +813,7 @@ function newGame() {
     bossKills: 0, free: 0, revives: 0, rerolls: 0, combos: {},
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '' },   // estadísticas del partido
     weapons: { pelota: 1 }, passives: {}, timers: { pelota: .4 }, rondoAng: 0, rondoBalls: null,
-    enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [],
+    enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [], fenceGaps: [],
     spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [],
   };
 }
@@ -1196,7 +1200,7 @@ function spawning() {
   const t = G.t, tt = ht();
   if (t >= G.nextWave) {
     G.nextWave += 60 / PACE;
-    const n = Math.round(Math.min(40, 14 + Math.floor(tt / 12)) * MOB_RATE), R = Math.hypot(viewW, viewH) / 2 + 30;
+    const n = Math.round(Math.min(40, 14 + Math.floor(tt / 12)) * MOB_RATE * (LV.wave || 1)), R = Math.hypot(viewW, viewH) / 2 + 30;
     for (let i = 0; i < n; i++) {
       const a = i / n * Math.PI * 2;
       let wx = G.p.x + Math.cos(a) * R, wy = G.p.y + Math.sin(a) * R;
@@ -1659,11 +1663,33 @@ function bossAI(e, d, ux, uy, sp, dt) {
       if (e.acd <= 0 && d < 640 && onScreen(e.x, e.y)) { e.mode = 'cast'; e.mt = .7; e.aimLine = true; e.acd = enr ? 1.9 : 2.6; }
       break;
     case 'tanque':  // mega pisotón si estás cerca, embestida si estás lejos
+      // Enojado: va al alambrado más cercano, arranca un pedazo y desde ahí te tira escombros
+      if (enr && !e.ripped) {
+        if (!e.rip) {
+          const L = -RUN + e.r, R = FW + RUN - e.r, T = -RUN + e.r, B = FH + RUN - e.r;
+          const opts = [{ side: 'T', x: e.x, y: T }, { side: 'B', x: e.x, y: B }, { side: 'L', x: L, y: e.y }, { side: 'R', x: R, y: e.y }];
+          e.rip = opts.reduce((a, o) => Math.hypot(o.x - e.x, o.y - e.y) < Math.hypot(a.x - e.x, a.y - e.y) ? o : a);
+          e.rip.x = clamp(e.rip.x, -RUN + 120, FW + RUN - 120); e.rip.y = clamp(e.rip.y, -RUN + 120, FH + RUN - 120);
+          if (e.rip.side === 'T') e.rip.y = T; if (e.rip.side === 'B') e.rip.y = B;
+          if (e.rip.side === 'L') e.rip.x = L; if (e.rip.side === 'R') e.rip.x = R;
+          banner('¡El Tanque se fue al alambrado!');
+        }
+        const tx = e.rip.x - e.x, ty = e.rip.y - e.y, td = Math.hypot(tx, ty);
+        if (td > 10) { e.ddx = tx / td; e.ddy = ty / td; return [e.ddx, e.ddy, 240]; }
+        e.ripped = true; e.acd = .9; e.throwNext = true;
+        G.fenceGaps.push({ side: e.rip.side, x: e.rip.x, y: e.rip.y, seed: Math.random() * 100 });
+        for (let i = 0; i < 26; i++) part(e.x + rnd(-40, 40), e.y + rnd(-40, 40), i % 2 ? '#c6cdd2' : '#7d858b');
+        if (!RM) G.shake = 12; sfx('stomp'); cheer = 2.5;
+        banner('¡Arrancó el alambrado!', true);
+      }
       if (enr) sp *= 1.2;
+      if (e.ripped && e.throwNext && e.acd <= 0 && d > 230 && d < 700 && onScreen(e.x, e.y)) {
+        e.mode = 'cast'; e.mt = .85; e.aimLine = true; e.acd = 1.8; e.throwNext = false; break;
+      }
       if (e.acd <= 0 && d < 230) {
         e.mode = 'cast'; e.mt = 1.05; e.aimLine = false; e.acd = 2.4;
         G.hazards.push({ kind: 'stomp', x: e.x, y: e.y, R: 190, t: 1.05, max: 1.05, dmg: e.dmg * 1.25 });
-      } else if (e.acd <= 0 && d > 330 && d < 750 && onScreen(e.x, e.y)) startCharge(e, .75, .8, 560, 1.8, 0);
+      } else if (e.acd <= 0 && d > 330 && d < 750 && onScreen(e.x, e.y)) { startCharge(e, .75, .8, 560, 1.8, 0); e.throwNext = true; }
       break;
     case 'capitan': // embiste en línea recta; golpeado, corre más y embiste más seguido
       if (enr) sp *= 1.25;
@@ -1714,6 +1740,10 @@ function bossCast(e, enr) {
     const n = enr ? 7 : 5;
     for (let i = 0; i < n; i++) foeShot(e.x, e.y, a + (i - (n - 1) / 2) * .17, 470, 9, e.dmg * .7);
     sfx('kick');
+  } else if (e.type === 'tanque') {
+    // Revolea pedazos de alambrado en abanico
+    for (let i = 0; i < 5; i++) foeShot(e.x, e.y, a + (i - 2) * .22, 430, 12, e.dmg * .4, 'scrap');
+    sfx('stomp');
   } else if (e.type === 'tecnico') {
     const n = enr ? 8 : 5;
     for (let i = 0; i < n; i++) { const b = i / n * Math.PI * 2; spawn(i % 2 ? 'extremo' : 'defensor', e.x + Math.cos(b) * 90, e.y + Math.sin(b) * 90); }
@@ -1723,8 +1753,8 @@ function bossCast(e, enr) {
     sfx('whistle');
   }
 }
-function foeShot(x, y, a, speed, r, dmg) {
-  G.foeShots.push({ x, y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, r, dmg, life: 2.4, rot: 0 });
+function foeShot(x, y, a, speed, r, dmg, k) {
+  G.foeShots.push({ x, y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, r, dmg, life: 2.4, rot: Math.random() * 6, k });
 }
 function updateFoeShots(dt) {
   const p = G.p;
@@ -2514,6 +2544,51 @@ function drawSpidercam(e) {
     ctx.fillStyle = '#ffb627'; ctx.fillRect(cx - 16, cy - 17, 32 * Math.max(0, e.hp / e.maxHp), 4);
   }
 }
+function meshRect(w, h) {
+  // Pedazo de alambrado romboidal visto desde arriba (centrado en 0,0)
+  ctx.fillStyle = 'rgba(40,44,48,.25)'; ctx.fillRect(-w / 2 + 3, -h / 2 + 3, w, h);
+  ctx.save(); ctx.beginPath(); ctx.rect(-w / 2, -h / 2, w, h); ctx.clip();
+  ctx.strokeStyle = 'rgba(214,220,224,.95)'; ctx.lineWidth = 1.1; ctx.beginPath();
+  for (let k = -h; k < w + h; k += 6) { ctx.moveTo(-w / 2 + k, -h / 2); ctx.lineTo(-w / 2 + k - h, h / 2); ctx.moveTo(-w / 2 + k - h, -h / 2); ctx.lineTo(-w / 2 + k, h / 2); }
+  ctx.stroke(); ctx.restore();
+  ctx.strokeStyle = '#9aa1a6'; ctx.lineWidth = 2; ctx.strokeRect(-w / 2, -h / 2, w, h);
+}
+function drawScrap(s) {
+  ctx.strokeStyle = 'rgba(255,90,74,.4)'; ctx.lineWidth = s.r * 1.2; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(s.x - s.vx * .06, s.y - s.vy * .06); ctx.lineTo(s.x, s.y); ctx.stroke();
+  ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.rot * .6);
+  meshRect(s.r * 2, s.r * 1.4);
+  ctx.fillStyle = '#6b7277'; ctx.fillRect(-s.r, -2, 4, 4);
+  ctx.restore();
+  ctx.strokeStyle = '#ff5a4a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s.x, s.y, s.r + 3, 0, Math.PI * 2); ctx.stroke();
+}
+function drawFenceGaps() {
+  // Huecos que dejó El Tanque: sin malla, alambre colgando, un poste caído y escombros en el piso
+  for (const g of G.fenceGaps) {
+    const W = 150, horiz = g.side === 'T' || g.side === 'B';
+    const out = g.side === 'T' || g.side === 'L' ? -1 : 1;
+    const ex = horiz ? g.x : (g.side === 'L' ? -RUN : FW + RUN), ey = horiz ? (g.side === 'T' ? -RUN : FH + RUN) : g.y;
+    ctx.save(); ctx.translate(ex, ey); if (!horiz) ctx.rotate(Math.PI / 2 * (g.side === 'L' ? -1 : 1)); else if (out < 0) ctx.rotate(Math.PI);
+    // ahora "afuera" es +y y la línea del alambrado es y = 0
+    ctx.fillStyle = '#6c7243'; ctx.fillRect(-W / 2, -2, W, 13);
+    let h = g.seed;
+    const rr = () => { h = (h * 9301 + 49297) % 233280; return h / 233280; };
+    ctx.strokeStyle = 'rgba(214,220,224,.9)'; ctx.lineWidth = 1.2;
+    for (const sx of [-1, 1]) for (let k = 0; k < 4; k++) {
+      ctx.beginPath(); ctx.moveTo(sx * W / 2, k * 3); ctx.quadraticCurveTo(sx * (W / 2 - 18 - rr() * 14), k * 3 - 14 - rr() * 16, sx * (W / 2 - 26 - rr() * 22), -4 - rr() * 18); ctx.stroke();
+    }
+    ctx.fillStyle = '#9aa1a6'; for (const sx of [-1, 1]) ctx.fillRect(sx * W / 2 - 4, -4, 8, 8);
+    // poste caído hacia adentro de la cancha
+    ctx.save(); ctx.translate(-10 + rr() * 20, -30); ctx.rotate(.35 + rr() * .5);
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(-34, 2, 70, 7); ctx.fillStyle = '#8b9297'; ctx.fillRect(-36, -3, 72, 6);
+    ctx.restore();
+    // paneles y escombros tirados
+    for (let i = 0; i < 3; i++) { ctx.save(); ctx.translate(-50 + i * 50 + rr() * 16, -46 - rr() * 40); ctx.rotate(rr() * 3); meshRect(26 + rr() * 14, 16 + rr() * 8); ctx.restore(); }
+    ctx.fillStyle = '#7d858b';
+    for (let i = 0; i < 12; i++) ctx.fillRect(-70 + rr() * 140, -10 - rr() * 70, 3 + rr() * 4, 2 + rr() * 3);
+    ctx.restore();
+  }
+}
 function drawFoe(e) {
   if (e.type === 'camillero') { drawCamilla(e); return; }
   if (e.type === 'spidercam') { drawSpidercam(e); return; }
@@ -2533,6 +2608,13 @@ function drawFoe(e) {
     shirt: fl ? fc : K.shirt, sleeve: fl ? fc : (K.sleeve === 'skin' ? e.skin : K.sleeve), stripe: fl ? null : K.stripe, shorts: K.shorts,
     boots: K.boots, skin: e.skin, hair: e.hair, hat: e.hat, gloves: K.gloves, dive: e.mode === 'dive' || e.mode === 'down', band: e.boss,
   });
+  if (e.type === 'tanque' && e.ripped) {
+    // lleva el pedazo de alambrado; lo levanta cuando apunta para tirarlo
+    const up = e.mode === 'cast';
+    ctx.save(); ctx.translate(e.x + Math.cos(ang) * (e.r * (up ? .2 : .95)), e.y + Math.sin(ang) * (e.r * (up ? .2 : .95))); ctx.rotate(ang + Math.PI / 2);
+    if (up) ctx.scale(1.15, 1.15);
+    meshRect(e.r * 2.1, e.r * .55); ctx.restore();
+  }
   if (e.yellow > 0) {
     const yy = e.boss ? e.y - e.r - 46 : e.y - e.r - 14;
     ctx.fillStyle = '#ffd34d'; ctx.fillRect(e.x + e.r * .5, yy - 6, 7, 10);
@@ -2679,6 +2761,7 @@ function render() {
   }
 
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (G.fenceGaps.length) drawFenceGaps();
   for (const e of G.enemies) if (!e.fly && vis(e.x, e.y, 60)) drawFoe(e);
 
   for (const c of G.cards) {
@@ -2690,6 +2773,7 @@ function render() {
   }
 
   for (const s of G.foeShots) {
+    if (s.k === 'scrap') { drawScrap(s); continue; }
     ctx.strokeStyle = 'rgba(255,90,74,.45)'; ctx.lineWidth = s.r * 1.3; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(s.x - s.vx * .07, s.y - s.vy * .07); ctx.lineTo(s.x, s.y); ctx.stroke();
     drawBall(s.x, s.y, s.r, s.rot);
