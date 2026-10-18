@@ -371,9 +371,10 @@ const WEAPONS = {
   rondo: { name: 'Rondo', max: 5, desc: [
     'Dos pelotas giran a tu alrededor y golpean a quien se acerque.',
     '+1 pelota girando.', '+35% de daño.', '+1 pelota y giran más rápido.', '+1 pelota y +35% de daño.'] },
-  barrida: { name: 'Barrida', max: 5, desc: [
+  barrida: { name: 'Barrida', max: 6, desc: [
     'Cada pocos segundos barrés en círculo: daña y empuja a los rivales cercanos.',
-    '+30% de área.', '+40% de daño.', '25% menos de espera entre barridas.', '+30% de área y +40% de daño.'] },
+    '+30% de área.', '+40% de daño.', '25% menos de espera entre barridas.', '+30% de área y +40% de daño.',
+    'Onda expansiva: medio segundo después de cada barrida sale una segunda onda, 40% más grande, con el 60% del daño.'] },
   tiroLibre: { name: 'Tiro libre', max: 5, desc: [
     'Un remate apuntado al rival más cercano: le pega y sigue derecho atravesando a todos.',
     '+50% de daño.', 'Rematás 2 pelotas en abanico.', '25% menos de espera entre remates.', 'Rematás 3 pelotas y +50% de daño.'] },
@@ -498,7 +499,7 @@ function wp(k, l) {
   switch (k) {
     case 'pelota': return { count: 1 + (l >= 3) + (l >= 5), bounces: 2 + (l >= 2) + (l >= 6 ? 2 : 0), dmg: 12 * (l >= 4 ? 1.4 : 1) * (l >= 6 ? 1.4 : 1), cd: 1.15, speed: 470 };
     case 'rondo': return { count: 2 + (l >= 2) + (l >= 4) + (l >= 5), dmg: 9 * (l >= 3 ? 1.35 : 1) * (l >= 5 ? 1.35 : 1), spin: 3 + (l >= 4 ? 1.3 : 0), R: 78 };
-    case 'barrida': return { R: 95 * (l >= 2 ? 1.3 : 1) * (l >= 5 ? 1.3 : 1), dmg: 18 * (l >= 3 ? 1.4 : 1) * (l >= 5 ? 1.4 : 1), cd: 3.2 * (l >= 4 ? .75 : 1) };
+    case 'barrida': return { R: 114 * (l >= 2 ? 1.3 : 1) * (l >= 5 ? 1.3 : 1), dmg: 18 * (l >= 3 ? 1.4 : 1) * (l >= 5 ? 1.4 : 1), cd: 2.56 * (l >= 4 ? .75 : 1), shock: l >= 6 };
     case 'tresDedos': return { dmg: 20 * (l >= 2 ? 1.4 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 3 ? 2 : 1, cd: 1.9 * (l >= 4 ? .75 : 1), speed: 620, straight: 190, life: l >= 5 ? 1.6 : 1.25 };
     case 'tiroLibre': return { dmg: 24 * (l >= 2 ? 1.5 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 5 ? 3 : l >= 3 ? 2 : 1, cd: 2.6 * (l >= 4 ? .75 : 1), speed: 720 };
   }
@@ -523,6 +524,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.16', date: '17 oct 2026', items: [
+    ['Técnicas', 'Barrida más fuerte desde el arranque: 20% más de área y 20% menos de espera entre barridas.'],
+    ['Técnicas', 'Barrida tiene un nivel 6, Onda expansiva: medio segundo después de cada barrida sale una segunda onda desde el mismo lugar, 40% más grande y con el 60% del daño.'],
+  ] },
   { v: '2.15', date: '17 oct 2026', items: [
     ['Dificultad', 'El Potrero es más fácil: la vida de los rivales crece un 25% más lento (un defensor llega al minuto 90 con 59 de vida en vez de 74) y los árbitros, arqueros y grandotes salen un 25% menos seguido.'],
     ['Combos', 'La roja de Doble amarilla le pega a los jefes un 30% menos (×2,8 el daño del remate en vez de ×4).'],
@@ -659,7 +664,7 @@ function newGame() {
     bossKills: 0, free: 0, revives: 0, rerolls: 0, combos: {},
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '' },   // estadísticas del partido
     weapons: { pelota: 1 }, passives: {}, timers: { pelota: .4 }, rondoAng: 0, rondoBalls: null,
-    enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [],
+    enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [],
     spawnAcc: 0, nextWave: 60 / PACE, hydra: 0, hydraDone: {}, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [],
   };
 }
@@ -1052,6 +1057,19 @@ function nearestList(x, y, n, maxD) {
 
 function fireWeapons(dt) {
   const S = G.stats, p = G.p;
+  // Ondas expansivas pendientes de la barrida nivel 6: salen desde donde barriste, medio segundo después
+  for (const w of G.shocks) {
+    w.t -= dt;
+    if (w.t > 0) continue;
+    G.rings.push({ x: w.x, y: w.y, R: w.R, life: .4, max: .4, col: '191,227,255' });
+    for (const e of G.enemies) {
+      if (e.dead) continue;
+      const dx = e.x - w.x, dy = e.y - w.y, d = Math.hypot(dx, dy) || 1;
+      if (d < w.R + e.r) hitEnemy(e, w.dmg, dx / d * 260, dy / d * 260, 'onda');
+    }
+    sfx('sweep');
+  }
+  G.shocks = G.shocks.filter(w => w.t > 0);
   for (const k in G.weapons) {
     const w = wp(k, G.weapons[k]);
     if (k === 'rondo') { G.rondoAng += w.spin / S.cd * dt; continue; }   // Ritmo de juego: gira más rápido
@@ -1080,6 +1098,7 @@ function fireWeapons(dt) {
           if (G.combos.tapones) { e.bleed = 3; e.bleedT = .5; e.bleedDmg = w.dmg * S.dmg * .3; }
         }
       }
+      if (w.shock) G.shocks.push({ x: p.x, y: p.y, t: .5, R: R * 1.4, dmg: w.dmg * S.dmg * .6 });
       sfx('sweep');
     } else if (k === 'tiroLibre') {
       // Autoapuntado: busca al rival más cercano; si no hay nadie a tiro, remata hacia donde corrés
@@ -1622,7 +1641,7 @@ function hud() {
   const w = (G.xp / G.xpNext * 100).toFixed(1) + '%';
   if (hudCache.xp !== w) { hudCache.xp = w; $('xpfill').style.width = w; }
 }
-const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', tiroLibre: 'Tiro libre', tresDedos: 'Tres dedos', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta', olimpico: 'Gol olímpico' };
+const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', onda: 'Onda expansiva', tiroLibre: 'Tiro libre', tresDedos: 'Tres dedos', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta', olimpico: 'Gol olímpico' };
 const nf = n => Math.round(n).toLocaleString('es-AR');
 function renderStats(el, full) {
   const R = G.rec;

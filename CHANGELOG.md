@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.16 · 17 oct 2026
+
+- **Técnicas:** Barrida más fuerte desde el arranque: 20% más de área y 20% menos de espera entre barridas.
+- **Técnicas:** Barrida tiene un nivel 6, Onda expansiva: medio segundo después de cada barrida sale una segunda onda desde el mismo lugar, 40% más grande y con el 60% del daño.
+
 ## 2.15 · 17 oct 2026
 
 - **Dificultad:** El Potrero es más fácil: la vida de los rivales crece un 25% más lento (un defensor llega al minuto 90 con 59 de vida en vez de 74) y los árbitros, arqueros y grandotes salen un 25% menos seguido.
