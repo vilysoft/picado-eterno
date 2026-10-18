@@ -507,7 +507,7 @@ const CHARS = {
     kit: { shirt: '#7cc4ff', sleeve: '#7cc4ff', stripe: '#f4f7fb', shorts: '#14181f' }, skin: '#d9a47c', hair: '#1b1410',
     swatch: 'repeating-linear-gradient(90deg,#7cc4ff 0 14px,#f4f7fb 14px 28px)',
     traits: ['<b>Sprint</b> recargable'] },
-  muro: { name: 'El Muro', desc: 'Central grandote: se cubre con el escudo y barre más lejos.', r: 16, speed: .9, area: 1.2, sprint: false, shield: 50,
+  muro: { name: 'El Muro', desc: 'Central grandote: se cubre con el escudo y barre más lejos.', r: 16, speed: .9, area: 1.2, sprint: false, shield: 60,
     kit: { shirt: '#f4f7fb', sleeve: '#7cc4ff', shorts: '#14181f' }, skin: '#b97d55', hair: '#111111',
     swatch: 'linear-gradient(90deg,#f4f7fb,#bfe3ff)',
     traits: ['<b>Escudo</b> con Shift', '<b>+20%</b> de área', '<i>10% más lento</i>', '<i>Sin sprint</i>'] },
@@ -615,26 +615,34 @@ function wp(k, l) {
     case 'tiroLibre': return { dmg: 24 * (l >= 2 ? 1.5 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 5 ? 3 : l >= 3 ? 2 : 1, cd: 2.6 * (l >= 4 ? .75 : 1), speed: 720 };
   }
 }
-const xpFor = l => Math.floor(5 + l * 4 + l * l * .35);
+// Los primeros niveles (2 a 5) piden 15% menos de experiencia, para que el arranque no sea tan lento
+const xpFor = l => Math.floor((5 + l * 4 + l * l * .35) * (l <= 4 ? .85 : 1));
 
 // ---------- Vestuario: mejoras permanentes ----------
 const PERMS = {
-  pretemporada: { name: 'Pretemporada', max: 6, desc: '+10 de vida máxima al arrancar.', cost: [15, 25, 40, 60, 90, 130] },
-  pegada:       { name: 'Pegada', max: 6, desc: '+6% de daño en todas tus técnicas.', cost: [20, 35, 55, 80, 120, 170] },
-  piques:       { name: 'Piques cortos', max: 6, desc: '+4% de velocidad de carrera.', cost: [15, 25, 40, 60, 90, 130] },
-  pulmones:     { name: 'Pulmones', max: 6, desc: '4% menos de espera en todas tus técnicas, rondo incluido.', cost: [20, 35, 55, 80, 120, 170] },
-  lectura:      { name: 'Lectura de juego', max: 6, desc: '+15% de distancia para juntar experiencia.', cost: [10, 20, 30, 45, 65, 90] },
-  inferiores:   { name: 'Inferiores', max: 6, desc: '+8% de experiencia por cada rival.', cost: [20, 35, 55, 80, 120, 170] },
-  calor:        { name: 'Entrada en calor', max: 3, desc: 'Arrancás cada partido con 1 mejora gratis por nivel.', cost: [40, 90, 160] },
+  pretemporada: { name: 'Pretemporada', max: 6, desc: '+6 de vida máxima al arrancar.', cost: [15, 25, 40, 60, 90, 130] },
+  pegada:       { name: 'Pegada', max: 6, desc: '+4% de daño en todas tus técnicas.', cost: [20, 35, 55, 80, 120, 170] },
+  piques:       { name: 'Piques cortos', max: 6, desc: '+3% de velocidad de carrera.', cost: [15, 25, 40, 60, 90, 130] },
+  pulmones:     { name: 'Pulmones', max: 6, desc: '3% menos de espera en todas tus técnicas, rondo incluido.', cost: [20, 35, 55, 80, 120, 170] },
+  lectura:      { name: 'Lectura de juego', max: 6, desc: '+12% de distancia para juntar experiencia.', cost: [10, 20, 30, 45, 65, 90] },
+  inferiores:   { name: 'Inferiores', max: 6, desc: '+6% de experiencia por cada rival.', cost: [20, 35, 55, 80, 120, 170] },
+  calor:        { name: 'Entrada en calor', max: 3, desc: 'Arrancás cada partido con 1 mejora gratis por nivel.', cost: [40, 90, 200] },
   pizarron:     { name: 'Pizarrón', max: 4, desc: '1 cambio de opciones por partido al subir de nivel (tecla R), por nivel.', cost: [30, 60, 100, 150] },
-  fuelle:       { name: 'Fuelle', max: 6, only: 'diez', desc: '+10% de barra de sprint y se recarga un 8% más rápido.', cost: [15, 25, 40, 60, 90, 130] },
+  fuelle:       { name: 'Fuelle', max: 6, only: 'diez', desc: '+7% de barra de sprint y se recarga un 8% más rápido.', cost: [15, 25, 40, 60, 90, 130] },
   zancada:      { name: 'Zancada', max: 6, only: 'diez', desc: '+3% de velocidad al sprintar y gastás 5% menos de barra.', cost: [20, 35, 55, 80, 120, 170] },
-  blindaje:     { name: 'Blindaje', max: 6, only: 'muro', desc: '+10 de barra de escudo.', cost: [20, 35, 55, 80, 120, 170] },
+  blindaje:     { name: 'Blindaje', max: 6, only: 'muro', desc: '+7 de barra de escudo.', cost: [20, 35, 55, 80, 120, 170] },
   recuperacion: { name: 'Recuperación', max: 6, only: 'muro', desc: 'El escudo se recarga 15% más rápido y empieza 0,2 s antes.', cost: [20, 35, 55, 80, 120, 170] },
-  suplente:     { name: 'Segundo aire', max: 2, desc: 'Al perder toda la vida volvés con la mitad. Una vez por partido por nivel.', cost: [150, 300] },
+  suplente:     { name: 'Segundo aire', max: 2, desc: 'Al perder toda la vida volvés con el 35%. Una vez por partido por nivel.', cost: [150, 300] },
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.22', date: '18 oct 2026', items: [
+    ['Jugadores', 'Los dos personajes arrancan más fuertes: 130 de vida en vez de 100, +10% de daño, +5% de velocidad, 5% menos de espera en las técnicas, +10% de experiencia y +10% de distancia para juntar gemas.'],
+    ['Jugadores', 'El 10 arranca con 110 de sprint en vez de 100. El Muro arranca con 60 de escudo en vez de 50.'],
+    ['Experiencia', 'Los niveles 2 a 5 piden un 15% menos de experiencia: las primeras mejoras llegan antes.'],
+    ['Vestuario', 'Cada nivel rinde un poco menos, así que con el vestuario completo quedás más o menos igual que antes: Pretemporada +6 de vida, Pegada +4% de daño, Piques cortos +3%, Pulmones 3%, Lectura de juego +12%, Inferiores +6%, Fuelle +7% de barra y Blindaje +7 de escudo.'],
+    ['Vestuario', 'Segundo aire te devuelve con el 35% de la vida en vez de la mitad. El tercer nivel de Entrada en calor cuesta 200 fichas en vez de 160.'],
+  ] },
   { v: '2.21', date: '18 oct 2026', items: [
     ['Menú', 'El botón ♪ Música está arriba de todo en el menú. La música arranca apagada y se prende con ese botón.'],
   ] },
@@ -797,24 +805,26 @@ function newGame() {
     spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, hydra: 0, hydraDone: {}, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [],
   };
 }
+// Stats de arranque de cualquier personaje, antes del vestuario
+const BASE = { hp: 130, dmg: 1.1, speed: 1.05, cd: .95, xp: 1.1, magnet: 1.1, st: 110 };
 function recalc() {
   const l = k => G.passives[k] || 0, S = G.stats;
-  S.dmg = (1 + .12 * l('potencia')) * (1 + .06 * pl('pegada'));
-  S.speed = (1 + .1 * l('botines')) * (1 + .04 * pl('piques')) * CH.speed;
-  S.cd = Math.pow(.92, l('ritmo')) * Math.pow(.96, pl('pulmones'));
-  S.magnet = (1 + .35 * l('vision')) * (1 + .15 * pl('lectura'));
+  S.dmg = BASE.dmg * (1 + .12 * l('potencia')) * (1 + .04 * pl('pegada'));
+  S.speed = BASE.speed * (1 + .1 * l('botines')) * (1 + .03 * pl('piques')) * CH.speed;
+  S.cd = BASE.cd * Math.pow(.92, l('ritmo')) * Math.pow(.97, pl('pulmones'));
+  S.magnet = BASE.magnet * (1 + .35 * l('vision')) * (1 + .12 * pl('lectura'));
   S.regen = .6 * l('hidratacion'); S.area = (1 + .12 * l('fisico')) * CH.area;
   S.armor = 1 - .08 * l('canilleras');          // multiplica todo el daño que recibís
   S.thorns = l('codazo') ? 6 + 6 * l('codazo') : 0;   // daño de rebote por contacto
-  S.xp = 1 + .08 * pl('inferiores');
-  G.p.maxHp = 100 + 20 * l('resistencia') + 10 * pl('pretemporada');
+  S.xp = BASE.xp * (1 + .06 * pl('inferiores'));
+  G.p.maxHp = BASE.hp + 20 * l('resistencia') + 6 * pl('pretemporada');
   // Escudo (El Muro)
-  G.p.shMax = CH.shield ? CH.shield + 10 * pl('blindaje') : 0;
+  G.p.shMax = CH.shield ? CH.shield + 7 * pl('blindaje') : 0;
   S.shRegen = 14 * (1 + .15 * pl('recuperacion'));
   S.shDelay = 1.5 - .2 * pl('recuperacion');   // espera tras soltarlo antes de recargar
   S.shDrain = 12;                                 // lo que gasta por segundo mientras está levantado
   // Sprint
-  G.p.stMax = 100 * (1 + .2 * l('aguante')) * (1 + .1 * pl('fuelle'));
+  G.p.stMax = BASE.st * (1 + .2 * l('aguante')) * (1 + .07 * pl('fuelle'));
   S.stRegen = 16 * (1 + .15 * l('aguante')) * (1 + .08 * pl('fuelle'));
   S.sprint = 1.4 + .06 * l('arranque') + .03 * pl('zancada');
   S.stDrain = Math.pow(.9, l('arranque')) * Math.pow(.95, pl('zancada'));
@@ -1096,7 +1106,7 @@ function update(dt) {
 
   if (p.hp <= 0) {
     if (G.revives > 0) {
-      G.revives--; p.hp = p.maxHp * .5; p.inv = 2;
+      G.revives--; p.hp = p.maxHp * .35; p.inv = 2;
       G.rings.push({ x: p.x, y: p.y, R: 220, life: .5, max: .5 });
       for (const e of G.enemies) {
         const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1;

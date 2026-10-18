@@ -2,6 +2,14 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.22 · 18 oct 2026
+
+- **Jugadores:** Los dos personajes arrancan más fuertes: 130 de vida en vez de 100, +10% de daño, +5% de velocidad, 5% menos de espera en las técnicas, +10% de experiencia y +10% de distancia para juntar gemas.
+- **Jugadores:** El 10 arranca con 110 de sprint en vez de 100. El Muro arranca con 60 de escudo en vez de 50.
+- **Experiencia:** Los niveles 2 a 5 piden un 15% menos de experiencia: las primeras mejoras llegan antes.
+- **Vestuario:** Cada nivel rinde un poco menos, así que con el vestuario completo quedás más o menos igual que antes: Pretemporada +6 de vida, Pegada +4% de daño, Piques cortos +3%, Pulmones 3%, Lectura de juego +12%, Inferiores +6%, Fuelle +7% de barra y Blindaje +7 de escudo.
+- **Vestuario:** Segundo aire te devuelve con el 35% de la vida en vez de la mitad. El tercer nivel de Entrada en calor cuesta 200 fichas en vez de 160.
+
 ## 2.21 · 18 oct 2026
 
 - **Menú:** El botón ♪ Música está arriba de todo en el menú. La música arranca apagada y se prende con ese botón.
