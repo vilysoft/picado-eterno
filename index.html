@@ -467,7 +467,7 @@ const FOES = {
   arquero:  { r: 15, hp: 26, speed: 95, dmg: 12, xp: 3, color: '#c8f03c', nums: [1] },
   camillero: { r: 32, hp: 60, speed: 62, dmg: 12, xp: 5, color: '#f2f2ec', nums: [] },
   hincha:    { r: 13, hp: 40, speed: 820, dmg: 26, xp: 20, color: '#7b4bc9', nums: [] },
-  spidercam: { r: 16, hp: 70, speed: 95, dmg: 14, xp: 8, color: '#2b2f36', nums: [], fly: true },
+  spidercam: { r: 16, hp: 70, speed: 76, dmg: 14, xp: 8, color: '#2b2f36', nums: [], fly: true },
   capitan:  { r: 34, hp: 900, speed: 78, dmg: 22, xp: 50, color: '#5b34a8', nums: [9], boss: true },
   dueno:    { r: 32, hp: 850, speed: 70, dmg: 20, xp: 50, color: '#e8e1cf', nums: [], boss: true },
   tanque:   { r: 40, hp: 1500, speed: 60, dmg: 26, xp: 60, color: '#5b4636', nums: [], boss: true },
@@ -530,6 +530,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.19', date: '18 oct 2026', items: [
+    ['Canchas', 'La pausa de hidratación de El Coloso dura 6 segundos en vez de 3.'],
+    ['Rivales', 'La Spidercam aparece un 20% menos seguido y se mueve un 20% más lento.'],
+  ] },
   { v: '2.18', date: '18 oct 2026', items: [
     ['Rivales', 'Hincha invasor en La Cancha del Club: desde el minuto 60, como mucho 2 veces por partido, un hincha salta a la cancha y la cruza a toda velocidad perseguido por un guardia. Antes de entrar se marca su franja en el piso. Si te agarra, pega fuerte; si lo volteás, deja muchas gemas.'],
     ['Rivales', 'Spidercam en El Coloso: la cámara aérea flota sobre la cancha colgada de cables, no choca, y cada tanto marca un círculo y baja de golpe. Solo la alcanzan los remates (Pelota, Tiro libre y Tres dedos); barrida, rondo y codazo no llegan.'],
@@ -669,7 +673,7 @@ function spentTotal() {
 // ---------- Estado ----------
 let G, state = 'menu', luAt = 0, hudCache = {}, resumeAt = 0;
 const RESUME_MS = 1000;
-const HYDRA_S = 3;          // duración de la pausa de hidratación   // pausa corta al cerrar las mejoras
+const HYDRA_S = 6;          // duración de la pausa de hidratación   // pausa corta al cerrar las mejoras
 function newGame() {
   return {
     t: 0, kills: 0, level: 1, xp: 0, xpNext: xpFor(1), pending: 0,
@@ -1013,7 +1017,7 @@ function pickType(t) {
   if ((LV.id === 'potrero' ? t > 45 : G.t > 1.25 * 45 / PACE) && r > 1 - .1 * f) return 'arquero';
   if (LV.id !== 'potrero' && after(110) && r > .84 && G.enemies.reduce((n, e) => n + (e.type === 'camillero'), 0) < 6) return 'camillero';
   // Spidercam: solo en El Coloso, como mucho 2 a la vez
-  if (LV.id === 'lujo' && after(220) && r > .80 && r <= .84 && G.enemies.reduce((n, e) => n + (e.type === 'spidercam'), 0) < 2) return 'spidercam';
+  if (LV.id === 'lujo' && after(220) && r > .808 && r <= .84 && G.enemies.reduce((n, e) => n + (e.type === 'spidercam'), 0) < 2) return 'spidercam';
   if (after(150) && r < .2 * f) return 'central';
   if (t > 60 && r < .45) return 'extremo';
   return 'defensor';
@@ -1374,7 +1378,7 @@ function updateEnemies(dt) {
       } else if (e.mode === 'drop') {
         e.mt -= dt;
         const tx = e.tx - e.x, ty = e.ty - e.y, td = Math.hypot(tx, ty);
-        if (td > 3) { ux = tx / td; uy = ty / td; sp = Math.min(600, td / Math.max(.08, e.mt - .25)); } else sp = 0;
+        if (td > 3) { ux = tx / td; uy = ty / td; sp = Math.min(480, td / Math.max(.08, e.mt - .25)); } else sp = 0;
         if (e.mt <= 0) { e.mode = 'run'; e.acd = 3.2 + Math.random(); }
       }
     }

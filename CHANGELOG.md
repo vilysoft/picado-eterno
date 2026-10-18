@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.19 · 18 oct 2026
+
+- **Canchas:** La pausa de hidratación de El Coloso dura 6 segundos en vez de 3.
+- **Rivales:** La Spidercam aparece un 20% menos seguido y se mueve un 20% más lento.
+
 ## 2.18 · 18 oct 2026
 
 - **Rivales:** Hincha invasor en La Cancha del Club: desde el minuto 60, como mucho 2 veces por partido, un hincha salta a la cancha y la cruza a toda velocidad perseguido por un guardia. Antes de entrar se marca su franja en el piso. Si te agarra, pega fuerte; si lo volteás, deja muchas gemas.
