@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.23 · 18 oct 2026
+
+- **Rivales:** Te aprieta la barra en El Potrero: desde el minuto 60, como mucho 2 veces por partido y con al menos 10 minutos entre una y otra, entra un grupo de hinchas con gorros que te viene a buscar corriendo. Son débiles, pero son muchos y llegan rápido. Cada uno deja 3 gemas.
+
 ## 2.22 · 18 oct 2026
 
 - **Jugadores:** Los dos personajes arrancan más fuertes: 130 de vida en vez de 100, +10% de daño, +5% de velocidad, 5% menos de espera en las técnicas, +10% de experiencia y +10% de distancia para juntar gemas.

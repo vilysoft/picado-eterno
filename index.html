@@ -572,6 +572,7 @@ const FOES = {
   arquero:  { r: 15, hp: 26, speed: 95, dmg: 12, xp: 3, color: '#c8f03c', nums: [1] },
   camillero: { r: 32, hp: 60, speed: 62, dmg: 12, xp: 5, color: '#f2f2ec', nums: [] },
   hincha:    { r: 13, hp: 40, speed: 820, dmg: 26, xp: 20, color: '#7b4bc9', nums: [] },
+  barra:     { r: 12, hp: 8, speed: 165, dmg: 5, xp: 2, color: '#22262e', nums: [] },
   spidercam: { r: 16, hp: 70, speed: 76, dmg: 14, xp: 8, color: '#2b2f36', nums: [], fly: true },
   capitan:  { r: 34, hp: 900, speed: 78, dmg: 22, xp: 50, color: '#5b34a8', nums: [9], boss: true },
   dueno:    { r: 32, hp: 850, speed: 70, dmg: 20, xp: 50, color: '#e8e1cf', nums: [], boss: true },
@@ -592,6 +593,7 @@ const KITS = {
   hincha:    { shirt: '#7b4bc9', sleeve: 'skin', stripe: '#f4f7fb', shorts: '#3b5a8a' },
   guardia:   { shirt: '#ffd34d', sleeve: '#ffd34d', shorts: '#1d1f1c' },
   spidercam: { shirt: '#2b2f36', sleeve: '#2b2f36', shorts: '#2b2f36' },
+  barra:     { shirt: '#22262e', sleeve: '#22262e', shorts: '#3b5a8a' },
   capitan:  { shirt: '#5b34a8', sleeve: '#5b34a8', stripe: '#4a2a85', shorts: '#1d1f1c' },
   dueno:    { shirt: '#e8e1cf', sleeve: 'skin', shorts: '#2b4c8c' },
   tanque:   { shirt: '#5b4636', sleeve: '#5b4636', stripe: '#4a3a2c', shorts: '#1d1f1c' },
@@ -636,6 +638,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.23', date: '18 oct 2026', items: [
+    ['Rivales', 'Te aprieta la barra en El Potrero: desde el minuto 60, como mucho 2 veces por partido y con al menos 10 minutos entre una y otra, entra un grupo de hinchas con gorros que te viene a buscar corriendo. Son débiles, pero son muchos y llegan rápido. Cada uno deja 3 gemas.'],
+  ] },
   { v: '2.22', date: '18 oct 2026', items: [
     ['Jugadores', 'Los dos personajes arrancan más fuertes: 130 de vida en vez de 100, +10% de daño, +5% de velocidad, 5% menos de espera en las técnicas, +10% de experiencia y +10% de distancia para juntar gemas.'],
     ['Jugadores', 'El 10 arranca con 110 de sprint en vez de 100. El Muro arranca con 60 de escudo en vez de 50.'],
@@ -802,7 +807,7 @@ function newGame() {
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '' },   // estadísticas del partido
     weapons: { pelota: 1 }, passives: {}, timers: { pelota: .4 }, rondoAng: 0, rondoBalls: null,
     enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [],
-    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, hydra: 0, hydraDone: {}, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [],
+    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [],
   };
 }
 // Stats de arranque de cualquier personaje, antes del vestuario
@@ -1028,6 +1033,12 @@ function update(dt) {
     if (G.invNext == null) G.invNext = G.t + rnd(2, 10);
     if (G.t >= G.invNext && !G.lane) startInvader();
   }
+  // Te aprieta la barra (solo El Potrero): desde el minuto 60, hasta 2 veces, con al menos 10 minutos entre una y otra
+  if (LV.id === 'potrero' && G.barras < 2) {
+    const m = minuteOf(G.t);
+    if (G.barraNext == null) G.barraNext = 60 + rnd(0, 8);
+    if (m >= G.barraNext) startBarra(m);
+  }
   if (G.lane) {
     // Franja de aviso: cuando se termina, el hincha sale corriendo por ahí
     G.lane.t -= dt;
@@ -1193,6 +1204,19 @@ function spawning() {
   if (!G.boss1 && t >= MATCH / 2) { G.boss1 = true; spawnBoss(LV.bosses[0]); sfx('whistle'); }
   if (!G.boss2 && t >= MATCH * 80 / 90) { G.boss2 = true; spawnBoss(LV.bosses[1]); }
 }
+const BARRA_N = 10, HATS = ['#ffd34d', '#e8433a', '#f4f7fb', '#3fa7ff', '#4fd16a'];
+function startBarra(m) {
+  // Un grupo de la barra entra junto desde un costado y te viene a buscar
+  G.barras++; G.barraNext = m + 10 + rnd(0, 8);
+  const a = Math.random() * Math.PI * 2, R = Math.hypot(viewW, viewH) / 2 + 60;
+  let cx = clamp(G.p.x + Math.cos(a) * R, -RUN + 40, FW + RUN - 40), cy = clamp(G.p.y + Math.sin(a) * R, -RUN + 40, FH + RUN - 40);
+  const n = Math.max(6, Math.round(BARRA_N * MOB_RATE));
+  for (let i = 0; i < n; i++) {
+    spawn('barra', clamp(cx + rnd(-60, 60), -RUN + 20, FW + RUN - 20), clamp(cy + rnd(-60, 60), -RUN + 20, FH + RUN - 20));
+    G.enemies[G.enemies.length - 1].hat = HATS[i % HATS.length];
+  }
+  banner('¡Te aprieta la barra!', true); sfx('whistle'); cheer = 3;
+}
 function startInvader() {
   // Cruza la cancha de lado a lado pasando por donde estás vos, en horizontal o en vertical
   const p = G.p, L = -RUN + 16, R = FW + RUN - 16, T = -RUN + 16, B = FH + RUN - 16;
@@ -1332,7 +1356,8 @@ function kill(e) {
     G.p.hp = Math.min(G.p.maxHp, G.p.hp + G.p.maxHp * .4);
     for (const g of G.gems) g.pull = true;
     banner(BOSSES[e.type].beat); cheer = 3;
-  } else gem(e.x, e.y, e.xp);
+  } else if (e.type === 'barra') { for (let i = 0; i < 3; i++) gem(e.x + rnd(-14, 14), e.y + rnd(-14, 14), e.xp); }
+  else gem(e.x, e.y, e.xp);
   if (e.type === 'hincha') { banner('¡Seguridad se lleva al hincha!'); cheer = 2; }
 }
 function codazo(e, ux, uy) {
@@ -2434,6 +2459,13 @@ function drawPerson(x, y, r, ang, step, o) {
   // Cabeza: cara hacia adelante, pelo en la nuca
   ell(1.5, 0, 5.6, 5.6, o.skin);
   ctx.fillStyle = o.hair; ctx.beginPath(); ctx.arc(1.5, 0, 5.9, Math.PI * .5, Math.PI * 1.5); ctx.closePath(); ctx.fill();
+  if (o.hat) {
+    // Gorro de lana visto desde arriba, con pompón
+    ell(1, 0, 6.6, 6.6, o.hat);
+    ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(1, 0, 6.6, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(1, 0, 4.2, 0, Math.PI * 2); ctx.stroke();
+    ell(0, 0, 2.4, 2.4, '#f4f7fb');
+  }
   ctx.restore();
 }
 function drawCamilla(e) {
@@ -2495,7 +2527,7 @@ function drawFoe(e) {
   if (e.buff > 0) { ctx.strokeStyle = 'rgba(255,211,77,.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 5, 0, Math.PI * 2); ctx.stroke(); }
   drawPerson(e.x, e.y, e.r, ang, still ? 0 : G.t * Math.min(e.speed, 300) * .09 + e.phase, {
     shirt: fl ? fc : K.shirt, sleeve: fl ? fc : (K.sleeve === 'skin' ? e.skin : K.sleeve), stripe: fl ? null : K.stripe, shorts: K.shorts,
-    boots: K.boots, skin: e.skin, hair: e.hair, gloves: K.gloves, dive: e.mode === 'dive' || e.mode === 'down', band: e.boss,
+    boots: K.boots, skin: e.skin, hair: e.hair, hat: e.hat, gloves: K.gloves, dive: e.mode === 'dive' || e.mode === 'down', band: e.boss,
   });
   if (e.yellow > 0) {
     const yy = e.boss ? e.y - e.r - 46 : e.y - e.r - 14;
