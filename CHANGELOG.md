@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.17 · 17 oct 2026
+
+- **Técnicas:** Rondo más fuerte desde el arranque: empieza con 3 pelotas en vez de 2 y hace 20% más de daño.
+- **Técnicas:** Rondo tiene un nivel 6, Despeje: cada pelota empuja bien lejos a los rivales que toca.
+
 ## 2.16 · 17 oct 2026
 
 - **Técnicas:** Barrida más fuerte desde el arranque: 20% más de área y 20% menos de espera entre barridas.

@@ -368,9 +368,10 @@ const WEAPONS = {
     'Patea una pelota al rival más cercano. Rebota de rival en rival y vuelve a tus pies.',
     '+1 rebote por pelota.', '+1 pelota en cada patada.', '+40% de daño.',
     '+1 pelota en cada patada.', '+2 rebotes y +40% de daño.'] },
-  rondo: { name: 'Rondo', max: 5, desc: [
-    'Dos pelotas giran a tu alrededor y golpean a quien se acerque.',
-    '+1 pelota girando.', '+35% de daño.', '+1 pelota y giran más rápido.', '+1 pelota y +35% de daño.'] },
+  rondo: { name: 'Rondo', max: 6, desc: [
+    'Tres pelotas giran a tu alrededor y golpean a quien se acerque.',
+    '+1 pelota girando.', '+35% de daño.', '+1 pelota y giran más rápido.', '+1 pelota y +35% de daño.',
+    'Despeje: cada pelota del rondo empuja bien lejos a los rivales que toca.'] },
   barrida: { name: 'Barrida', max: 6, desc: [
     'Cada pocos segundos barrés en círculo: daña y empuja a los rivales cercanos.',
     '+30% de área.', '+40% de daño.', '25% menos de espera entre barridas.', '+30% de área y +40% de daño.',
@@ -498,7 +499,7 @@ const HAIRS = ['#1b1410', '#3b2416', '#6b4423', '#c99a4c', '#111111'];
 function wp(k, l) {
   switch (k) {
     case 'pelota': return { count: 1 + (l >= 3) + (l >= 5), bounces: 2 + (l >= 2) + (l >= 6 ? 2 : 0), dmg: 12 * (l >= 4 ? 1.4 : 1) * (l >= 6 ? 1.4 : 1), cd: 1.15, speed: 470 };
-    case 'rondo': return { count: 2 + (l >= 2) + (l >= 4) + (l >= 5), dmg: 9 * (l >= 3 ? 1.35 : 1) * (l >= 5 ? 1.35 : 1), spin: 3 + (l >= 4 ? 1.3 : 0), R: 78 };
+    case 'rondo': return { count: 3 + (l >= 2) + (l >= 4) + (l >= 5), dmg: 10.8 * (l >= 3 ? 1.35 : 1) * (l >= 5 ? 1.35 : 1), spin: 3 + (l >= 4 ? 1.3 : 0), R: 78, push: l >= 6 ? 1150 : 200 };
     case 'barrida': return { R: 114 * (l >= 2 ? 1.3 : 1) * (l >= 5 ? 1.3 : 1), dmg: 18 * (l >= 3 ? 1.4 : 1) * (l >= 5 ? 1.4 : 1), cd: 2.56 * (l >= 4 ? .75 : 1), shock: l >= 6 };
     case 'tresDedos': return { dmg: 20 * (l >= 2 ? 1.4 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 3 ? 2 : 1, cd: 1.9 * (l >= 4 ? .75 : 1), speed: 620, straight: 190, life: l >= 5 ? 1.6 : 1.25 };
     case 'tiroLibre': return { dmg: 24 * (l >= 2 ? 1.5 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 5 ? 3 : l >= 3 ? 2 : 1, cd: 2.6 * (l >= 4 ? .75 : 1), speed: 720 };
@@ -524,6 +525,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.17', date: '17 oct 2026', items: [
+    ['Técnicas', 'Rondo más fuerte desde el arranque: empieza con 3 pelotas en vez de 2 y hace 20% más de daño.'],
+    ['Técnicas', 'Rondo tiene un nivel 6, Despeje: cada pelota empuja bien lejos a los rivales que toca.'],
+  ] },
   { v: '2.16', date: '17 oct 2026', items: [
     ['Técnicas', 'Barrida más fuerte desde el arranque: 20% más de área y 20% menos de espera entre barridas.'],
     ['Técnicas', 'Barrida tiene un nivel 6, Onda expansiva: medio segundo después de cada barrida sale una segunda onda desde el mismo lugar, 40% más grande y con el 60% del daño.'],
@@ -1356,7 +1361,12 @@ function updateEnemies(dt) {
     if (rb && e.rcd <= 0 && Math.abs(d - rR) < e.r + rbr) {
       for (const b of rb) {
         const bx = e.x - b[0], by = e.y - b[1];
-        if (bx * bx + by * by < (e.r + rbr) ** 2) { hitEnemy(e, rw.dmg * S.dmg, -ux * 200, -uy * 200, 'rondo'); e.rcd = .45 * S.cd; break; }
+        if (bx * bx + by * by < (e.r + rbr) ** 2) {
+          // Empuje hacia afuera (desde vos hacia el rival); en nivel 6 lo despeja lejos
+          hitEnemy(e, rw.dmg * S.dmg, -dx / d * rw.push, -dy / d * rw.push, 'rondo'); e.rcd = .45 * S.cd;
+          if (rw.push > 200) G.rings.push({ x: b[0], y: b[1], R: 18 * S.area, life: .2, max: .2 });
+          break;
+        }
       }
     }
     if (!e.boss && d > 1500) [e.x, e.y] = ringPos();
