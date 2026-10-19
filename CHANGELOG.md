@@ -2,6 +2,12 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.28 · 19 oct 2026
+
+- **Jugadores:** Nuevo jugador: El Árbitro. Se desbloquea al expulsar 50 rivales con tarjeta roja, sumando todos tus partidos (con Doble amarilla también cuenta). Con Shift pita el silbato: los rivales cercanos quedan congelados 1,5 s sin moverse ni pegar (los jefes no). Se recarga en 10 s. Tiene 15% menos de vida y no tiene sprint. Los árbitros rivales no le sacan tarjeta.
+- **Técnicas:** Tarjeta roja, solo para El Árbitro (arranca con ella): le sacás una roja al rival más cercano; si le queda poca vida, lo expulsa de una. Tiene 5 niveles: más tarjetas, más daño, menos espera y expulsiones más fáciles.
+- **Técnicas:** Spray de distancia, solo para El Árbitro: marcás una línea de spray en el piso delante del rival más cercano. Los que la pisan se prenden fuego y siguen quemándose un rato. Tiene 5 niveles: línea más larga, más quemadura, dos líneas a la vez y más duración.
+
 ## 2.27 · 19 oct 2026
 
 - **Técnicas:** Rondo y Barrida pegan un 25% más fuerte desde el arranque (Rondo 13,5 por golpe en vez de 10,8; Barrida 22,5 en vez de 18). Las mejoras de nivel suman encima de eso.
