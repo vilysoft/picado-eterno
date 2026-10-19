@@ -347,7 +347,7 @@ function tone(f1, f2, dur, type, vol, delay = 0) {
 function sfx(n) {
   if (muted || !AC) return;
   const now = AC.currentTime;
-  if (lastS[n] && now - lastS[n] < .045) return;
+  if (lastS[n] && now - lastS[n] < (n === 'card' ? .6 : n === 'expel' ? .25 : .045)) return;
   lastS[n] = now;
   switch (n) {
     case 'kick': tone(180, 60, .09, 'sine', .25); break;
@@ -365,6 +365,8 @@ function sfx(n) {
     case 'zap': tone(1200, 300, .18, 'sawtooth', .05); break;
     case 'cheer': break;
     case 'level': [523, 659, 784, 1046].forEach((f, i) => tone(f, f, .12, 'triangle', .08, i * .07)); break;
+    case 'card': tone(340, 190, .08, 'triangle', .035); break;          // tarjeta: un "fsst" corto y grave
+    case 'expel': tone(260, 130, .14, 'square', .03); tone(520, 520, .05, 'triangle', .025, .02); break;
     case 'whistle': tone(2100, 2300, .22, 'sine', .06); tone(2100, 2350, .4, 'sine', .06, .28); break;
   }
 }
@@ -654,6 +656,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.32', date: '19 oct 2026', items: [
+    ['Sonido', 'La Tarjeta roja ya no suena con silbato: hace un "fsst" corto y grave al tirarla (como mucho una vez cada 0,6 s) y un golpe seco cuando expulsa a alguien.'],
+  ] },
   { v: '2.31', date: '19 oct 2026', items: [
     ['Jugadores', 'El Árbitro corre con un solo brazo balanceándose; el otro queda estirado con la tarjeta.'],
     ['Rivales', 'Te aprieta la barra: entran 13 hinchas en vez de 10 y cada uno tiene el doble de vida.'],
@@ -1403,7 +1408,7 @@ function fireWeapons(dt) {
         G.shots.push({ k: 'roja', x: p.x, y: p.y, vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed, r: 8, dmg: w.dmg * S.dmg, exp: w.exp,
           target: t, life: 1.6, rot: 0, speed: w.speed, hit: new Set() });
       }
-      sfx('whistle');
+      sfx('card');
     } else if (k === 'spray') {
       // Línea de barrera: atraviesa delante del rival, perpendicular a la dirección desde vos
       const near = nearestList(p.x, p.y, w.n, 600), half = w.len * S.area / 2;
@@ -1542,7 +1547,7 @@ function updateShots(dt) {
             // Expulsado: se va de la cancha sin importar cuánta vida le quedaba
             G.texts.push({ x: e.x, y: e.y - e.r - 18, txt: '¡ROJA!', life: 1, big: true });
             G.rings.push({ x: e.x, y: e.y, R: e.r + 22, life: .3, max: .3, col: '226,59,59' });
-            G.rojas++;
+            G.rojas++; sfx('expel');
             hitEnemy(e, e.hp + 1, 0, 0, 'roja', true);
           } else hitEnemy(e, s.dmg, s.vx / s.speed * 140, s.vy / s.speed * 140, 'roja');
           s.life = 0; break;

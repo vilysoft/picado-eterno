@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.32 · 19 oct 2026
+
+- **Sonido:** La Tarjeta roja ya no suena con silbato: hace un "fsst" corto y grave al tirarla (como mucho una vez cada 0,6 s) y un golpe seco cuando expulsa a alguien.
+
 ## 2.31 · 19 oct 2026
 
 - **Jugadores:** El Árbitro corre con un solo brazo balanceándose; el otro queda estirado con la tarjeta.
