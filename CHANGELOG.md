@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.27 · 19 oct 2026
+
+- **Técnicas:** Rondo y Barrida pegan un 25% más fuerte desde el arranque (Rondo 13,5 por golpe en vez de 10,8; Barrida 22,5 en vez de 18). Las mejoras de nivel suman encima de eso.
+
 ## 2.26 · 18 oct 2026
 
 - **Jefes:** El jefe del minuto 80 de El Coloso tiene un ataque nuevo cuando está golpeado: Retrotrae la jugada. Marca con una silueta verde dónde estabas 2 segundos antes, congela la imagen medio segundo y te devuelve ahí. Ojo, que te puede dejar arriba de una zona marcada.
