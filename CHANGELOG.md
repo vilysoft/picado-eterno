@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.30 · 19 oct 2026
+
+- **Jugadores:** El Árbitro ya no lleva la pelota en el pie: corre con el brazo estirado mostrando la tarjeta roja.
+- **Técnicas:** Tarjeta roja pega 25% menos (12 en vez de 16). Como la expulsión depende del daño, también expulsa un poco menos.
+
 ## 2.29 · 19 oct 2026
 
 - **Jugadores:** El Árbitro ya está disponible desde el arranque, sin tener que desbloquearlo.
