@@ -638,6 +638,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.26', date: '18 oct 2026', items: [
+    ['Jefes', 'El jefe del minuto 80 de El Coloso tiene un ataque nuevo cuando está golpeado: Retrotrae la jugada. Marca con una silueta verde dónde estabas 2 segundos antes, congela la imagen medio segundo y te devuelve ahí. Ojo, que te puede dejar arriba de una zona marcada.'],
+  ] },
   { v: '2.25', date: '18 oct 2026', items: [
     ['Jefes', 'El jefe del minuto 80 de El Potrero tiene un ataque nuevo cuando está golpeado: va hasta el alambrado, arranca un pedazo y te revolea escombros en abanico. El hueco en el alambrado queda hasta el final del partido.'],
     ['Dificultad', 'En El Potrero salen un 10% menos de rivales, tanto en el goteo de siempre como en los contraataques.'],
@@ -814,7 +817,7 @@ function newGame() {
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '' },   // estadísticas del partido
     weapons: { pelota: 1 }, passives: {}, timers: { pelota: .4 }, rondoAng: 0, rondoBalls: null,
     enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [], fenceGaps: [],
-    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [],
+    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0,
   };
 }
 // Stats de arranque de cualquier personaje, antes del vestuario
@@ -1028,6 +1031,17 @@ function banner(txt, important) {
 // ---------- Lógica ----------
 function update(dt) {
   const p = G.p, S = G.stats;
+  // "Retrotrae la jugada": durante el congelado no se mueve nada; al terminar te devuelve a donde estabas
+  if (G.rewind && G.rewind.phase === 'freeze') {
+    G.rewind.t -= dt;
+    if (G.rewind.t <= 0) {
+      const R = G.rewind; G.rewind = null; G.hist = [];
+      for (let i = 0; i < 16; i++) { part(p.x, p.y, '#39ff9a'); part(R.x, R.y, '#39ff9a'); }
+      p.x = R.x; p.y = R.y; p.inv = Math.max(p.inv, .2);
+      if (!RM) G.shake = 6; sfx('zap');
+    }
+    return;
+  }
   // Pausa de hidratación (solo El Coloso): en los minutos 30 y 60 los rivales se frenan 3 s y no pegan; el reloj se detiene
   if (LV.id === 'lujo' && !G.hydra) {
     const m = minuteOf(G.t);
@@ -1104,6 +1118,11 @@ function update(dt) {
   const spd = 175 * S.speed * mag * boost;
   p.x = clamp(p.x + mx * spd * dt, -RUN + p.r, FW + RUN - p.r);
   p.y = clamp(p.y + my * spd * dt, -RUN + p.r, FH + RUN - p.r);
+  // Historial de posiciones (últimos 3 s) para que el VAR pueda retrotraer la jugada
+  G.rt += dt;
+  if (!G.hist.length || G.rt - G.hist[G.hist.length - 1].t >= .05) G.hist.push({ t: G.rt, x: p.x, y: p.y });
+  while (G.hist.length && G.hist[0].t < G.rt - 3) G.hist.shift();
+  if (G.rewind) { G.rewind.t -= dt; if (G.rewind.t <= 0) { G.rewind.phase = 'freeze'; G.rewind.t = .5; G.rewind.max = .5; sfx('var'); } }
   if (p.inv > 0) p.inv -= dt;
   p.hp = Math.min(p.maxHp, p.hp + S.regen * dt);
   G.shake = Math.max(0, G.shake - dt * 30);
@@ -1364,6 +1383,7 @@ function kill(e) {
     G.p.hp = Math.min(G.p.maxHp, G.p.hp + G.p.maxHp * .4);
     for (const g of G.gems) g.pull = true;
     banner(BOSSES[e.type].beat); cheer = 3;
+    if (e.type === 'var') G.rewind = null;
   } else if (e.type === 'barra') { for (let i = 0; i < 3; i++) gem(e.x + rnd(-14, 14), e.y + rnd(-14, 14), e.xp); }
   else gem(e.x, e.y, e.xp);
   if (e.type === 'hincha') { banner('¡Seguridad se lleva al hincha!'); cheer = 2; }
@@ -1721,6 +1741,18 @@ function bossAI(e, d, ux, uy, sp, dt) {
           G.hazards.push({ kind: 'var', x, y, w: 170, h: 170, t: 1.3, max: 1.3, dmg: e.dmg * 1.3, fx: 0 });
         }
         sfx('var');
+      }
+      if (enr && !G.rewind) {
+        // Retrotrae la jugada: marca dónde estabas hace 2 s y, tras el aviso, te devuelve ahí
+        e.rwCd = (e.rwCd == null ? 2 : e.rwCd) - dt;
+        if (e.rwCd <= 0 && onScreen(e.x, e.y)) {
+          const old = G.hist.find(h => h.t >= G.rt - 2.05) || G.hist[0];
+          if (old && Math.hypot(old.x - p.x, old.y - p.y) > 80) {
+            e.rwCd = 8;
+            G.rewind = { x: old.x, y: old.y, t: 1, max: 1, phase: 'warn' };
+            banner('¡El VAR retrotrae la jugada!', true); sfx('var');
+          } else e.rwCd = .5;
+        }
       }
       if (enr) {
         e.cardCd -= dt;
@@ -2813,6 +2845,19 @@ function render() {
     ctx.strokeText(t.txt, t.x, t.y); ctx.fillStyle = t.big ? '#ffb627' : '#ffffff'; ctx.fillText(t.txt, t.x, t.y);
   }
   ctx.globalAlpha = 1;
+  if (G.rewind) {
+    // Adónde te va a devolver el VAR: línea punteada verde y tu silueta transparente
+    const R = G.rewind, p = G.p, blink = R.phase === 'freeze' || Math.floor(R.t * 8) % 2 === 0;
+    ctx.strokeStyle = 'rgba(57,255,154,.85)'; ctx.lineWidth = 3; ctx.setLineDash([10, 8]);
+    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(R.x, R.y); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(R.x, R.y, p.r + 10, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = blink ? .6 : .35;
+    const K = CH.kit;
+    drawPerson(R.x, R.y, p.r, Math.atan2(p.fy, p.fx), 0, { shirt: '#39ff9a', sleeve: '#39ff9a', stripe: null, shorts: K.shorts, skin: CH.skin, hair: CH.hair });
+    ctx.globalAlpha = 1;
+    ctx.font = '700 22px Teko, "Arial Narrow", sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.strokeText('◀◀', R.x, R.y - p.r - 16); ctx.fillStyle = '#39ff9a'; ctx.fillText('◀◀', R.x, R.y - p.r - 16);
+  }
 
   // Capa de pantalla
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -2833,6 +2878,19 @@ function render() {
     ctx.fillText('PAUSA DE HIDRATACIÓN · LOS RIVALES NO SE MUEVEN', VW / 2, VH * .72);
     ctx.font = '700 64px Teko, "Arial Narrow", sans-serif'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.6)';
     const n = String(Math.ceil(G.hydra)); ctx.strokeText(n, VW / 2, VH * .72 + 46); ctx.fillStyle = '#bfe3ff'; ctx.fillText(n, VW / 2, VH * .72 + 46);
+  }
+  if (G.rewind && G.rewind.phase === 'freeze') {
+    // Imagen congelada como en la cabina del VAR: tinte verde, líneas de TV y cartel
+    ctx.fillStyle = 'rgba(8,24,16,.38)'; ctx.fillRect(0, 0, VW, VH);
+    ctx.fillStyle = 'rgba(57,255,154,.07)';
+    for (let y = (performance.now() / 30) % 4; y < VH; y += 4) ctx.fillRect(0, y, VW, 1.5);
+    ctx.strokeStyle = 'rgba(57,255,154,.8)'; ctx.lineWidth = 4; ctx.strokeRect(10, 10, VW - 20, VH - 20);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '700 24px Teko, "Arial Narrow", sans-serif';
+    ctx.fillStyle = Math.floor(performance.now() / 250) % 2 ? '#ff3b30' : '#7a1d18'; ctx.beginPath(); ctx.arc(VW / 2 - 78, VH * .7 - 44, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#39ff9a'; ctx.fillText('VAR · REVISIÓN', VW / 2 + 6, VH * .7 - 44);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '700 46px Teko, "Arial Narrow", sans-serif';
+    ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.7)';
+    ctx.strokeText('◀◀ RETROTRAE LA JUGADA', VW / 2, VH * .7); ctx.fillStyle = '#39ff9a'; ctx.fillText('◀◀ RETROTRAE LA JUGADA', VW / 2, VH * .7);
   }
   if (G.hurtFlash > 0) { ctx.fillStyle = `rgba(217,74,61,${G.hurtFlash})`; ctx.fillRect(0, 0, VW, VH); }
   if (joy && state === 'play') {

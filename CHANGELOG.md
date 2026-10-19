@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.26 · 18 oct 2026
+
+- **Jefes:** El jefe del minuto 80 de El Coloso tiene un ataque nuevo cuando está golpeado: Retrotrae la jugada. Marca con una silueta verde dónde estabas 2 segundos antes, congela la imagen medio segundo y te devuelve ahí. Ojo, que te puede dejar arriba de una zona marcada.
+
 ## 2.25 · 18 oct 2026
 
 - **Jefes:** El jefe del minuto 80 de El Potrero tiene un ataque nuevo cuando está golpeado: va hasta el alambrado, arranca un pedazo y te revolea escombros en abanico. El hueco en el alambrado queda hasta el final del partido.
