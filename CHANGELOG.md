@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.29 · 19 oct 2026
+
+- **Jugadores:** El Árbitro ya está disponible desde el arranque, sin tener que desbloquearlo.
+
 ## 2.28 · 19 oct 2026
 
 - **Jugadores:** Nuevo jugador: El Árbitro. Se desbloquea al expulsar 50 rivales con tarjeta roja, sumando todos tus partidos (con Doble amarilla también cuenta). Con Shift pita el silbato: los rivales cercanos quedan congelados 1,5 s sin moverse ni pegar (los jefes no). Se recarga en 10 s. Tiene 15% menos de vida y no tiene sprint. Los árbitros rivales no le sacan tarjeta.

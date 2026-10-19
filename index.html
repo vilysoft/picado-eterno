@@ -526,7 +526,8 @@ const ROJAS_NEED = 50;
 const charLock = id => id === 'muro' ? 'Ganá en El Potrero para desbloquearlo'
   : id === 'arbitro' ? `Expulsá ${ROJAS_NEED} rivales con tarjeta roja para desbloquearlo (${Math.min(ROJAS_NEED, SAVE.rojas || 0)}/${ROJAS_NEED})` : '';
 let CH = CHARS.diez;
-const charOpen = id => id === 'diez' || ALL_OPEN || !!(SAVE.chars && SAVE.chars[id]);
+// El Árbitro está abierto para todos por ahora (el desbloqueo por rojas queda listo para más adelante)
+const charOpen = id => id === 'diez' || id === 'arbitro' || ALL_OPEN || !!(SAVE.chars && SAVE.chars[id]);
 // Combos: se activan cuando las dos mejoras llegan a nivel 5
 const COMBOS = {
   amarilla: { name: 'Doble amarilla', need: [['w', 'tiroLibre'], ['p', 'potencia']],
@@ -653,6 +654,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.29', date: '19 oct 2026', items: [
+    ['Jugadores', 'El Árbitro ya está disponible desde el arranque, sin tener que desbloquearlo.'],
+  ] },
   { v: '2.28', date: '19 oct 2026', items: [
     ['Jugadores', 'Nuevo jugador: El Árbitro. Se desbloquea al expulsar 50 rivales con tarjeta roja, sumando todos tus partidos (con Doble amarilla también cuenta). Con Shift pita el silbato: los rivales cercanos quedan congelados 1,5 s sin moverse ni pegar (los jefes no). Se recarga en 10 s. Tiene 15% menos de vida y no tiene sprint. Los árbitros rivales no le sacan tarjeta.'],
     ['Técnicas', 'Tarjeta roja, solo para El Árbitro (arranca con ella): le sacás una roja al rival más cercano; si le queda poca vida, lo expulsa de una. Tiene 5 niveles: más tarjetas, más daño, menos espera y expulsiones más fáciles.'],
