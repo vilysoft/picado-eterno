@@ -586,7 +586,7 @@ const FOES = {
   arquero:  { r: 15, hp: 26, speed: 95, dmg: 12, xp: 3, color: '#c8f03c', nums: [1] },
   camillero: { r: 32, hp: 60, speed: 62, dmg: 12, xp: 5, color: '#f2f2ec', nums: [] },
   hincha:    { r: 13, hp: 40, speed: 820, dmg: 26, xp: 20, color: '#7b4bc9', nums: [] },
-  barra:     { r: 12, hp: 8, speed: 165, dmg: 5, xp: 2, color: '#22262e', nums: [] },
+  barra:     { r: 12, hp: 16, speed: 165, dmg: 5, xp: 2, color: '#22262e', nums: [] },
   spidercam: { r: 16, hp: 70, speed: 76, dmg: 14, xp: 8, color: '#2b2f36', nums: [], fly: true },
   capitan:  { r: 34, hp: 900, speed: 78, dmg: 22, xp: 50, color: '#5b34a8', nums: [9], boss: true },
   dueno:    { r: 32, hp: 850, speed: 70, dmg: 20, xp: 50, color: '#e8e1cf', nums: [], boss: true },
@@ -654,6 +654,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.31', date: '19 oct 2026', items: [
+    ['Jugadores', 'El Árbitro corre con un solo brazo balanceándose; el otro queda estirado con la tarjeta.'],
+    ['Rivales', 'Te aprieta la barra: entran 13 hinchas en vez de 10 y cada uno tiene el doble de vida.'],
+  ] },
   { v: '2.30', date: '19 oct 2026', items: [
     ['Jugadores', 'El Árbitro ya no lleva la pelota en el pie: corre con el brazo estirado mostrando la tarjeta roja.'],
     ['Técnicas', 'Tarjeta roja pega 25% menos (12 en vez de 16). Como la expulsión depende del daño, también expulsa un poco menos.'],
@@ -1269,7 +1273,7 @@ function spawning() {
   if (!G.boss1 && t >= MATCH / 2) { G.boss1 = true; spawnBoss(LV.bosses[0]); sfx('whistle'); }
   if (!G.boss2 && t >= MATCH * 80 / 90) { G.boss2 = true; spawnBoss(LV.bosses[1]); }
 }
-const BARRA_N = 10, HATS = ['#ffd34d', '#e8433a', '#f4f7fb', '#3fa7ff', '#4fd16a'];
+const BARRA_N = 13, HATS = ['#ffd34d', '#e8433a', '#f4f7fb', '#3fa7ff', '#4fd16a'];
 function startBarra(m) {
   // Un grupo de la barra entra junto desde un costado y te viene a buscar
   G.barras++; G.barraNext = m + 10 + rnd(0, 8);
@@ -2623,8 +2627,8 @@ function drawPerson(x, y, r, ang, step, o) {
   // Brazos: se balancean al revés que las piernas (o hacia adelante si se tira)
   const ay = 12.5, axL = o.dive ? 13 : -fo * .7, axR = o.dive ? 13 : fo * .7, hy = o.dive ? 6 : ay;
   const hand = o.gloves || o.skin, hr = o.gloves ? 4.2 : 3;
-  ell(axL + 3.5, -hy, hr, hr, hand); ell(axR + 3.5, hy, hr, hr, hand);
-  ell(axL * .4, -ay + 1, 4, 3.8, o.sleeve); ell(axR * .4, ay - 1, 4, 3.8, o.sleeve);
+  ell(axL + 3.5, -hy, hr, hr, hand); if (!o.armOut) ell(axR + 3.5, hy, hr, hr, hand);   // armOut: ese brazo lo dibuja quien llama (el árbitro con la tarjeta)
+  ell(axL * .4, -ay + 1, 4, 3.8, o.sleeve); if (!o.armOut) ell(axR * .4, ay - 1, 4, 3.8, o.sleeve);
   if (o.band) { ctx.fillStyle = '#ffb627'; ctx.fillRect(axL * .4 - 1.5, -ay - 2.5, 3, 7); }
   // Torso con camiseta
   ctx.beginPath(); ctx.ellipse(0, 0, 6.8, 11.5, 0, 0, Math.PI * 2);
@@ -2822,7 +2826,7 @@ function drawPlayer(p) {
   if (!blink) {
     const K = CH.kit;
     drawPerson(p.x, p.y, p.r, Math.atan2(p.fy, p.fx), p.step, {
-      shirt: K.shirt, sleeve: K.sleeve, stripe: K.stripe, shorts: K.shorts, skin: CH.skin, hair: CH.hair, band: !!CH.shield,
+      shirt: K.shirt, sleeve: K.sleeve, stripe: K.stripe, shorts: K.shorts, skin: CH.skin, hair: CH.hair, band: !!CH.shield, armOut: !!CH.whistle,
     });
     if (CH.whistle) {
       // El Árbitro: brazo estirado hacia adelante mostrando la tarjeta roja

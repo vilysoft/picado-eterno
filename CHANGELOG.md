@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.31 · 19 oct 2026
+
+- **Jugadores:** El Árbitro corre con un solo brazo balanceándose; el otro queda estirado con la tarjeta.
+- **Rivales:** Te aprieta la barra: entran 13 hinchas en vez de 10 y cada uno tiene el doble de vida.
+
 ## 2.30 · 19 oct 2026
 
 - **Jugadores:** El Árbitro ya no lleva la pelota en el pie: corre con el brazo estirado mostrando la tarjeta roja.
