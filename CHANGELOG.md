@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.35 · 20 oct 2026
+
+- **Técnicas:** Pelota pega 10% menos: 10,8 por golpe en vez de 12. Las mejoras de daño suman encima de eso.
+
 ## 2.34 · 20 oct 2026
 
 - **Jefes:** El jefe del entretiempo de La Cancha del Club, golpeado, grita "¡Vamos, muchachos!": antes de cada embestida forma en fila detrás suyo hasta 6 rivales cercanos (la fila se ve unida por una línea amarilla) y salen todos juntos embistiendo.

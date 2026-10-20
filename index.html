@@ -628,7 +628,7 @@ const SKINS = ['#f1c9a5', '#dcab82', '#b97d55', '#8a5636', '#5e3a24'];
 const HAIRS = ['#1b1410', '#3b2416', '#6b4423', '#c99a4c', '#111111'];
 function wp(k, l) {
   switch (k) {
-    case 'pelota': return { count: 1 + (l >= 3) + (l >= 5), bounces: 2 + (l >= 2) + (l >= 6 ? 2 : 0), dmg: 12 * (l >= 4 ? 1.4 : 1) * (l >= 6 ? 1.4 : 1), cd: 1.15, speed: 470 };
+    case 'pelota': return { count: 1 + (l >= 3) + (l >= 5), bounces: 2 + (l >= 2) + (l >= 6 ? 2 : 0), dmg: 10.8 * (l >= 4 ? 1.4 : 1) * (l >= 6 ? 1.4 : 1), cd: 1.15, speed: 470 };
     case 'rondo': return { count: 3 + (l >= 2) + (l >= 4) + (l >= 5), dmg: 13.5 * (l >= 3 ? 1.35 : 1) * (l >= 5 ? 1.35 : 1), spin: 3 + (l >= 4 ? 1.3 : 0), R: 78, push: l >= 6 ? 1150 : 200 };
     case 'barrida': return { R: 114 * (l >= 2 ? 1.3 : 1) * (l >= 5 ? 1.3 : 1), dmg: 22.5 * (l >= 3 ? 1.4 : 1) * (l >= 5 ? 1.4 : 1), cd: 2.56 * (l >= 4 ? .75 : 1), shock: l >= 6 };
     case 'tresDedos': return { dmg: 20 * (l >= 2 ? 1.4 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 3 ? 2 : 1, cd: 1.9 * (l >= 4 ? .75 : 1), speed: 620, straight: 190, life: l >= 5 ? 1.6 : 1.25 };
@@ -658,6 +658,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.35', date: '20 oct 2026', items: [
+    ['Técnicas', 'Pelota pega 10% menos: 10,8 por golpe en vez de 12. Las mejoras de daño suman encima de eso.'],
+  ] },
   { v: '2.34', date: '20 oct 2026', items: [
     ['Jefes', 'El jefe del entretiempo de La Cancha del Club, golpeado, grita "¡Vamos, muchachos!": antes de cada embestida forma en fila detrás suyo hasta 6 rivales cercanos (la fila se ve unida por una línea amarilla) y salen todos juntos embistiendo.'],
     ['Jefes', 'El jefe del minuto 80 de La Cancha del Club, golpeado, se va expulsado a la tribuna: desde ahí no lo podés tocar, pero sigue mandando gente a la cancha cada 4 s. Cada uno de los que manda que volteás le baja un 2,5% de la vida. Le ganás desarmándole el equipo.'],
