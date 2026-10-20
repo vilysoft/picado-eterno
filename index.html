@@ -658,6 +658,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.36', date: '20 oct 2026', items: [
+    ['Rivales', 'El hincha invasor hace ida y vuelta: cruza la cancha, frena del otro lado, se vuelve a marcar su franja y vuelve corriendo por el mismo camino. Si lo volteás deja una gema celeste grande que vale 60 de experiencia (antes 20).'],
+  ] },
   { v: '2.35', date: '20 oct 2026', items: [
     ['Técnicas', 'Pelota pega 10% menos: 10,8 por golpe en vez de 12. Las mejoras de daño suman encima de eso.'],
   ] },
@@ -1116,12 +1119,16 @@ function update(dt) {
   if (G.lane) {
     // Franja de aviso: cuando se termina, el hincha sale corriendo por ahí
     G.lane.t -= dt;
-    if (G.lane.t <= 0) {
+    if (G.lane.t <= 0 && G.lane.back) {
+      // Vuelta: el mismo hincha sale corriendo por la misma franja hacia donde entró
+      const L = G.lane, e = L.back; G.lane = null;
+      if (!e.dead) { e.waiting = false; e.ddx = -e.ddx; e.ddy = -e.ddy; e.ex = L.x1; e.ey = L.y1; sfx('dive'); cheer = 2.5; }
+    } else if (G.lane.t <= 0) {
       const L = G.lane; G.lane = null;
       spawn('hincha', L.x0, L.y0);
       const e = G.enemies[G.enemies.length - 1];
       const len = Math.hypot(L.x1 - L.x0, L.y1 - L.y0);
-      e.ddx = (L.x1 - L.x0) / len; e.ddy = (L.y1 - L.y0) / len; e.ex = L.x1; e.ey = L.y1;
+      e.ddx = (L.x1 - L.x0) / len; e.ddy = (L.y1 - L.y0) / len; e.ex = L.x1; e.ey = L.y1; e.sx = L.x0; e.sy = L.y0;
       e.dmg = FOES.hincha.dmg * LV.dmg * MOB_DMG; e.speed = FOES.hincha.speed;
       sfx('dive'); cheer = 2.5;
     }
@@ -1462,7 +1469,8 @@ function hitEnemy(e, dmg, kx, ky, src, exact) {
   sfx('hit');
   if (e.hp <= 0) { R.kills[src] = (R.kills[src] || 0) + 1; kill(e); }
 }
-const DT_DRAIN = .025;   // cada rival que mandó el DT expulsado le saca 2,5% de su vida total
+const DT_DRAIN = .025;
+const HINCHA_GEM = 60;   // experiencia de la gema celeste del hincha invasor   // cada rival que mandó el DT expulsado le saca 2,5% de su vida total
 function kill(e) {
   e.dead = true; G.kills++;
   if (e.dtTeam) {
@@ -1483,7 +1491,8 @@ function kill(e) {
     banner(BOSSES[e.type].beat); cheer = 3;
     if (e.type === 'var') G.rewind = null;
     if (e.type === 'tecnico') for (const o of G.enemies) if (o.dtTeam) o.buff = 0;
-  } else if (e.type === 'barra') { for (let i = 0; i < 3; i++) gem(e.x + rnd(-14, 14), e.y + rnd(-14, 14), e.xp); }
+  } else if (e.type === 'hincha') gem(e.x, e.y, HINCHA_GEM, true);   // gema celeste grande
+  else if (e.type === 'barra') { for (let i = 0; i < 3; i++) gem(e.x + rnd(-14, 14), e.y + rnd(-14, 14), e.xp); }
   else gem(e.x, e.y, e.xp);
   if (e.type === 'hincha') { banner('¡Seguridad se lleva al hincha!'); cheer = 2; }
 }
@@ -1730,9 +1739,15 @@ function updateEnemies(dt) {
       else if (e.mode === 'down') { sp = 0; e.mt -= dt; if (e.mt <= 0) { e.mode = 'run'; e.diveCd = 1.2; } }
     }
     if (e.type === 'hincha') {
-      // Corre en línea recta por su franja; al llegar al otro lado se va (sin contar como volteado)
-      ux = e.ddx; uy = e.ddy; sp = e.speed;
-      if ((e.x - e.ex) * e.ddx + (e.y - e.ey) * e.ddy > -8) { e.dead = true; continue; }
+      // Corre en línea recta por su franja; al llegar al otro lado frena, se marca la franja de nuevo y vuelve.
+      // Si llega otra vez al lado donde entró, se va (sin contar como volteado)
+      ux = e.ddx; uy = e.ddy; sp = e.waiting ? 0 : e.speed;
+      if (!e.waiting && (e.x - e.ex) * e.ddx + (e.y - e.ey) * e.ddy > -8) {
+        if (e.back) { e.dead = true; continue; }
+        e.back = true; e.waiting = true; sp = 0;
+        G.lane = { x0: e.ex, y0: e.ey, x1: e.sx, y1: e.sy, t: .9, max: .9, back: e };
+        banner('¡El hincha pega la vuelta!');
+      }
     }
     if (e.type === 'spidercam') {
       // Spidercam: flota cerca tuyo y cada tanto marca un círculo y baja de golpe
@@ -2053,9 +2068,9 @@ function updateCards(dt) {
   G.cards = G.cards.filter(c => c.life > 0);
 }
 
-function gem(x, y, v) {
-  if (G.gems.length > 320) { G.gems[Math.random() * G.gems.length | 0].v += v; return; }
-  G.gems.push({ x, y, v, pull: false, sp: 0, got: false });
+function gem(x, y, v, star) {
+  if (G.gems.length > 320 && !star) { G.gems[Math.random() * G.gems.length | 0].v += v; return; }
+  G.gems.push({ x, y, v, pull: false, sp: 0, got: false, star: !!star });
 }
 function updateGems(dt) {
   const p = G.p, R = 80 * G.stats.magnet;
@@ -3077,10 +3092,19 @@ function render() {
     ctx.fillStyle = big ? '#7cf0d0' : '#ffd34d'; ctx.beginPath();
     const s = big ? 9 : 6;
     for (const g of G.gems) {
-      if ((g.v >= 5) !== big || !vis(g.x, g.y, 10)) continue;
+      if (g.star || (g.v >= 5) !== big || !vis(g.x, g.y, 10)) continue;
       ctx.moveTo(g.x, g.y - s); ctx.lineTo(g.x + s * .65, g.y); ctx.lineTo(g.x, g.y + s); ctx.lineTo(g.x - s * .65, g.y); ctx.closePath();
     }
     ctx.fill();
+  }
+
+  for (const g of G.gems) {
+    // Gema celeste del hincha: más grande, con borde blanco y un halo que late
+    if (!g.star || !vis(g.x, g.y, 20)) continue;
+    const s = 13, pl = .5 + .5 * Math.sin(performance.now() / 160);
+    ctx.fillStyle = `rgba(124,196,255,${.18 + .15 * pl})`; ctx.beginPath(); ctx.arc(g.x, g.y, s + 8 + pl * 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(g.x, g.y - s); ctx.lineTo(g.x + s * .65, g.y); ctx.lineTo(g.x, g.y + s); ctx.lineTo(g.x - s * .65, g.y); ctx.closePath();
+    ctx.fillStyle = '#7cc4ff'; ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
   }
 
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';

@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.36 · 20 oct 2026
+
+- **Rivales:** El hincha invasor hace ida y vuelta: cruza la cancha, frena del otro lado, se vuelve a marcar su franja y vuelve corriendo por el mismo camino. Si lo volteás deja una gema celeste grande que vale 60 de experiencia (antes 20).
+
 ## 2.35 · 20 oct 2026
 
 - **Técnicas:** Pelota pega 10% menos: 10,8 por golpe en vez de 12. Las mejoras de daño suman encima de eso.
