@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.33 · 20 oct 2026
+
+- **Combos:** Barrera, solo para El Árbitro (Tarjeta roja y Spray de distancia en nivel 5): las líneas de spray se vuelven una barrera que los rivales comunes no pueden cruzar, y una roja que pega cerca de una línea la hace estallar en una llamarada que quema a todos alrededor. Los jefes y el hincha invasor sí la cruzan.
+
 ## 2.32 · 19 oct 2026
 
 - **Sonido:** La Tarjeta roja ya no suena con silbato: hace un "fsst" corto y grave al tirarla (como mucho una vez cada 0,6 s) y un golpe seco cuando expulsa a alguien.

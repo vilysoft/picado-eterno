@@ -542,6 +542,8 @@ const COMBOS = {
     desc: 'Cuando la pelota de Tres dedos termina su recorrido, estalla en un golazo que daña a todos alrededor.' },
   tapones:  { name: 'Tapones de punta', need: [['p', 'botines'], ['w', 'barrida']],
     desc: 'La barrida hace sangrar 3 s: daño cada medio segundo.' },
+  barrera:  { name: 'Barrera', need: [['w', 'roja'], ['w', 'spray']],
+    desc: 'Las líneas de spray son una barrera: los rivales comunes no las pueden cruzar. Una roja que pega cerca de una línea la hace estallar en una llamarada.' },
 };
 const comboLv = (t, k) => (t === 'w' ? G.weapons : G.passives)[k] || 0;
 function checkCombos() {
@@ -656,6 +658,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.33', date: '20 oct 2026', items: [
+    ['Combos', 'Barrera, solo para El Árbitro (Tarjeta roja y Spray de distancia en nivel 5): las líneas de spray se vuelven una barrera que los rivales comunes no pueden cruzar, y una roja que pega cerca de una línea la hace estallar en una llamarada que quema a todos alrededor. Los jefes y el hincha invasor sí la cruzan.'],
+  ] },
   { v: '2.32', date: '19 oct 2026', items: [
     ['Sonido', 'La Tarjeta roja ya no suena con silbato: hace un "fsst" corto y grave al tirarla (como mucho una vez cada 0,6 s) y un golpe seco cuando expulsa a alguien.'],
   ] },
@@ -1350,7 +1355,7 @@ function fireWeapons(dt) {
   G.shocks = G.shocks.filter(w => w.t > 0);
   // Líneas de spray: quien las pisa se prende fuego (la quemadura sigue un ratito después de salir)
   for (const L of G.sprays) {
-    L.life -= dt; L.grow = Math.min(1, L.grow + dt * 5);
+    L.life -= dt; L.grow = Math.min(1, L.grow + dt * 5); L.flareCd = (L.flareCd || 0) - dt;
     const vx = L.x2 - L.x1, vy = L.y2 - L.y1, l2 = vx * vx + vy * vy || 1;
     for (const e of G.enemies) {
       if (e.dead || e.fly) continue;
@@ -1550,6 +1555,7 @@ function updateShots(dt) {
             G.rojas++; sfx('expel');
             hitEnemy(e, e.hp + 1, 0, 0, 'roja', true);
           } else hitEnemy(e, s.dmg, s.vx / s.speed * 140, s.vy / s.speed * 140, 'roja');
+          if (G.combos.barrera) sprayFlare(e.x, e.y, s.dmg);
           s.life = 0; break;
         }
       }
@@ -1605,6 +1611,38 @@ function updateShots(dt) {
   G.shots = G.shots.filter(s => s.life > 0);
 }
 
+// Combo Barrera: si el rival quiere pasar a través de una línea de spray, queda del lado de donde venía
+function barrierBlock(e, ox, oy) {
+  for (const L of G.sprays) {
+    if (L.grow < 1) continue;
+    const vx = L.x2 - L.x1, vy = L.y2 - L.y1, len = Math.hypot(vx, vy) || 1, nx = -vy / len, ny = vx / len;
+    const t = ((e.x - L.x1) * vx + (e.y - L.y1) * vy) / (len * len);
+    if (t < 0 || t > 1) continue;
+    const dNow = (e.x - L.x1) * nx + (e.y - L.y1) * ny, dOld = (ox - L.x1) * nx + (oy - L.y1) * ny, m = e.r + 6;
+    if (Math.abs(dNow) >= m && Math.sign(dNow) === Math.sign(dOld)) continue;
+    const side = Math.sign(dOld) || 1;
+    e.x += nx * (side * m - dNow); e.y += ny * (side * m - dNow);
+    e.kx *= .3; e.ky *= .3;
+  }
+}
+function sprayFlare(x, y, dmg) {
+  // Combo Barrera: la roja cerca de una línea la hace estallar
+  for (const L of G.sprays) {
+    const vx = L.x2 - L.x1, vy = L.y2 - L.y1, l2 = vx * vx + vy * vy || 1;
+    const t = clamp(((x - L.x1) * vx + (y - L.y1) * vy) / l2, 0, 1), qx = L.x1 + vx * t, qy = L.y1 + vy * t;
+    if ((x - qx) ** 2 + (y - qy) ** 2 > 70 * 70 || L.flareCd > 0) continue;
+    L.flareCd = .4;
+    const R = 95 * G.stats.area;
+    G.rings.push({ x: qx, y: qy, R, life: .4, max: .4, col: '255,150,60' });
+    for (let i = 0; i < 12; i++) part(qx + rnd(-30, 30), qy + rnd(-30, 30), i % 2 ? '#ffb35a' : '#ffffff');
+    for (const e of G.enemies) {
+      if (e.dead || e.fly) continue;
+      if ((e.x - qx) ** 2 + (e.y - qy) ** 2 < (R + e.r) ** 2) { hitEnemy(e, dmg * 1.5, 0, 0, 'barrera'); e.burn = 1.5; e.burnDps = Math.max(e.burnDps || 0, L.dps); }
+    }
+    sfx('stomp');
+    return;
+  }
+}
 const grid = new Map();
 function updateEnemies(dt) {
   const p = G.p, E = G.enemies, decay = Math.pow(.004, dt), S = G.stats;
@@ -1722,7 +1760,9 @@ function updateEnemies(dt) {
     if (stn) sp = 0;
     if (e.buff > 0) { e.buff -= dt; sp *= 1.35; }
     e.still = sp === 0;
+    const ox = e.x, oy = e.y;
     e.x += (ux * sp + e.kx) * dt; e.y += (uy * sp + e.ky) * dt;
+    if (G.combos.barrera && G.sprays.length && !e.boss && !e.fly && e.type !== 'hincha') barrierBlock(e, ox, oy);
     e.kx *= decay; e.ky *= decay;
     e.flash -= dt; e.rcd -= dt; e.tcd = (e.tcd || 0) - dt;
     if (e.type !== 'camillero' && !e.fly && !stn && d < e.r + p.r - 2) {   // la Spidercam vuela: no choca
@@ -2060,7 +2100,7 @@ function hud() {
   const w = (G.xp / G.xpNext * 100).toFixed(1) + '%';
   if (hudCache.xp !== w) { hudCache.xp = w; $('xpfill').style.width = w; }
 }
-const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', onda: 'Onda expansiva', tiroLibre: 'Tiro libre', tresDedos: 'Tres dedos', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta', olimpico: 'Gol olímpico', roja: 'Tarjeta roja', spray: 'Spray de distancia' };
+const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', onda: 'Onda expansiva', tiroLibre: 'Tiro libre', tresDedos: 'Tres dedos', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta', olimpico: 'Gol olímpico', barrera: 'Barrera (llamarada)', roja: 'Tarjeta roja', spray: 'Spray de distancia' };
 const nf = n => Math.round(n).toLocaleString('es-AR');
 function renderStats(el, full) {
   const R = G.rec;
@@ -2070,7 +2110,7 @@ function renderStats(el, full) {
   if (!total) h = '<p class="best" style="margin:6px 0 10px">Tus habilidades todavía no tocaron a nadie.</p>';
   else {
     h = '<div class="srows"><div class="shead"><span>Habilidad</span><span></span><span>Daño</span><span>%</span><span>Volteó</span></div>'
-      + rows.map(([k, v]) => `<div class="srow${k === 'codazo' ? ' fis' : k === 'amarilla' || k === 'tapones' || k === 'olimpico' ? ' combo' : ''}"><span class="sname">${SRC_NAMES[k] || k}</span>`
+      + rows.map(([k, v]) => `<div class="srow${k === 'codazo' ? ' fis' : k === 'amarilla' || k === 'tapones' || k === 'olimpico' || k === 'barrera' ? ' combo' : ''}"><span class="sname">${SRC_NAMES[k] || k}</span>`
         + `<span class="sbar"><i style="width:${(v / rows[0][1] * 100).toFixed(1)}%"></i></span>`
         + `<span class="snum">${nf(v)}</span><span class="spct">${Math.round(v / total * 100)}%</span><span class="skill">${R.kills[k] || 0}</span></div>`).join('')
       + '</div>';
@@ -2753,7 +2793,12 @@ function drawSprays() {
     ctx.globalAlpha = a;
     ctx.strokeStyle = `rgba(255,150,60,${.22 + .18 * pulse})`; ctx.lineWidth = 20;
     ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    ctx.strokeStyle = 'rgba(255,255,255,.92)'; ctx.lineWidth = 8;
+    if (G.combos.barrera) {
+      // Barrera: la espuma se ve más alta, con borde naranja firme
+      ctx.strokeStyle = 'rgba(255,140,40,.95)'; ctx.lineWidth = 14;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.92)'; ctx.lineWidth = G.combos.barrera ? 10 : 8;
     ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
     ctx.fillStyle = '#ffffff';
     const len = Math.hypot(x2 - x1, y2 - y1), n = Math.floor(len / 9);
