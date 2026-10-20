@@ -658,6 +658,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.37', date: '20 oct 2026', items: [
+    ['Jefes', 'El jefe del minuto 80 de La Cancha del Club, ya expulsado, manda 10 rivales por cambio en vez de 8, y cada uno que volteás le saca 2% de la vida en vez de 2,5%.'],
+  ] },
   { v: '2.36', date: '20 oct 2026', items: [
     ['Rivales', 'El hincha invasor hace ida y vuelta: cruza la cancha, frena del otro lado, se vuelve a marcar su franja y vuelve corriendo por el mismo camino. Si lo volteás deja una gema celeste grande que vale 60 de experiencia (antes 20).'],
   ] },
@@ -1469,7 +1472,7 @@ function hitEnemy(e, dmg, kx, ky, src, exact) {
   sfx('hit');
   if (e.hp <= 0) { R.kills[src] = (R.kills[src] || 0) + 1; kill(e); }
 }
-const DT_DRAIN = .025;
+const DT_DRAIN = .02;   // cada rival que mandó el DT expulsado le saca 2% de su vida total
 const HINCHA_GEM = 60;   // experiencia de la gema celeste del hincha invasor   // cada rival que mandó el DT expulsado le saca 2,5% de su vida total
 function kill(e) {
   e.dead = true; G.kills++;
@@ -2011,7 +2014,7 @@ function bossCast(e, enr) {
     for (let i = 0; i < 5; i++) foeShot(e.x, e.y, a + (i - 2) * .22, 430, 12, e.dmg * .4, 'scrap');
     sfx('stomp');
   } else if (e.type === 'tecnico') {
-    const n = enr ? 8 : 5;
+    const n = e.away ? 10 : enr ? 8 : 5;   // expulsado manda 10 por vez
     // desde la tribuna los manda a la cancha justo al lado de la línea
     const cx = e.x, cy = e.away ? (e.awayY < 0 ? -RUN + 70 : FH + RUN - 70) : e.y;
     for (let i = 0; i < n; i++) {
