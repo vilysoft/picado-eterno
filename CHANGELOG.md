@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.38 · 20 oct 2026
+
+- **Técnicas:** El nivel 6 de Pelota da +1 rebote en vez de +2 (sigue sumando +40% de daño).
+
 ## 2.37 · 20 oct 2026
 
 - **Jefes:** El jefe del minuto 80 de La Cancha del Club, ya expulsado, manda 10 rivales por cambio en vez de 8, y cada uno que volteás le saca 2% de la vida en vez de 2,5%.
