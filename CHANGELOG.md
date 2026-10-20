@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.39 · 20 oct 2026
+
+- **Técnicas:** Si ganás las 3 canchas con El Árbitro, el Spray de distancia se libera para todos los jugadores: también les puede salir a El 10 y a El Muro al subir de nivel. La tarjeta de El Árbitro en el menú muestra cuántas canchas le ganaste.
+
 ## 2.38 · 20 oct 2026
 
 - **Técnicas:** El nivel 6 de Pelota da +1 rebote en vez de +2 (sigue sumando +40% de daño).

@@ -525,6 +525,9 @@ const CHARS = {
     traits: ['<b>Silbato</b> con Shift', 'Arranca con <b>Tarjeta roja</b>', '<i>15% menos de vida</i>', '<i>Sin sprint</i>'] },
 };
 const ROJAS_NEED = 50;
+// El Spray de distancia se libera para todos al ganar las 3 canchas con El Árbitro
+const sprayFree = () => ALL_OPEN || !!SAVE.sprayAll;
+const weaponFor = k => !WEAPONS[k].only || CHARS[WEAPONS[k].only] === CH || (k === 'spray' && sprayFree());
 const charLock = id => id === 'muro' ? 'Ganá en El Potrero para desbloquearlo'
   : id === 'arbitro' ? `Expulsá ${ROJAS_NEED} rivales con tarjeta roja para desbloquearlo (${Math.min(ROJAS_NEED, SAVE.rojas || 0)}/${ROJAS_NEED})` : '';
 let CH = CHARS.diez;
@@ -658,6 +661,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.39', date: '20 oct 2026', items: [
+    ['Técnicas', 'Si ganás las 3 canchas con El Árbitro, el Spray de distancia se libera para todos los jugadores: también les puede salir a El 10 y a El Muro al subir de nivel. La tarjeta de El Árbitro en el menú muestra cuántas canchas le ganaste.'],
+  ] },
   { v: '2.38', date: '20 oct 2026', items: [
     ['Técnicas', 'El nivel 6 de Pelota da +1 rebote en vez de +2 (sigue sumando +40% de daño).'],
   ] },
@@ -841,10 +847,10 @@ const CHANGELOG = [
 ];
 const SAVE_KEY = 'picado-eterno-save';
 function loadSave() {
-  const out = { tokens: 0, perm: {}, unlocked: 1, best: {}, last: 0, chars: {}, char: 'diez', rojas: 0 };
+  const out = { tokens: 0, perm: {}, unlocked: 1, best: {}, last: 0, chars: {}, char: 'diez', rojas: 0, arbWins: {}, sprayAll: false };
   try {
     const s = JSON.parse(localStorage.getItem(SAVE_KEY));
-    if (s && typeof s.tokens === 'number') Object.assign(out, { tokens: s.tokens, perm: s.perm || {}, unlocked: s.unlocked || 1, best: s.best || {}, last: s.last || 0, chars: s.chars || {}, char: s.char || 'diez', rojas: s.rojas || 0 });
+    if (s && typeof s.tokens === 'number') Object.assign(out, { tokens: s.tokens, perm: s.perm || {}, unlocked: s.unlocked || 1, best: s.best || {}, last: s.last || 0, chars: s.chars || {}, char: s.char || 'diez', rojas: s.rojas || 0, arbWins: s.arbWins || {}, sprayAll: !!s.sprayAll });
   } catch (e) {}
   // El récord viejo (de antes de las canchas) pasa a El Potrero, que tiene la misma dificultad
   if (!out.best.potrero) {
@@ -942,7 +948,9 @@ function renderChars() {
     btn.setAttribute('aria-pressed', String(C === CH));
     btn.innerHTML = `<span class="sw" style="background:${C.swatch}"></span><span class="name">${C.name}</span><span class="desc">${C.desc}</span>`
       + `<span class="traits">${C.traits.map(t => `<span>${t}</span>`).join('')}</span>`
-      + (open ? '' : `<span class="meta">${charLock(id)}</span>`);
+      + (open ? '' : `<span class="meta">${charLock(id)}</span>`)
+      + (open && id === 'arbitro' ? `<span class="meta">${SAVE.sprayAll ? 'Spray de distancia liberado para todos los jugadores'
+        : `Ganá las 3 canchas con él para liberar el Spray para todos (${LEVELS.filter(L => SAVE.arbWins && SAVE.arbWins[L.id]).length}/3)`}</span>` : '');
     btn.addEventListener('click', () => selectChar(id));
     box.appendChild(btn);
   }
@@ -2111,7 +2119,7 @@ function updateFx(dt) {
 // ---------- Subir de nivel ----------
 function rollOptions() {
   const pool = [];
-  for (const k in WEAPONS) { const l = G.weapons[k] || 0; if (WEAPONS[k].only && CHARS[WEAPONS[k].only] !== CH) continue; if (l < WEAPONS[k].max) pool.push({ t: 'w', k, l: l + 1, wt: l ? 1.4 : 1 }); }
+  for (const k in WEAPONS) { const l = G.weapons[k] || 0; if (!weaponFor(k)) continue; if (l < WEAPONS[k].max) pool.push({ t: 'w', k, l: l + 1, wt: l ? 1.4 : 1 }); }
   for (const k in PASSIVES) { const l = G.passives[k] || 0; if (!CH.sprint && (k === 'aguante' || k === 'arranque')) continue; if (l < PASSIVES[k].max) pool.push({ t: 'p', k, l: l + 1, wt: .8 }); }
   const out = [];
   while (out.length < 3 && pool.length) {
@@ -2135,7 +2143,7 @@ function openLevelUp(sound = true) {
   const box = $('cards'); box.innerHTML = '';
   G.options.forEach((o, i) => {
     let name, desc, tag, cls;
-    if (o.t === 'w') { const W = WEAPONS[o.k]; name = W.name; desc = W.desc[o.l - 1]; tag = (o.l === 1 ? 'Técnica nueva' : 'Técnica · nivel ' + o.l) + (W.only ? ' · solo ' + CHARS[W.only].name : ''); cls = 'tec'; }
+    if (o.t === 'w') { const W = WEAPONS[o.k]; name = W.name; desc = W.desc[o.l - 1]; tag = (o.l === 1 ? 'Técnica nueva' : 'Técnica · nivel ' + o.l) + (W.only && !(o.k === 'spray' && sprayFree()) ? ' · solo ' + CHARS[W.only].name : ''); cls = 'tec'; }
     else if (o.t === 'p') { const P = PASSIVES[o.k]; name = P.name; desc = P.desc; tag = o.l === 1 ? 'Físico nuevo' : 'Físico · nivel ' + o.l; cls = 'fis'; }
     else { name = 'Agua fresca'; desc = 'Recuperás 40 de vida.'; tag = 'Banco de suplentes'; cls = 'heal'; }
     const b = document.createElement('button');
@@ -2227,10 +2235,15 @@ function endScreen(won) {
   let newChar = false;
   if (won && LV.id === 'potrero' && !SAVE.chars.muro) { SAVE.chars.muro = true; newChar = 'El Muro'; }
   SAVE.rojas = (SAVE.rojas || 0) + G.rojas;
+  let sprayNew = false;
+  if (won && CH === CHARS.arbitro) {
+    SAVE.arbWins = SAVE.arbWins || {}; SAVE.arbWins[LV.id] = true;
+    if (!SAVE.sprayAll && LEVELS.every(L => SAVE.arbWins[L.id])) { SAVE.sprayAll = true; sprayNew = true; }
+  }
   if (!SAVE.chars.arbitro && SAVE.rojas >= ROJAS_NEED) { SAVE.chars.arbitro = true; newChar = newChar ? newChar + ' y El Árbitro' : 'El Árbitro'; }
   $('overTitle').textContent = won ? "¡Aguantaste los 90'!" : 'Fin del partido';
   $('overSub').textContent = won
-    ? `El árbitro pita el final y seguís en pie en ${LV.name}.` + (opened ? ` ¡Se abrió ${next.name}!` : '') + (newChar ? ` ¡Desbloqueaste a ${newChar}!` : '')
+    ? `El árbitro pita el final y seguís en pie en ${LV.name}.` + (opened ? ` ¡Se abrió ${next.name}!` : '') + (newChar ? ` ¡Desbloqueaste a ${newChar}!` : '') + (sprayNew ? ' ¡El Spray de distancia ahora lo pueden elegir todos los jugadores!' : '')
     : `Te sacaron de la cancha de ${LV.name} en el minuto ${minuteOf(G.t)}'.` + (newChar ? ` ¡Igual desbloqueaste a ${newChar}!` : '');
   $('btnNext').hidden = !(won && next);
   $('oTime').textContent = fmt(G.t); $('oLvl').textContent = G.level; $('oKills').textContent = G.kills;
