@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.37 · 20 oct 2026
+
+- **Jefes:** El jefe del minuto 80 de La Cancha del Club, ya expulsado, manda 10 rivales por cambio en vez de 8, y cada uno que volteás le saca 2% de la vida en vez de 2,5%.
+
 ## 2.36 · 20 oct 2026
 
 - **Rivales:** El hincha invasor hace ida y vuelta: cruza la cancha, frena del otro lado, se vuelve a marcar su franja y vuelve corriendo por el mismo camino. Si lo volteás deja una gema celeste grande que vale 60 de experiencia (antes 20).
