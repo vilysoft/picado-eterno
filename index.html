@@ -658,6 +658,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.34', date: '20 oct 2026', items: [
+    ['Jefes', 'El jefe del entretiempo de La Cancha del Club, golpeado, grita "¡Vamos, muchachos!": antes de cada embestida forma en fila detrás suyo hasta 6 rivales cercanos (la fila se ve unida por una línea amarilla) y salen todos juntos embistiendo.'],
+    ['Jefes', 'El jefe del minuto 80 de La Cancha del Club, golpeado, se va expulsado a la tribuna: desde ahí no lo podés tocar, pero sigue mandando gente a la cancha cada 4 s. Cada uno de los que manda que volteás le baja un 2,5% de la vida. Le ganás desarmándole el equipo.'],
+  ] },
   { v: '2.33', date: '20 oct 2026', items: [
     ['Combos', 'Barrera, solo para El Árbitro (Tarjeta roja y Spray de distancia en nivel 5): las líneas de spray se vuelven una barrera que los rivales comunes no pueden cruzar, y una roja que pega cerca de una línea la hace estallar en una llamarada que quema a todos alrededor. Los jefes y el hincha invasor sí la cruzan.'],
   ] },
@@ -1321,7 +1325,7 @@ function spawnStep(dt) {
 function nearestEnemy(x, y, excl, maxD) {
   let best = null, bd = maxD * maxD;
   for (const e of G.enemies) {
-    if (e.dead || e === excl) continue;
+    if (e.dead || e.away || e === excl) continue;
     const dx = e.x - x, dy = e.y - y, d2 = dx * dx + dy * dy;
     if (d2 < bd) { bd = d2; best = e; }
   }
@@ -1330,7 +1334,7 @@ function nearestEnemy(x, y, excl, maxD) {
 function nearestList(x, y, n, maxD) {
   const arr = [];
   for (const e of G.enemies) {
-    if (e.dead) continue;
+    if (e.dead || e.away) continue;
     const d2 = (e.x - x) ** 2 + (e.y - y) ** 2;
     if (d2 < maxD * maxD) arr.push([d2, e]);
   }
@@ -1441,7 +1445,7 @@ function fireWeapons(dt) {
 
 const GROUND = { barrida: 1, onda: 1, rondo: 1, codazo: 1 };   // técnicas a ras del piso: no llegan a lo que vuela
 function hitEnemy(e, dmg, kx, ky, src, exact) {
-  if (e.dead || (e.fly && GROUND[src])) return;
+  if (e.dead || e.away || (e.fly && GROUND[src])) return;
   if (e.yellow > 0) dmg *= 1.25;
   dmg = exact ? Math.ceil(dmg) : Math.max(1, Math.round(dmg * rnd(.9, 1.1)));   // exact: sin variación ni número flotante
   // Para las estadísticas cuenta el daño que de verdad le sacaste (no lo que sobra al voltearlo)
@@ -1455,8 +1459,18 @@ function hitEnemy(e, dmg, kx, ky, src, exact) {
   sfx('hit');
   if (e.hp <= 0) { R.kills[src] = (R.kills[src] || 0) + 1; kill(e); }
 }
+const DT_DRAIN = .025;   // cada rival que mandó el DT expulsado le saca 2,5% de su vida total
 function kill(e) {
   e.dead = true; G.kills++;
+  if (e.dtTeam) {
+    const dt = G.enemies.find(o => o.type === 'tecnico' && o.away && !o.dead);
+    if (dt) {
+      dt.hp -= dt.maxHp * DT_DRAIN; dt.flash = .15;
+      G.rec.dmg.dtTeam = (G.rec.dmg.dtTeam || 0) + dt.maxHp * DT_DRAIN;
+      if (G.texts.length < 70) G.texts.push({ x: dt.x + rnd(-10, 10), y: dt.y - dt.r - 8, txt: '-' + Math.round(dt.maxHp * DT_DRAIN), life: .8, big: false });
+      if (dt.hp <= 0) kill(dt);
+    }
+  }
   for (let i = 0; i < (e.boss ? 30 : 6); i++) part(e.x, e.y, e.color);
   if (e.boss) {
     G.bossKills++;
@@ -1465,6 +1479,7 @@ function kill(e) {
     for (const g of G.gems) g.pull = true;
     banner(BOSSES[e.type].beat); cheer = 3;
     if (e.type === 'var') G.rewind = null;
+    if (e.type === 'tecnico') for (const o of G.enemies) if (o.dtTeam) o.buff = 0;
   } else if (e.type === 'barra') { for (let i = 0; i < 3; i++) gem(e.x + rnd(-14, 14), e.y + rnd(-14, 14), e.xp); }
   else gem(e.x, e.y, e.xp);
   if (e.type === 'hincha') { banner('¡Seguridad se lleva al hincha!'); cheer = 2; }
@@ -1668,6 +1683,20 @@ function updateEnemies(dt) {
       if (e.dead) continue;
     }
     // Mareado: camina sin rumbo, más lento, y no usa sus ataques especiales
+    if (e.train) {
+      // En la fila del capitán: se acomoda atrás mientras apunta y sale embistiendo pegado a él
+      const L = e.train.leader;
+      if (L.dead || (L.mode !== 'aimCharge' && L.mode !== 'charge')) e.train = null;
+      else {
+        const gap = L.r + 16 + e.r + e.train.i * (e.r * 2 + 4);
+        const tx = L.x - L.ddx * gap, ty = L.y - L.ddy * gap;
+        if (L.mode === 'aimCharge') { const k = Math.min(1, dt * 9); e.x += (tx - e.x) * k; e.y += (ty - e.y) * k; }
+        else { e.x = tx; e.y = ty; if (!RM && Math.random() < dt * 20) part(e.x, e.y, LV.dust); }
+        e.kx = e.ky = 0; e.still = false; e.flash -= dt; e.rcd -= dt; e.tcd = (e.tcd || 0) - dt;
+        if (d < e.r + p.r - 2) { if (p.inv <= 0) hurt(L.mode === 'charge' ? e.dmg * 1.3 : e.dmg); codazo(e, dx / d, dy / d); }
+        continue;
+      }
+    }
     const dz = e.dizzy > 0 && !e.fly && e.type !== 'hincha';
     const stn = e.stun > 0;   // congelado por el silbato: no se mueve, no pega y no usa ataques
     if (stn) e.stun -= dt;
@@ -1808,7 +1837,7 @@ function updateEnemies(dt) {
       }
     }
   }
-  for (const e of E) { e.x = clamp(e.x, -RUN + e.r, FW + RUN - e.r); e.y = clamp(e.y, -RUN + e.r, FH + RUN - e.r); }
+  for (const e of E) { if (e.away) continue; e.x = clamp(e.x, -RUN + e.r, FW + RUN - e.r); e.y = clamp(e.y, -RUN + e.r, FH + RUN - e.r); }
   G.enemies = E.filter(e => !e.dead);
 }
 
@@ -1871,11 +1900,29 @@ function bossAI(e, d, ux, uy, sp, dt) {
         G.hazards.push({ kind: 'stomp', x: e.x, y: e.y, R: 190, t: 1.05, max: 1.05, dmg: e.dmg * 1.25 });
       } else if (e.acd <= 0 && d > 330 && d < 750 && onScreen(e.x, e.y)) { startCharge(e, .75, .8, 560, 1.8, 0); e.throwNext = true; }
       break;
-    case 'capitan': // embiste en línea recta; golpeado, corre más y embiste más seguido
+    case 'capitan': // embiste en línea recta; golpeado, corre más, embiste más seguido y se lleva a su equipo atrás
       if (enr) sp *= 1.25;
-      if (e.acd <= 0 && d > 170 && d < 620 && onScreen(e.x, e.y)) startCharge(e, .6, .7, 600, enr ? 1.4 : 2.2, 0);
+      if (e.acd <= 0 && d > 170 && d < 620 && onScreen(e.x, e.y)) {
+        startCharge(e, enr ? .8 : .6, .7, 600, enr ? 1.4 : 2.2, 0);
+        if (enr) recruitTrain(e);
+      }
       break;
     case 'tecnico': // se queda lejos, hace cambios y acelera a su equipo
+      if (enr && !e.away) {
+        // El cuarto árbitro lo expulsa: se va a la tribuna y sigue dirigiendo desde ahí
+        e.away = true; e.acd = 2.5;
+        e.awayY = p.y < FH / 2 ? -RUN - 34 : FH + RUN + 34;   // justo del otro lado de la línea, a la vista
+        G.texts.push({ x: e.x, y: e.y - e.r - 34, txt: '¡AFUERA!', life: 1.4, big: true });
+        banner('¡Expulsaron al DT rival! Dirige desde la tribuna', true);
+        banner('Volteá a los que manda a la cancha para ganarle', true);
+        sfx('whistle'); cheer = 2.5;
+      }
+      if (e.away) {
+        const tx = clamp(p.x, 60, FW - 60), dxx = tx - e.x, dyy = e.awayY - e.y;
+        if (Math.abs(dyy) > 6) { const dd = Math.hypot(dxx, dyy) || 1; return [dxx / dd, dyy / dd, 230]; }   // camina a la tribuna
+        if (e.acd <= 0) { e.mode = 'cast'; e.mt = .8; e.aimLine = false; e.acd = 4; }
+        return [Math.sign(dxx), 0, Math.abs(dxx) > 20 ? 70 : 0];   // se mueve por el borde siguiéndote
+      }
       const kd = reach(430);
       if (d < 300 * kd) { ux = -ux; uy = -uy; sp *= .8; } else if (d < 430 * kd) { const tx = -uy; uy = ux; ux = tx; sp *= .6; }
       if (e.acd <= 0) { e.mode = 'cast'; e.mt = 1; e.aimLine = false; e.acd = enr ? 5 : 6.5; }
@@ -1922,6 +1969,15 @@ function bossAI(e, d, ux, uy, sp, dt) {
   }
   return [ux, uy, sp];
 }
+// "¡Vamos, muchachos!": hasta 6 rivales comunes cercanos se forman en fila detrás del capitán y embisten con él
+const TRAIN_MAX = 6;
+function recruitTrain(e) {
+  const pool = G.enemies.filter(o => !o.dead && !o.boss && !o.fly && !o.away && !o.train && o.type !== 'hincha' && o.type !== 'camillero'
+    && (o.x - e.x) ** 2 + (o.y - e.y) ** 2 < 300 * 300);
+  pool.sort((a, b) => ((a.x - e.x) ** 2 + (a.y - e.y) ** 2) - ((b.x - e.x) ** 2 + (b.y - e.y) ** 2));
+  pool.slice(0, TRAIN_MAX).forEach((o, i) => { o.train = { leader: e, i }; o.dizzy = 0; o.mode = o.type === 'camillero' ? o.mode : 'run'; });
+  if (pool.length) { G.texts.push({ x: e.x, y: e.y - e.r - 34, txt: '¡VAMOS, MUCHACHOS!', life: 1.2, big: true }); sfx('whistle'); }
+}
 function bossCast(e, enr) {
   const a = Math.atan2(e.ddy, e.ddx);
   if (e.type === 'dueno') {
@@ -1938,9 +1994,15 @@ function bossCast(e, enr) {
     sfx('stomp');
   } else if (e.type === 'tecnico') {
     const n = enr ? 8 : 5;
-    for (let i = 0; i < n; i++) { const b = i / n * Math.PI * 2; spawn(i % 2 ? 'extremo' : 'defensor', e.x + Math.cos(b) * 90, e.y + Math.sin(b) * 90); }
-    for (const o of G.enemies) if (!o.boss && (o.x - e.x) ** 2 + (o.y - e.y) ** 2 < 450 * 450) o.buff = 4;
-    G.rings.push({ x: e.x, y: e.y, R: 450, life: .5, max: .5, col: '255,211,77' });
+    // desde la tribuna los manda a la cancha justo al lado de la línea
+    const cx = e.x, cy = e.away ? (e.awayY < 0 ? -RUN + 70 : FH + RUN - 70) : e.y;
+    for (let i = 0; i < n; i++) {
+      const b = i / n * Math.PI * 2;
+      spawn(i % 2 ? 'extremo' : 'defensor', clamp(cx + Math.cos(b) * 90, -RUN + 20, FW + RUN - 20), clamp(cy + Math.sin(b) * 90 * (e.away ? .5 : 1), -RUN + 20, FH + RUN - 20));
+      G.enemies[G.enemies.length - 1].dtTeam = true;
+    }
+    for (const o of G.enemies) if (!o.boss && (o.x - cx) ** 2 + (o.y - cy) ** 2 < 450 * 450) o.buff = 4;
+    G.rings.push({ x: cx, y: cy, R: 450, life: .5, max: .5, col: '255,211,77' });
     G.texts.push({ x: e.x, y: e.y - e.r - 34, txt: '¡CAMBIO!', life: 1.2, big: true });
     sfx('whistle');
   }
@@ -2100,7 +2162,7 @@ function hud() {
   const w = (G.xp / G.xpNext * 100).toFixed(1) + '%';
   if (hudCache.xp !== w) { hudCache.xp = w; $('xpfill').style.width = w; }
 }
-const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', onda: 'Onda expansiva', tiroLibre: 'Tiro libre', tresDedos: 'Tres dedos', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta', olimpico: 'Gol olímpico', barrera: 'Barrera (llamarada)', roja: 'Tarjeta roja', spray: 'Spray de distancia' };
+const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', onda: 'Onda expansiva', tiroLibre: 'Tiro libre', tresDedos: 'Tres dedos', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta', olimpico: 'Gol olímpico', barrera: 'Barrera (llamarada)', dtTeam: 'Suplentes del DT volteados', roja: 'Tarjeta roja', spray: 'Spray de distancia' };
 const nf = n => Math.round(n).toLocaleString('es-AR');
 function renderStats(el, full) {
   const R = G.rec;
@@ -2840,6 +2902,12 @@ function drawFoe(e) {
     ctx.fillStyle = '#ffd34d'; ctx.fillRect(e.x + e.r * .5, yy - 6, 7, 10);
     ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1; ctx.strokeRect(e.x + e.r * .5, yy - 6, 7, 10);
   }
+  if (e.away) {
+    // DT expulsado: tarjeta roja flotando sobre la cabeza
+    const yy = e.y - e.r - 46 + Math.sin(G.t * 4) * 2;
+    ctx.fillStyle = '#e23b3b'; ctx.fillRect(e.x - 5, yy - 8, 10, 15);
+    ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1; ctx.strokeRect(e.x - 5, yy - 8, 10, 15);
+  }
   if (e.stun > 0) {
     // Congelado por el silbato: dos barritas de pausa sobre la cabeza
     const yy = e.y - e.r - 12;
@@ -2939,6 +3007,15 @@ function drawHazard(h) {
 function drawBossTell(e) {
   if (e.mode === 'aimCharge') {
     const len = e.chargeSp * e.chargeT;
+    if (e.type === 'capitan') {
+      // la fila que se forma atrás, unida con una línea amarilla
+      const fila = G.enemies.filter(o => o.train && o.train.leader === e);
+      if (fila.length) {
+        ctx.strokeStyle = 'rgba(255,211,77,.7)'; ctx.lineWidth = 3; ctx.setLineDash([8, 6]); ctx.beginPath(); ctx.moveTo(e.x, e.y);
+        for (const o of fila.sort((a, b) => a.train.i - b.train.i)) ctx.lineTo(o.x, o.y);
+        ctx.stroke(); ctx.setLineDash([]);
+      }
+    }
     ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(Math.atan2(e.ddy, e.ddx));
     ctx.fillStyle = 'rgba(255,90,74,.16)'; ctx.fillRect(0, -e.r, len, e.r * 2);
     ctx.strokeStyle = 'rgba(255,90,74,.75)'; ctx.lineWidth = 2; ctx.strokeRect(0, -e.r, len, e.r * 2);

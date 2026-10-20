@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.34 · 20 oct 2026
+
+- **Jefes:** El jefe del entretiempo de La Cancha del Club, golpeado, grita "¡Vamos, muchachos!": antes de cada embestida forma en fila detrás suyo hasta 6 rivales cercanos (la fila se ve unida por una línea amarilla) y salen todos juntos embistiendo.
+- **Jefes:** El jefe del minuto 80 de La Cancha del Club, golpeado, se va expulsado a la tribuna: desde ahí no lo podés tocar, pero sigue mandando gente a la cancha cada 4 s. Cada uno de los que manda que volteás le baja un 2,5% de la vida. Le ganás desarmándole el equipo.
+
 ## 2.33 · 20 oct 2026
 
 - **Combos:** Barrera, solo para El Árbitro (Tarjeta roja y Spray de distancia en nivel 5): las líneas de spray se vuelven una barrera que los rivales comunes no pueden cruzar, y una roja que pega cerca de una línea la hace estallar en una llamarada que quema a todos alrededor. Los jefes y el hincha invasor sí la cruzan.
