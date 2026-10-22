@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.42 · 22 oct 2026
+
+- **Jefes:** El jefe del entretiempo de La Cancha del Club, golpeado, ya no se deja encimar: si lo tenés pegado más de 1,5 s, retrocede a tomar carrera, junta a su fila y embiste igual.
+
 ## 2.41 · 22 oct 2026
 
 - **Jugadores:** Nuevo jugador: El Barra, disponible desde el arranque. No pelea solo: sus técnicas llaman a gente de la barra, con tus colores y gorro, que pega por él y se va. Las técnicas comunes le pegan 25% menos y tiene 10% menos de vida.

@@ -697,6 +697,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.42', date: '22 oct 2026', items: [
+    ['Jefes', 'El jefe del entretiempo de La Cancha del Club, golpeado, ya no se deja encimar: si lo tenés pegado más de 1,5 s, retrocede a tomar carrera, junta a su fila y embiste igual.'],
+  ] },
   { v: '2.41', date: '22 oct 2026', items: [
     ['Jugadores', 'Nuevo jugador: El Barra, disponible desde el arranque. No pelea solo: sus técnicas llaman a gente de la barra, con tus colores y gorro, que pega por él y se va. Las técnicas comunes le pegan 25% menos y tiene 10% menos de vida.'],
     ['Jugadores', 'Avalancha (Shift, solo El Barra): cada rival que volteás llena el aliento; con la barra llena, un toque manda una fila de 8 barras que cruza corriendo hacia donde vas y pisotea a todos a su paso.'],
@@ -2138,7 +2141,22 @@ function bossAI(e, d, ux, uy, sp, dt) {
       } else if (e.acd <= 0 && d > 330 && d < 750 && onScreen(e.x, e.y)) { startCharge(e, .75, .8, 560, 1.8, 0); e.throwNext = true; }
       break;
     case 'capitan': // embiste en línea recta; golpeado, corre más, embiste más seguido y se lleva a su equipo atrás
-      if (enr) sp *= 1.25;
+      if (e.mode === 'backup') {
+        // Toma carrera: retrocede unos pasos y después embiste con su fila
+        e.mt -= dt;
+        if (e.mt <= 0) { e.mode = 'run'; startCharge(e, .8, .7, 600, 1.4, 0); recruitTrain(e); }
+        return [-ux, -uy, 280];
+      }
+      if (enr) {
+        sp *= 1.25;
+        // Si lo tenés encima más de 1,5 s, retrocede para tomar carrera en vez de quedarse pegado
+        e.closeT = d < 170 ? (e.closeT || 0) + dt : 0;
+        if (e.closeT > 1.5 && e.acd <= 0) {
+          e.closeT = 0; e.mode = 'backup'; e.mt = .65;
+          G.texts.push({ x: e.x, y: e.y - e.r - 34, txt: '¡A TOMAR CARRERA!', life: 1, big: true });
+          return [-ux, -uy, 280];
+        }
+      }
       if (e.acd <= 0 && d > 170 && d < 620 && onScreen(e.x, e.y)) {
         startCharge(e, enr ? .8 : .6, .7, 600, enr ? 1.4 : 2.2, 0);
         if (enr) recruitTrain(e);
