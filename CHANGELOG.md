@@ -2,6 +2,15 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.41 · 22 oct 2026
+
+- **Jugadores:** Nuevo jugador: El Barra, disponible desde el arranque. No pelea solo: sus técnicas llaman a gente de la barra, con tus colores y gorro, que pega por él y se va. Las técnicas comunes le pegan 25% menos y tiene 10% menos de vida.
+- **Jugadores:** Avalancha (Shift, solo El Barra): cada rival que volteás llena el aliento; con la barra llena, un toque manda una fila de 8 barras que cruza corriendo hacia donde vas y pisotea a todos a su paso.
+- **Técnicas:** Los pibes, solo para El Barra (arranca con ella): cada 4 s cae un pibe que corre al rival más cercano y le pega varias veces. 6 niveles: más pibes, más daño, más duración, menos espera y una piña de despedida en área.
+- **Técnicas:** El Bombo, solo para El Barra: un barra planta un bombo 6 s y cada golpe larga una onda que daña y empuja. 5 niveles: más radio, más daño, dos bombos y en el último toca más rápido y marea.
+- **Combos:** Fiesta en la tribuna (Los pibes nivel 5 y El Bombo nivel 5): los pibes que pelean cerca de un bombo se agrandan y pegan el doble de rápido.
+- **Rivales:** Con El Barra, en El Potrero "Te aprieta la barra" cambia de bando: la barra viene a alentarte y pelea de tu lado 10 s.
+
 ## 2.40 · 22 oct 2026
 
 - **Alargue:** Nuevo: el alargue. Se desbloquea al ganar las 3 canchas, con cualquier jugador. Al llegar al 90' podés elegir seguir con el mismo partido y las mismas mejoras: dos tiempos de 15' (unos 1:20 reales cada uno) donde la dificultad sube 3 veces más rápido, hay contraataque cada medio minuto y salen más especiales.

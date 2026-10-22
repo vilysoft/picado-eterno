@@ -212,7 +212,7 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
     <dl class="ficha">
       <div><dt>Duración</dt><dd>90' = 8 min reales</dd></div>
       <div><dt>Controles</dt><dd>WASD o flechas · en celular, arrastrá el dedo</dd></div>
-      <div><dt>Shift</dt><dd>Mantenelo para el sprint o el escudo; tocalo para el silbato · en celular, el botón redondo</dd></div>
+      <div><dt>Shift</dt><dd>Mantenelo para el sprint o el escudo; tocalo para el silbato o la avalancha · en celular, el botón redondo</dd></div>
       <div><dt>Pausa</dt><dd>P o Esc</dd></div>
     </dl>
     <div class="actions">
@@ -507,6 +507,13 @@ const WEAPONS = {
   spray: { name: 'Spray de distancia', max: 5, only: 'arbitro', desc: [
     'Marcás una línea de spray en el piso delante del rival más cercano. Quema: los que la pisan se prenden fuego un rato.',
     'La línea es 40% más larga.', '+50% de quemadura.', 'Marcás 2 líneas a la vez.', 'La línea dura 6 s y +50% de quemadura.'] },
+  pibes: { name: 'Los pibes', max: 6, only: 'barra', desc: [
+    'Cada pocos segundos cae un pibe de la barra: corre al rival más cercano, le pega varias veces y se va.',
+    '+1 pibe por llamada.', '+40% de daño.', 'Los pibes se quedan 2 s más.', '+1 pibe y 25% menos de espera.',
+    '¡Se quedan a pelear!: al irse, cada pibe tira una piña fuerte que daña a todos alrededor.'] },
+  bombo: { name: 'El Bombo', max: 5, only: 'barra', desc: [
+    'Un barra planta un bombo 6 s: cada golpe larga una onda que daña y empuja a los rivales cercanos.',
+    '+30% de radio.', '+50% de daño.', 'Planta 2 bombos a la vez.', 'Toca más rápido y cada golpe marea a los rivales.'] },
   tresDedos: { name: 'Tres dedos', max: 5, desc: [
     'Un remate con comba: sale derecho hacia el rival más cercano y después dobla 45° a un costado, atravesando a todos.',
     '+40% de daño.', 'Rematás 2 pelotas: una dobla a la derecha y otra a la izquierda.', '25% menos de espera entre remates.', 'La comba es más larga y +50% de daño.'] },
@@ -539,6 +546,13 @@ const CHARS = {
     swatch: 'linear-gradient(90deg,#ffd34d 0 60%,#1d1f1c 60%)',
     traits: ['<b>Silbato</b> con Shift', 'Arranca con <b>Tarjeta roja</b>', '<i>15% menos de vida</i>', '<i>Sin sprint</i>'] },
 };
+CHARS.barra = { name: 'El Barra', desc: 'Nunca pelea solo: llama a su gente para que pegue por él.', r: 14, speed: 1, area: 1, sprint: false, shield: 0, aliento: true, hp: .9, start: 'pibes',
+  kit: { shirt: '#7cc4ff', sleeve: '#7cc4ff', stripe: '#f4f7fb', shorts: '#1d1f1c' }, skin: '#b97d55', hair: '#1b1410', hat: '#f4f7fb',
+  swatch: 'repeating-linear-gradient(90deg,#7cc4ff 0 10px,#f4f7fb 10px 20px,#1d1f1c 20px 24px)',
+  traits: ['<b>Avalancha</b> con Shift', 'Arranca con <b>Los pibes</b>', '<i>Técnicas comunes −25%</i>', '<i>10% menos de vida</i>'] };
+// Daño de las técnicas propias de El Barra (las demás le pegan 25% menos)
+const BARRA_SRC = { pibes: 1, bombo: 1, avalancha: 1, barraAliada: 1 };
+const ALIENTO_KILL = 4, AVAL_N = 8;
 const ROJAS_NEED = 50;
 // El alargue se abre al llegar al 90' en las 3 canchas, con cualquier jugador
 const etWon = () => LEVELS.filter(L => SAVE.best[L.id] && SAVE.best[L.id].min >= 90).length;
@@ -550,7 +564,7 @@ const charLock = id => id === 'muro' ? 'Ganá en El Potrero para desbloquearlo'
   : id === 'arbitro' ? `Expulsá ${ROJAS_NEED} rivales con tarjeta roja para desbloquearlo (${Math.min(ROJAS_NEED, SAVE.rojas || 0)}/${ROJAS_NEED})` : '';
 let CH = CHARS.diez;
 // El Árbitro está abierto para todos por ahora (el desbloqueo por rojas queda listo para más adelante)
-const charOpen = id => id === 'diez' || id === 'arbitro' || ALL_OPEN || !!(SAVE.chars && SAVE.chars[id]);
+const charOpen = id => id === 'diez' || id === 'arbitro' || id === 'barra' || ALL_OPEN || !!(SAVE.chars && SAVE.chars[id]);
 // Combos: se activan cuando las dos mejoras llegan a nivel 5
 const COMBOS = {
   amarilla: { name: 'Doble amarilla', need: [['w', 'tiroLibre'], ['p', 'potencia']],
@@ -563,6 +577,8 @@ const COMBOS = {
     desc: 'Cuando la pelota de Tres dedos termina su recorrido, estalla en un golazo que daña a todos alrededor.' },
   tapones:  { name: 'Tapones de punta', need: [['p', 'botines'], ['w', 'barrida']],
     desc: 'La barrida hace sangrar 3 s: daño cada medio segundo.' },
+  fiesta:   { name: 'Fiesta en la tribuna', need: [['w', 'pibes'], ['w', 'bombo']],
+    desc: 'Los pibes que pelean cerca de un bombo se agrandan, pegan el doble de rápido y 20% más fuerte.' },
   barrera:  { name: 'Barrera', need: [['w', 'roja'], ['w', 'spray']],
     desc: 'Las líneas de spray son una barrera: los rivales comunes no las pueden cruzar. Una roja que pega cerca de una línea la hace estallar en una llamarada.' },
 };
@@ -655,6 +671,8 @@ function wp(k, l) {
     case 'tresDedos': return { dmg: 20 * (l >= 2 ? 1.4 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 3 ? 2 : 1, cd: 1.9 * (l >= 4 ? .75 : 1), speed: 620, straight: 190, life: l >= 5 ? 1.6 : 1.25 };
     case 'roja': return { dmg: 12 * (l >= 3 ? 1.4 : 1), n: 1 + (l >= 2) + (l >= 5), cd: 1.7 * (l >= 4 ? .75 : 1), exp: l >= 5 ? 3 : 2, speed: 560 };
     case 'spray': return { len: 140 * (l >= 2 ? 1.4 : 1), dps: 12 * (l >= 3 ? 1.5 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 4 ? 2 : 1, life: l >= 5 ? 6 : 4, cd: 3 };
+    case 'pibes': return { n: 1 + (l >= 2) + (l >= 5), dmg: 9 * (l >= 3 ? 1.4 : 1), life: 5 + (l >= 4 ? 2 : 0), cd: 4 * (l >= 5 ? .75 : 1), boom: l >= 6 };
+    case 'bombo': return { R: 110 * (l >= 2 ? 1.3 : 1), dmg: 14 * (l >= 3 ? 1.5 : 1), n: l >= 4 ? 2 : 1, beat: l >= 5 ? .7 : 1, dizzy: l >= 5, life: 6, cd: 7 };
     case 'tiroLibre': return { dmg: 24 * (l >= 2 ? 1.5 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 5 ? 3 : l >= 3 ? 2 : 1, cd: 2.6 * (l >= 4 ? .75 : 1), speed: 720 };
   }
 }
@@ -679,6 +697,14 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.41', date: '22 oct 2026', items: [
+    ['Jugadores', 'Nuevo jugador: El Barra, disponible desde el arranque. No pelea solo: sus técnicas llaman a gente de la barra, con tus colores y gorro, que pega por él y se va. Las técnicas comunes le pegan 25% menos y tiene 10% menos de vida.'],
+    ['Jugadores', 'Avalancha (Shift, solo El Barra): cada rival que volteás llena el aliento; con la barra llena, un toque manda una fila de 8 barras que cruza corriendo hacia donde vas y pisotea a todos a su paso.'],
+    ['Técnicas', 'Los pibes, solo para El Barra (arranca con ella): cada 4 s cae un pibe que corre al rival más cercano y le pega varias veces. 6 niveles: más pibes, más daño, más duración, menos espera y una piña de despedida en área.'],
+    ['Técnicas', 'El Bombo, solo para El Barra: un barra planta un bombo 6 s y cada golpe larga una onda que daña y empuja. 5 niveles: más radio, más daño, dos bombos y en el último toca más rápido y marea.'],
+    ['Combos', 'Fiesta en la tribuna (Los pibes nivel 5 y El Bombo nivel 5): los pibes que pelean cerca de un bombo se agrandan y pegan el doble de rápido.'],
+    ['Rivales', 'Con El Barra, en El Potrero "Te aprieta la barra" cambia de bando: la barra viene a alentarte y pelea de tu lado 10 s.'],
+  ] },
   { v: '2.40', date: '22 oct 2026', items: [
     ['Alargue', "Nuevo: el alargue. Se desbloquea al ganar las 3 canchas, con cualquier jugador. Al llegar al 90' podés elegir seguir con el mismo partido y las mismas mejoras: dos tiempos de 15' (unos 1:20 reales cada uno) donde la dificultad sube 3 veces más rápido, hay contraataque cada medio minuto y salen más especiales."],
     ['Alargue', "En el 105' hay cambio de lado (pausa de 3 s) y después vuelven los dos jefes de esa cancha juntos, con 30% más de vida."],
@@ -902,11 +928,11 @@ const HYDRA_S = 6;          // duración de la pausa de hidratación   // pausa 
 function newGame() {
   return {
     t: 0, kills: 0, level: 1, xp: 0, xpNext: xpFor(1), pending: 0,
-    p: { x: FW / 2, y: FH / 2, r: CH.r, sh: CH.shield, shMax: CH.shield, shCd: 0, shHit: 0, shOn: false, shBroken: false, hp: 100, maxHp: 100, inv: 0, fx: 1, fy: 0, step: 0, st: 100, stMax: 100, stCd: 0, tired: false, sprinting: false, wh: 0, whPrev: false },
+    p: { x: FW / 2, y: FH / 2, r: CH.r, sh: CH.shield, shMax: CH.shield, shCd: 0, shHit: 0, shOn: false, shBroken: false, hp: 100, maxHp: 100, inv: 0, fx: 1, fy: 0, step: 0, st: 100, stMax: 100, stCd: 0, tired: false, sprinting: false, wh: 0, whPrev: false, al: 0 },
     stats: { armor: 1, thorns: 0, dmg: 1, speed: 1, cd: 1, magnet: 1, regen: 0, area: 1, xp: 1, sprint: 1.4, stRegen: 16, stDrain: 1 },
     bossKills: 0, free: 0, revives: 0, rerolls: 0, combos: {},
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '' },   // estadísticas del partido
-    weapons: { [CH.start || 'pelota']: 1 }, passives: {}, timers: { [CH.start || 'pelota']: .4 }, sprays: [], rojas: 0, rondoAng: 0, rondoBalls: null,
+    weapons: { [CH.start || 'pelota']: 1 }, passives: {}, timers: { [CH.start || 'pelota']: .4 }, sprays: [], rojas: 0, allies: [], bombos: [], rondoAng: 0, rondoBalls: null,
     enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [], fenceGaps: [],
     spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0,
   };
@@ -1111,8 +1137,8 @@ function startGame() {
   G = newGame(); recalc(); hudCache = {}; joy = null;
   G.p.hp = G.p.maxHp; G.p.st = G.p.stMax; G.p.sh = G.p.shMax; G.p.wh = G.stats.whCd || 10; G.free = pl('calor'); G.revives = pl('suplente'); G.rerolls = pl('pizarron');
   state = 'play'; hideAll(); $('hud').hidden = false;
-  $('btnSprint').textContent = CH.sprint ? '»' : CH.whistle ? '◎' : '◈';
-  $('btnSprint').setAttribute('aria-label', CH.sprint ? 'Mantener para sprintar' : CH.whistle ? 'Tocar para pitar con el silbato' : 'Mantener para levantar el escudo');
+  $('btnSprint').textContent = CH.sprint ? '»' : CH.whistle ? '◎' : CH.aliento ? '★' : '◈';
+  $('btnSprint').setAttribute('aria-label', CH.sprint ? 'Mantener para sprintar' : CH.whistle ? 'Tocar para pitar con el silbato' : CH.aliento ? 'Tocar para la avalancha cuando el aliento está lleno' : 'Mantener para levantar el escudo');
   bannerQ = []; bannerLock = 0;
   if (SAVE.last !== lvIdx) { SAVE.last = lvIdx; persist(); }
   updateLoadout(); hud(); sfx('whistle'); banner(LV.start); cheer = 1.5;
@@ -1231,6 +1257,11 @@ function update(dt) {
     }
     p.shHit = Math.max(0, p.shHit - dt);
   }
+  if (CH.aliento) {
+    // El Barra: con el aliento lleno, un toque llama a la avalancha
+    if (holding && !p.whPrev && p.al >= 100) avalancha();
+    p.whPrev = holding;
+  }
   if (CH.whistle) {
     // El Árbitro: un pitazo (al apretar, no al mantener) congela a los rivales cercanos; después se recarga
     p.wh = Math.min(S.whCd, p.wh + dt);
@@ -1266,6 +1297,7 @@ function update(dt) {
   if (!frozen) { spawning(); spawnStep(dt); }
   fireWeapons(dt);
   updateShots(dt);
+  if (G.allies.length || G.bombos.length) updateAllies(dt);
   if (!frozen) { updateEnemies(dt); updateCards(dt); updateHazards(dt); updateFoeShots(dt); }
   else {
     // Rivales quietos: solo se limpian los que voltees y se apaga el destello de los golpes
@@ -1372,6 +1404,15 @@ function startBarra(m) {
   const a = Math.random() * Math.PI * 2, R = Math.hypot(viewW, viewH) / 2 + 60;
   let cx = clamp(G.p.x + Math.cos(a) * R, -RUN + 40, FW + RUN - 40), cy = clamp(G.p.y + Math.sin(a) * R, -RUN + 40, FH + RUN - 40);
   const n = Math.max(6, Math.round(BARRA_N * MOB_RATE));
+  if (CH.aliento) {
+    // Con El Barra, la barra viene a alentarte: pelean de tu lado 10 s
+    for (let i = 0; i < n; i++) {
+      addAlly('pibe', clamp(cx + rnd(-60, 60), -RUN + 20, FW + RUN - 20), clamp(cy + rnd(-60, 60), -RUN + 20, FH + RUN - 20), 10, 12 * G.stats.dmg, 'barraAliada');
+      G.allies[G.allies.length - 1].hat = HATS[i % HATS.length];
+    }
+    banner('¡La barra viene a alentarte!', true); sfx('combo'); cheer = 3;
+    return;
+  }
   for (let i = 0; i < n; i++) {
     spawn('barra', clamp(cx + rnd(-60, 60), -RUN + 20, FW + RUN - 20), clamp(cy + rnd(-60, 60), -RUN + 20, FH + RUN - 20));
     G.enemies[G.enemies.length - 1].hat = HATS[i % HATS.length];
@@ -1487,6 +1528,22 @@ function fireWeapons(dt) {
           r: 10 * S.area, dmg: w.dmg * S.dmg, hit: new Set(), life: 1.3, rot: 0 });
       }
       sfx('kick');
+    } else if (k === 'pibes') {
+      // Caen pibes al lado tuyo (como mucho 12 en la cancha)
+      if (!G.enemies.some(e => !e.dead && !e.away)) { G.timers[k] = .3; continue; }
+      for (let i = 0; i < w.n && G.allies.length < 12; i++) {
+        const a = Math.random() * Math.PI * 2;
+        addAlly('pibe', p.x + Math.cos(a) * 30, p.y + Math.sin(a) * 30, w.life, w.dmg * S.dmg, 'pibes', w.boom);
+      }
+      sfx('kick');
+    } else if (k === 'bombo') {
+      const near = nearestList(p.x, p.y, w.n, 420);
+      for (let i = 0; i < w.n; i++) {
+        const t = near[i], a = t ? Math.atan2(t.y - p.y, t.x - p.x) : Math.atan2(p.fy, p.fx) + i * Math.PI;
+        const dd = t ? Math.min(120, Math.hypot(t.x - p.x, t.y - p.y) * .6) : 70;
+        G.bombos.push({ x: clamp(p.x + Math.cos(a) * dd, -RUN + 30, FW + RUN - 30), y: clamp(p.y + Math.sin(a) * dd, -RUN + 30, FH + RUN - 30),
+          life: w.life, beat: w.beat * S.cd, bt: .25, R: w.R * S.area, dmg: w.dmg * S.dmg, dizzy: w.dizzy, hit: 0, skin: SKINS[Math.random() * SKINS.length | 0] });
+      }
     } else if (k === 'roja') {
       const near = nearestList(p.x, p.y, w.n, 520);
       if (!near.length) { G.timers[k] = .2; continue; }
@@ -1525,6 +1582,7 @@ const GROUND = { barrida: 1, onda: 1, rondo: 1, codazo: 1 };   // técnicas a ra
 function hitEnemy(e, dmg, kx, ky, src, exact) {
   if (e.dead || e.away || (e.fly && GROUND[src])) return;
   if (e.yellow > 0) dmg *= 1.25;
+  if (CH.aliento && !BARRA_SRC[src]) dmg *= .75;   // El Barra: lo que no es de su gente pega menos
   dmg = exact ? Math.ceil(dmg) : Math.max(1, Math.round(dmg * rnd(.9, 1.1)));   // exact: sin variación ni número flotante
   // Para las estadísticas cuenta el daño que de verdad le sacaste (no lo que sobra al voltearlo)
   const R = G.rec, real = Math.min(dmg, Math.max(0, e.hp));
@@ -1541,6 +1599,7 @@ const DT_DRAIN = .02;   // cada rival que mandó el DT expulsado le saca 2% de s
 const HINCHA_GEM = 60;   // experiencia de la gema celeste del hincha invasor   // cada rival que mandó el DT expulsado le saca 2,5% de su vida total
 function kill(e) {
   e.dead = true; G.kills++;
+  if (CH.aliento && G.p.al < 100) { G.p.al = Math.min(100, G.p.al + (e.boss ? 40 : ALIENTO_KILL)); if (G.p.al >= 100) sfx('combo'); }
   if (e.dtTeam) {
     const dt = G.enemies.find(o => o.type === 'tecnico' && o.away && !o.dead);
     if (dt) {
@@ -1571,6 +1630,98 @@ function codazo(e, ux, uy) {
   const p = G.p;
   G.rings.push({ x: p.x - ux * (p.r + 4), y: p.y - uy * (p.r + 4), R: 22, life: .2, max: .2 });
   hitEnemy(e, G.stats.thorns * G.stats.dmg, -ux * 420, -uy * 420, 'codazo');
+}
+// ---------- El Barra: su gente ----------
+function addAlly(kind, x, y, life, dmg, src, boom) {
+  G.allies.push({ kind, x, y, life, max: life, dmg, src, boom, target: null, hitCd: .15, punch: 0, step: Math.random() * 6, fx: 1, fy: 0,
+    hat: Math.random() < .5 ? '#7cc4ff' : '#f4f7fb', skin: SKINS[Math.random() * SKINS.length | 0], hair: HAIRS[Math.random() * HAIRS.length | 0], hitSet: null });
+}
+function avalancha() {
+  // Una fila de barras cruza corriendo hacia donde vas, pisoteando a todos (cada rival recibe un golpe)
+  const p = G.p, fx = p.fx, fy = p.fy, nx = -fy, ny = fx, hitSet = new Set();
+  p.al = 0;
+  for (let i = 0; i < AVAL_N; i++) {
+    const off = (i - (AVAL_N - 1) / 2) * 34;
+    addAlly('aval', p.x - fx * 260 + nx * off, p.y - fy * 260 + ny * off, 1.7, 60 * G.stats.dmg, 'avalancha');
+    const a = G.allies[G.allies.length - 1]; a.fx = fx; a.fy = fy; a.hitSet = hitSet;
+  }
+  banner('¡Avalancha!', true); sfx('stomp'); cheer = 3; if (!RM) G.shake = 6;
+}
+function updateAllies(dt) {
+  const S = G.stats;
+  // Bombos: cada golpe es una onda que daña y empuja
+  for (const b of G.bombos) {
+    b.life -= dt; b.bt -= dt; b.hit = Math.max(0, b.hit - dt);
+    if (b.bt <= 0 && b.life > 0) {
+      b.bt = b.beat; b.hit = .15;
+      G.rings.push({ x: b.x, y: b.y, R: b.R, life: .3, max: .3, col: '124,196,255' });
+      for (const e of G.enemies) {
+        if (e.dead || e.fly || e.away) continue;
+        const dx = e.x - b.x, dy = e.y - b.y, d = Math.hypot(dx, dy) || 1;
+        if (d < b.R + e.r) { hitEnemy(e, b.dmg, dx / d * 240, dy / d * 240, 'bombo'); if (b.dizzy && !e.boss && !e.dead) e.dizzy = 1.2; }
+      }
+      sfx('kick');
+    }
+  }
+  G.bombos = G.bombos.filter(b => b.life > 0);
+  for (const a of G.allies) {
+    a.life -= dt; a.hitCd -= dt; a.punch = Math.max(0, a.punch - dt);
+    if (a.kind === 'aval') {
+      a.x += a.fx * 520 * dt; a.y += a.fy * 520 * dt; a.step += dt * 30;
+      if (!RM && Math.random() < dt * 10) part(a.x, a.y, LV.dust);
+      for (const e of G.enemies) {
+        if (e.dead || e.fly || e.away || a.hitSet.has(e)) continue;
+        if ((e.x - a.x) ** 2 + (e.y - a.y) ** 2 < (e.r + 16) ** 2) { a.hitSet.add(e); hitEnemy(e, a.dmg, a.fx * 420, a.fy * 420, a.src); }
+      }
+      continue;
+    }
+    // Pibe: va al rival más cercano y le pega mientras le dure la bronca
+    if (!a.target || a.target.dead || a.target.away) a.target = nearestEnemy(a.x, a.y, null, 700);
+    const fiesta = G.combos.fiesta && G.bombos.some(b => (b.x - a.x) ** 2 + (b.y - a.y) ** 2 < (b.R * 1.2) ** 2);
+    a.big = fiesta;
+    if (a.target) {
+      const t = a.target, dx = t.x - a.x, dy = t.y - a.y, d = Math.hypot(dx, dy) || 1;
+      a.fx = dx / d; a.fy = dy / d;
+      if (d > t.r + 15) { a.x += a.fx * 270 * dt; a.y += a.fy * 270 * dt; a.step += dt * 14; }
+      else if (a.hitCd <= 0) { a.hitCd = fiesta ? .25 : .5; a.punch = .12; hitEnemy(t, a.dmg * (fiesta ? 1.2 : 1), a.fx * 150, a.fy * 150, a.src); }
+    }
+    if (a.life <= 0 && a.boom) {
+      // ¡Se quedan a pelear!: piña de despedida en área
+      const R = 70 * S.area;
+      G.rings.push({ x: a.x, y: a.y, R, life: .3, max: .3, col: '244,247,251' });
+      for (const e of G.enemies) {
+        if (e.dead || e.fly || e.away) continue;
+        const dx = e.x - a.x, dy = e.y - a.y, d = Math.hypot(dx, dy) || 1;
+        if (d < R + e.r) hitEnemy(e, a.dmg * 2, dx / d * 300, dy / d * 300, a.src);
+      }
+    }
+  }
+  G.allies = G.allies.filter(a => a.life > 0);
+}
+function drawAllies(vis) {
+  const K = CHARS.barra.kit;
+  for (const b of G.bombos) {
+    if (!vis(b.x, b.y, 40)) continue;
+    const a = Math.min(1, b.life / .4);
+    ctx.globalAlpha = a;
+    shadow(b.x - 16, b.y, 13);
+    drawPerson(b.x - 16, b.y, 13, 0, 0, { shirt: K.shirt, sleeve: K.sleeve, stripe: K.stripe, shorts: K.shorts, skin: b.skin, hair: '#1b1410', hat: '#7cc4ff' });
+    const s = b.hit > 0 ? 1.12 : 1;
+    ctx.fillStyle = '#2b4c8c'; ctx.beginPath(); ctx.arc(b.x + 10, b.y, 13 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#f4f7fb'; ctx.beginPath(); ctx.arc(b.x + 10, b.y, 10 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#7cc4ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(b.x + 10, b.y, 12 * s, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  for (const a of G.allies) {
+    if (!vis(a.x, a.y, 30)) continue;
+    ctx.globalAlpha = Math.min(1, a.life / .3, (a.max - a.life) / .15 + .2);
+    const r = a.big ? 16 : 13;
+    shadow(a.x, a.y, r);
+    drawPerson(a.x + (a.punch > 0 ? a.fx * 4 : 0), a.y + (a.punch > 0 ? a.fy * 4 : 0), r, Math.atan2(a.fy, a.fx), a.step,
+      { shirt: K.shirt, sleeve: K.sleeve, stripe: K.stripe, shorts: K.shorts, skin: a.skin, hair: a.hair, hat: a.hat });
+    if (a.punch > 0) { ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(a.x + a.fx * (r + 8), a.y + a.fy * (r + 8), 6, 0, Math.PI * 2); ctx.stroke(); }
+  }
+  ctx.globalAlpha = 1;
 }
 function whistle() {
   const p = G.p, R = 230 * G.stats.area;
@@ -2248,7 +2399,7 @@ function hud() {
   const w = (G.xp / G.xpNext * 100).toFixed(1) + '%';
   if (hudCache.xp !== w) { hudCache.xp = w; $('xpfill').style.width = w; }
 }
-const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', onda: 'Onda expansiva', tiroLibre: 'Tiro libre', tresDedos: 'Tres dedos', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta', olimpico: 'Gol olímpico', barrera: 'Barrera (llamarada)', dtTeam: 'Suplentes del DT volteados', roja: 'Tarjeta roja', spray: 'Spray de distancia' };
+const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', onda: 'Onda expansiva', tiroLibre: 'Tiro libre', tresDedos: 'Tres dedos', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta', olimpico: 'Gol olímpico', barrera: 'Barrera (llamarada)', dtTeam: 'Suplentes del DT volteados', pibes: 'Los pibes', bombo: 'El Bombo', avalancha: 'Avalancha', barraAliada: 'La barra aliada', roja: 'Tarjeta roja', spray: 'Spray de distancia' };
 const nf = n => Math.round(n).toLocaleString('es-AR');
 function renderStats(el, full) {
   const R = G.rec;
@@ -3041,7 +3192,7 @@ function drawPlayer(p) {
   if (!blink) {
     const K = CH.kit;
     drawPerson(p.x, p.y, p.r, Math.atan2(p.fy, p.fx), p.step, {
-      shirt: K.shirt, sleeve: K.sleeve, stripe: K.stripe, shorts: K.shorts, skin: CH.skin, hair: CH.hair, band: !!CH.shield, armOut: !!CH.whistle,
+      shirt: K.shirt, sleeve: K.sleeve, stripe: K.stripe, shorts: K.shorts, skin: CH.skin, hair: CH.hair, band: !!CH.shield, armOut: !!CH.whistle, hat: CH.hat,
     });
     if (CH.whistle) {
       // El Árbitro: brazo estirado hacia adelante mostrando la tarjeta roja
@@ -3067,6 +3218,14 @@ function drawPlayer(p) {
       ctx.strokeStyle = p.shHit > 0 ? 'rgba(255,255,255,1)' : 'rgba(200,235,255,.85)';
       ctx.lineWidth = p.shHit > 0 ? 4 : 2.5; ctx.stroke();
     }
+    return;
+  }
+  if (CH.aliento) {
+    // Aliento: se llena volteando rivales; llena, titila
+    const af = Math.min(1, p.al / 100), ready = af >= 1;
+    ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(p.x - w / 2, p.y + p.r + 15, w, 4);
+    ctx.fillStyle = ready ? '#7cc4ff' : '#3d6a8f'; ctx.fillRect(p.x - w / 2, p.y + p.r + 15, w * af, 4);
+    if (ready && Math.floor(performance.now() / 300) % 2) { ctx.strokeStyle = 'rgba(124,196,255,.9)'; ctx.lineWidth = 1; ctx.strokeRect(p.x - w / 2 - 1, p.y + p.r + 14, w + 2, 6); }
     return;
   }
   if (CH.whistle) {
@@ -3228,6 +3387,7 @@ function render() {
   }
   if (G.rondoBalls) { const r = 9 * G.stats.area; for (const b of G.rondoBalls) drawBall(b[0], b[1], r, G.rondoAng * 3); }
 
+  if (G.allies.length || G.bombos.length) drawAllies(vis);
   drawPlayer(p);
   for (const e of G.enemies) if (e.fly && vis(e.x, e.y, 80)) drawFoe(e);
   if (state === 'resume') {
