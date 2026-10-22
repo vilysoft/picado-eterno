@@ -577,6 +577,16 @@ const COMBOS = {
     desc: 'Cuando la pelota de Tres dedos termina su recorrido, estalla en un golazo que daña a todos alrededor.' },
   tapones:  { name: 'Tapones de punta', need: [['p', 'botines'], ['w', 'barrida']],
     desc: 'La barrida hace sangrar 3 s: daño cada medio segundo.' },
+  contragolpe: { name: 'Contragolpe', need: [['p', 'codazo'], ['w', 'barrida']],
+    desc: 'Cada codazo dispara una mini-barrida a tu alrededor (como mucho una por segundo).' },
+  pared:    { name: 'Pared', need: [['p', 'canilleras'], ['p', 'resistencia']],
+    desc: 'Si un golpe te saca más del 20% de la vida, se levanta una pared que frena por completo el siguiente golpe. Se recarga en 8 s.' },
+  tercer:   { name: 'Tercer tiempo', need: [['p', 'hidratacion'], ['p', 'resistencia']],
+    desc: 'Cada gema te cura 1. Con la vida llena, lo que sobra se guarda: llena la reserva y el próximo golpe te saca la mitad y te deja 1 s invulnerable.' },
+  pique:    { name: 'Pique al vacío', need: [['p', 'arranque'], ['p', 'aguante']],
+    desc: 'Solo El 10. Al arrancar el sprint, durante 0,4 s atravesás a los rivales sin recibir daño y les pegás al pasar.' },
+  pulmon:   { name: 'Pulmón de oro', need: [['p', 'aguante'], ['p', 'hidratacion']],
+    desc: 'Solo El 10. Con más del 80% de vida, sprintar no gasta barra; fundido, te curás el doble de rápido.' },
   fiesta:   { name: 'Fiesta en la tribuna', need: [['w', 'pibes'], ['w', 'bombo']],
     desc: 'Los pibes que pelean cerca de un bombo se agrandan, pegan el doble de rápido y 20% más fuerte.' },
   barrera:  { name: 'Barrera', need: [['w', 'roja'], ['w', 'spray']],
@@ -697,6 +707,13 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.45', date: '22 oct 2026', items: [
+    ['Combos', 'Contragolpe (Codazo + Barrida): cada codazo dispara una mini-barrida a tu alrededor, como mucho una por segundo.'],
+    ['Combos', 'Pared (Canilleras + Resistencia): si un golpe te saca más del 20% de la vida, se levanta una pared dorada que frena por completo el siguiente golpe. Se recarga en 8 s.'],
+    ['Combos', 'Tercer tiempo (Hidratación + Resistencia): cada gema te cura 1. Con la vida llena se va llenando una reserva (aro verde punteado) y el próximo golpe te saca la mitad y te deja 1 s invulnerable.'],
+    ['Combos', 'Pique al vacío (Arranque explosivo + Aguante, El 10): al arrancar el sprint, durante 0,4 s atravesás a los rivales sin recibir daño y les pegás al pasar. Una vez cada 1,5 s.'],
+    ['Combos', 'Pulmón de oro (Aguante + Hidratación, El 10): con más del 80% de vida sprintar no gasta barra, y fundido te curás el doble de rápido.'],
+  ] },
   { v: '2.44', date: '22 oct 2026', items: [
     ['Combos', 'Tiki-taka: la pelota que sale de nuevo desde el rondo pega 40% menos y ahora es naranja con estela, para distinguirla.'],
   ] },
@@ -944,7 +961,7 @@ function newGame() {
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '' },   // estadísticas del partido
     weapons: { [CH.start || 'pelota']: 1 }, passives: {}, timers: { [CH.start || 'pelota']: .4 }, sprays: [], rojas: 0, allies: [], bombos: [], rondoAng: 0, rondoBalls: null,
     enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [], fenceGaps: [],
-    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0,
+    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
   };
 }
 // Stats de arranque de cualquier personaje, antes del vestuario
@@ -1279,9 +1296,21 @@ function update(dt) {
     p.whPrev = holding;
   }
   if (p.tired && p.st >= p.stMax * .35) p.tired = false;
+  const wasSprinting = p.sprinting;
   p.sprinting = wantSprint && !p.tired && p.st > 0;
+  G.piqueT = Math.max(0, G.piqueT - dt); G.piqueCd = Math.max(0, G.piqueCd - dt);
+  if (p.sprinting && !wasSprinting && G.combos.pique && G.piqueCd <= 0) { G.piqueT = .4; G.piqueCd = 1.5; G.piqueHit = new Set(); sfx('dive'); }
+  if (G.piqueT > 0) {
+    // Pique al vacío: les pegás a los que atravesás
+    for (const e of G.enemies) {
+      if (e.dead || e.fly || G.piqueHit.has(e)) continue;
+      if ((e.x - p.x) ** 2 + (e.y - p.y) ** 2 < (e.r + p.r + 4) ** 2) { G.piqueHit.add(e); hitEnemy(e, 22 * S.dmg, p.fx * 300, p.fy * 300, 'pique'); }
+    }
+    if (!RM && Math.random() < dt * 40) part(p.x, p.y, '#bfe3ff');
+  }
   if (p.sprinting) {
-    p.st -= 42 * S.stDrain * dt; p.stCd = .9;
+    if (!(G.combos.pulmon && p.hp > p.maxHp * .8)) p.st -= 42 * S.stDrain * dt;   // Pulmón de oro: con vida alta no gasta
+    p.stCd = .9;
     if (p.st <= 0) { p.st = 0; p.tired = true; sfx('tired'); }
     if (!RM && Math.random() < dt * 14) part(p.x - p.fx * 10, p.y - p.fy * 10, LV.dust);
   } else {
@@ -1299,7 +1328,8 @@ function update(dt) {
   while (G.hist.length && G.hist[0].t < G.rt - 3) G.hist.shift();
   if (G.rewind) { G.rewind.t -= dt; if (G.rewind.t <= 0) { G.rewind.phase = 'freeze'; G.rewind.t = .5; G.rewind.max = .5; sfx('var'); } }
   if (p.inv > 0) p.inv -= dt;
-  p.hp = Math.min(p.maxHp, p.hp + S.regen * dt);
+  p.hp = Math.min(p.maxHp, p.hp + S.regen * dt * (G.combos.pulmon && p.tired ? 2 : 1));
+  G.cgCd -= dt; G.paredCd -= dt;
   G.shake = Math.max(0, G.shake - dt * 30);
   G.hurtFlash = Math.max(0, G.hurtFlash - dt);
 
@@ -1640,6 +1670,18 @@ function codazo(e, ux, uy) {
   const p = G.p;
   G.rings.push({ x: p.x - ux * (p.r + 4), y: p.y - uy * (p.r + 4), R: 22, life: .2, max: .2 });
   hitEnemy(e, G.stats.thorns * G.stats.dmg, -ux * 420, -uy * 420, 'codazo');
+  if (G.combos.contragolpe && G.cgCd <= 0 && G.weapons.barrida) {
+    // Contragolpe: mini-barrida alrededor tuyo
+    G.cgCd = 1;
+    const w = wp('barrida', G.weapons.barrida), R = w.R * G.stats.area * .6, dmg = w.dmg * G.stats.dmg * .5;
+    G.rings.push({ x: p.x, y: p.y, R, life: .25, max: .25, col: '255,182,39' });
+    for (const o of G.enemies) {
+      if (o.dead || o.fly) continue;
+      const dx = o.x - p.x, dy = o.y - p.y, d = Math.hypot(dx, dy) || 1;
+      if (d < R + o.r) hitEnemy(o, dmg, dx / d * 260, dy / d * 260, 'contragolpe');
+    }
+    sfx('sweep');
+  }
 }
 // ---------- El Barra: su gente ----------
 function addAlly(kind, x, y, life, dmg, src, boom) {
@@ -1748,8 +1790,17 @@ function whistle() {
 }
 function hurt(n) {
   const p = G.p;
+  if (G.piqueT > 0) return;   // Pique al vacío: atravesás sin recibir daño
+  if (G.paredOn) {
+    // Pared: frena el golpe entero
+    G.paredOn = false; p.inv = .55;
+    G.rings.push({ x: p.x, y: p.y, R: p.r + 22, life: .35, max: .35, col: '255,211,77' });
+    G.texts.push({ x: p.x, y: p.y - p.r - 26, txt: '¡PARED!', life: .9, big: true }); sfx('shield');
+    return;
+  }
   const raw = n;
   n *= G.stats.armor ?? 1;
+  if (G.ttOn) { n *= .5; G.ttOn = false; G.ttBank = 0; G.ttInv = true; G.texts.push({ x: p.x, y: p.y - p.r - 26, txt: '¡TERCER TIEMPO!', life: .9, big: true }); }
   G.rec.blocked += raw - n;
   if (p.shMax && p.shOn) {
     // Escudo levantado: el golpe sale de la barra del escudo antes que de la vida
@@ -1760,7 +1811,8 @@ function hurt(n) {
     if (a > 0) sfx('shield');
   }
   G.rec.taken += n;
-  p.hp -= n; p.inv = .55; G.hurtFlash = .25; sfx('hurt');
+  if (G.combos.pared && G.paredCd <= 0 && n > p.maxHp * .2) { G.paredOn = true; G.paredCd = 8; }   // se levanta para el próximo golpe
+  p.hp -= n; p.inv = G.ttInv ? 1.05 : .55; G.ttInv = false; G.hurtFlash = .25; sfx('hurt');
   if (!RM) G.shake = 8;
 }
 
@@ -2323,7 +2375,13 @@ function updateGems(dt) {
     const dx = p.x - g.x, dy = p.y - g.y, d = Math.hypot(dx, dy) || 1;
     if (!g.pull && d < R) g.pull = true;
     if (g.pull) { g.sp = Math.min(900, g.sp + 1400 * dt); g.x += dx / d * g.sp * dt; g.y += dy / d * g.sp * dt; }
-    if (d < p.r + 8) { g.got = true; gainXp(g.v); sfx('gem'); }
+    if (d < p.r + 8) {
+      g.got = true; gainXp(g.v); sfx('gem');
+      if (G.combos.tercer) {
+        const heal = Math.min(1, p.maxHp - p.hp); p.hp += heal;
+        if (!G.ttOn) { G.ttBank += 1 - heal; if (G.ttBank >= 15) G.ttOn = true; }
+      }
+    }
   }
   G.gems = G.gems.filter(g => !g.got);
 }
@@ -2425,7 +2483,7 @@ function hud() {
   const w = (G.xp / G.xpNext * 100).toFixed(1) + '%';
   if (hudCache.xp !== w) { hudCache.xp = w; $('xpfill').style.width = w; }
 }
-const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', onda: 'Onda expansiva', tiroLibre: 'Tiro libre', tresDedos: 'Tres dedos', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta', olimpico: 'Gol olímpico', barrera: 'Barrera (llamarada)', dtTeam: 'Suplentes del DT volteados', pibes: 'Los pibes', bombo: 'El Bombo', avalancha: 'Avalancha', barraAliada: 'La barra aliada', roja: 'Tarjeta roja', spray: 'Spray de distancia' };
+const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', onda: 'Onda expansiva', tiroLibre: 'Tiro libre', tresDedos: 'Tres dedos', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta', olimpico: 'Gol olímpico', contragolpe: 'Contragolpe', pique: 'Pique al vacío', barrera: 'Barrera (llamarada)', dtTeam: 'Suplentes del DT volteados', pibes: 'Los pibes', bombo: 'El Bombo', avalancha: 'Avalancha', barraAliada: 'La barra aliada', roja: 'Tarjeta roja', spray: 'Spray de distancia' };
 const nf = n => Math.round(n).toLocaleString('es-AR');
 function renderStats(el, full) {
   const R = G.rec;
@@ -2435,7 +2493,7 @@ function renderStats(el, full) {
   if (!total) h = '<p class="best" style="margin:6px 0 10px">Tus habilidades todavía no tocaron a nadie.</p>';
   else {
     h = '<div class="srows"><div class="shead"><span>Habilidad</span><span></span><span>Daño</span><span>%</span><span>Volteó</span></div>'
-      + rows.map(([k, v]) => `<div class="srow${k === 'codazo' ? ' fis' : k === 'amarilla' || k === 'tapones' || k === 'olimpico' || k === 'barrera' ? ' combo' : ''}"><span class="sname">${SRC_NAMES[k] || k}</span>`
+      + rows.map(([k, v]) => `<div class="srow${k === 'codazo' ? ' fis' : k === 'amarilla' || k === 'tapones' || k === 'olimpico' || k === 'barrera' || k === 'contragolpe' || k === 'pique' ? ' combo' : ''}"><span class="sname">${SRC_NAMES[k] || k}</span>`
         + `<span class="sbar"><i style="width:${(v / rows[0][1] * 100).toFixed(1)}%"></i></span>`
         + `<span class="snum">${nf(v)}</span><span class="spct">${Math.round(v / total * 100)}%</span><span class="skill">${R.kills[k] || 0}</span></div>`).join('')
       + '</div>';
@@ -3208,6 +3266,12 @@ function drawFoe(e) {
 }
 function drawPlayer(p) {
   shadow(p.x, p.y, p.r);
+  if (G.paredOn) {
+    ctx.strokeStyle = 'rgba(255,211,77,.9)'; ctx.lineWidth = 3; ctx.beginPath();
+    for (let i = 0; i <= 6; i++) { const a = i * Math.PI / 3 + G.t; const x = p.x + Math.cos(a) * (p.r + 12), y = p.y + Math.sin(a) * (p.r + 12); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.stroke();
+  }
+  if (G.ttOn) { ctx.strokeStyle = 'rgba(155,227,138,.8)'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 16, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
   const cl = G.passives.canilleras || 0;
   if (cl) {
     ctx.strokeStyle = `rgba(124,196,255,${.2 + cl * .08})`; ctx.lineWidth = 1.5 + cl * .4;

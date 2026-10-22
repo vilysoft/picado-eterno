@@ -2,6 +2,14 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.45 · 22 oct 2026
+
+- **Combos:** Contragolpe (Codazo + Barrida): cada codazo dispara una mini-barrida a tu alrededor, como mucho una por segundo.
+- **Combos:** Pared (Canilleras + Resistencia): si un golpe te saca más del 20% de la vida, se levanta una pared dorada que frena por completo el siguiente golpe. Se recarga en 8 s.
+- **Combos:** Tercer tiempo (Hidratación + Resistencia): cada gema te cura 1. Con la vida llena se va llenando una reserva (aro verde punteado) y el próximo golpe te saca la mitad y te deja 1 s invulnerable.
+- **Combos:** Pique al vacío (Arranque explosivo + Aguante, El 10): al arrancar el sprint, durante 0,4 s atravesás a los rivales sin recibir daño y les pegás al pasar. Una vez cada 1,5 s.
+- **Combos:** Pulmón de oro (Aguante + Hidratación, El 10): con más del 80% de vida sprintar no gasta barra, y fundido te curás el doble de rápido.
+
 ## 2.44 · 22 oct 2026
 
 - **Combos:** Tiki-taka: la pelota que sale de nuevo desde el rondo pega 40% menos y ahora es naranja con estela, para distinguirla.
