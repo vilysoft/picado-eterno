@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.43 · 22 oct 2026
+
+- **Jugadores:** El aliento de El Barra se llena mucho más despacio: cada rival suma 1,5 en vez de 4 (hacen falta unos 67 para una Avalancha) y un jefe suma 20 en vez de 40.
+- **Técnicas:** Barrida más fuerte desde el arranque, para todos: 20% más de área y 10% más de daño (24,75 por golpe en vez de 22,5).
+
 ## 2.42 · 22 oct 2026
 
 - **Jefes:** El jefe del entretiempo de La Cancha del Club, golpeado, ya no se deja encimar: si lo tenés pegado más de 1,5 s, retrocede a tomar carrera, junta a su fila y embiste igual.

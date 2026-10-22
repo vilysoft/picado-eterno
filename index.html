@@ -552,7 +552,7 @@ CHARS.barra = { name: 'El Barra', desc: 'Nunca pelea solo: llama a su gente para
   traits: ['<b>Avalancha</b> con Shift', 'Arranca con <b>Los pibes</b>', '<i>Técnicas comunes −25%</i>', '<i>10% menos de vida</i>'] };
 // Daño de las técnicas propias de El Barra (las demás le pegan 25% menos)
 const BARRA_SRC = { pibes: 1, bombo: 1, avalancha: 1, barraAliada: 1 };
-const ALIENTO_KILL = 4, AVAL_N = 8;
+const ALIENTO_KILL = 1.5, AVAL_N = 8;
 const ROJAS_NEED = 50;
 // El alargue se abre al llegar al 90' en las 3 canchas, con cualquier jugador
 const etWon = () => LEVELS.filter(L => SAVE.best[L.id] && SAVE.best[L.id].min >= 90).length;
@@ -667,7 +667,7 @@ function wp(k, l) {
   switch (k) {
     case 'pelota': return { count: 1 + (l >= 3) + (l >= 5), bounces: 2 + (l >= 2) + (l >= 6 ? 1 : 0), dmg: 10.8 * (l >= 4 ? 1.4 : 1) * (l >= 6 ? 1.4 : 1), cd: 1.15, speed: 470 };
     case 'rondo': return { count: 3 + (l >= 2) + (l >= 4) + (l >= 5), dmg: 13.5 * (l >= 3 ? 1.35 : 1) * (l >= 5 ? 1.35 : 1), spin: 3 + (l >= 4 ? 1.3 : 0), R: 78, push: l >= 6 ? 1150 : 200 };
-    case 'barrida': return { R: 114 * (l >= 2 ? 1.3 : 1) * (l >= 5 ? 1.3 : 1), dmg: 22.5 * (l >= 3 ? 1.4 : 1) * (l >= 5 ? 1.4 : 1), cd: 2.56 * (l >= 4 ? .75 : 1), shock: l >= 6 };
+    case 'barrida': return { R: 137 * (l >= 2 ? 1.3 : 1) * (l >= 5 ? 1.3 : 1), dmg: 24.75 * (l >= 3 ? 1.4 : 1) * (l >= 5 ? 1.4 : 1), cd: 2.56 * (l >= 4 ? .75 : 1), shock: l >= 6 };
     case 'tresDedos': return { dmg: 20 * (l >= 2 ? 1.4 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 3 ? 2 : 1, cd: 1.9 * (l >= 4 ? .75 : 1), speed: 620, straight: 190, life: l >= 5 ? 1.6 : 1.25 };
     case 'roja': return { dmg: 12 * (l >= 3 ? 1.4 : 1), n: 1 + (l >= 2) + (l >= 5), cd: 1.7 * (l >= 4 ? .75 : 1), exp: l >= 5 ? 3 : 2, speed: 560 };
     case 'spray': return { len: 140 * (l >= 2 ? 1.4 : 1), dps: 12 * (l >= 3 ? 1.5 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 4 ? 2 : 1, life: l >= 5 ? 6 : 4, cd: 3 };
@@ -697,6 +697,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.43', date: '22 oct 2026', items: [
+    ['Jugadores', 'El aliento de El Barra se llena mucho más despacio: cada rival suma 1,5 en vez de 4 (hacen falta unos 67 para una Avalancha) y un jefe suma 20 en vez de 40.'],
+    ['Técnicas', 'Barrida más fuerte desde el arranque, para todos: 20% más de área y 10% más de daño (24,75 por golpe en vez de 22,5).'],
+  ] },
   { v: '2.42', date: '22 oct 2026', items: [
     ['Jefes', 'El jefe del entretiempo de La Cancha del Club, golpeado, ya no se deja encimar: si lo tenés pegado más de 1,5 s, retrocede a tomar carrera, junta a su fila y embiste igual.'],
   ] },
@@ -1602,7 +1606,7 @@ const DT_DRAIN = .02;   // cada rival que mandó el DT expulsado le saca 2% de s
 const HINCHA_GEM = 60;   // experiencia de la gema celeste del hincha invasor   // cada rival que mandó el DT expulsado le saca 2,5% de su vida total
 function kill(e) {
   e.dead = true; G.kills++;
-  if (CH.aliento && G.p.al < 100) { G.p.al = Math.min(100, G.p.al + (e.boss ? 40 : ALIENTO_KILL)); if (G.p.al >= 100) sfx('combo'); }
+  if (CH.aliento && G.p.al < 100) { G.p.al = Math.min(100, G.p.al + (e.boss ? 20 : ALIENTO_KILL)); if (G.p.al >= 100) sfx('combo'); }
   if (e.dtTeam) {
     const dt = G.enemies.find(o => o.type === 'tecnico' && o.away && !o.dead);
     if (dt) {
