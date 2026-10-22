@@ -2,6 +2,13 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.40 · 22 oct 2026
+
+- **Alargue:** Nuevo: el alargue. Se desbloquea al ganar las 3 canchas, con cualquier jugador. Al llegar al 90' podés elegir seguir con el mismo partido y las mismas mejoras: dos tiempos de 15' (unos 1:20 reales cada uno) donde la dificultad sube 3 veces más rápido, hay contraataque cada medio minuto y salen más especiales.
+- **Alargue:** En el 105' hay cambio de lado (pausa de 3 s) y después vuelven los dos jefes de esa cancha juntos, con 30% más de vida.
+- **Alargue:** Si te ganan en el alargue, el partido cuenta igual como ganado. Suma fichas por cada minuto de alargue y +60 si llegás al 120'. El récord de cada cancha ahora puede llegar al minuto 120.
+- **Menú:** Debajo de las canchas se ve si el alargue está desbloqueado o cuántas canchas te faltan ganar.
+
 ## 2.39 · 20 oct 2026
 
 - **Técnicas:** Si ganás las 3 canchas con El Árbitro, el Spray de distancia se libera para todos los jugadores: también les puede salir a El 10 y a El Muro al subir de nivel. La tarjeta de El Árbitro en el menú muestra cuántas canchas le ganaste.

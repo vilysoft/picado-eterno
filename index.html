@@ -208,6 +208,7 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
     <div id="chars" class="levels chars"></div>
     <p class="eyebrow">Elegí la cancha · teclas 1, 2 o 3</p>
     <div id="levels" class="levels"></div>
+    <p id="etLine" class="best" style="margin:8px 0 14px"></p>
     <dl class="ficha">
       <div><dt>Duración</dt><dd>90' = 8 min reales</dd></div>
       <div><dt>Controles</dt><dd>WASD o flechas · en celular, arrastrá el dedo</dd></div>
@@ -275,6 +276,18 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
   </div>
 </div>
 
+<div id="etAsk" class="overlay" hidden>
+  <div class="panel small">
+    <p class="eyebrow">Minuto 90</p>
+    <h2>¿Vamos al alargue?</h2>
+    <p class="lede">Dos tiempos de 15' con las mismas mejoras que tenés ahora. La dificultad sube mucho más rápido y en el 105' vuelven los dos jefes de esta cancha, juntos. Si te ganan en el alargue, el partido cuenta igual como ganado.</p>
+    <div class="actions" style="margin-top:18px">
+      <button id="btnEtGo" class="btn" type="button">Jugar el alargue</button>
+      <button id="btnEtNo" class="btn ghost" type="button">Terminar acá</button>
+    </div>
+  </div>
+</div>
+
 <div id="over" class="overlay" hidden>
   <div class="panel small">
     <p class="eyebrow">Planilla del partido</p>
@@ -321,7 +334,9 @@ const MOB_DMG = TOUCH ? .85 : 1, MOB_RATE = TOUCH ? .9 : 1;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const rnd = (a, b) => a + Math.random() * (b - a);
 const fmt = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
-const minuteOf = t => Math.min(90, Math.floor(t / MATCH * 90));
+const minuteOf = t => Math.min(120, Math.floor(t / MATCH * 90));
+// Alargue: dos tiempos de 15' a la misma escala (30' = 160 s reales); la dificultad corre 3 veces más rápido
+const ET_LEN = MATCH * 30 / 90, ET_MULT = 3, ET_BOSS_HP = 1.3, ET_BREAK = 3;
 
 // ---------- Pantalla ----------
 let VW = 0, VH = 0, DPR = 1, ZOOM = 1, viewW = 0, viewH = 0;
@@ -525,6 +540,9 @@ const CHARS = {
     traits: ['<b>Silbato</b> con Shift', 'Arranca con <b>Tarjeta roja</b>', '<i>15% menos de vida</i>', '<i>Sin sprint</i>'] },
 };
 const ROJAS_NEED = 50;
+// El alargue se abre al llegar al 90' en las 3 canchas, con cualquier jugador
+const etWon = () => LEVELS.filter(L => SAVE.best[L.id] && SAVE.best[L.id].min >= 90).length;
+const etOpen = () => ALL_OPEN || etWon() >= LEVELS.length;
 // El Spray de distancia se libera para todos al ganar las 3 canchas con El Árbitro
 const sprayFree = () => ALL_OPEN || !!SAVE.sprayAll;
 const weaponFor = k => !WEAPONS[k].only || CHARS[WEAPONS[k].only] === CH || (k === 'spray' && sprayFree());
@@ -661,6 +679,12 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.40', date: '22 oct 2026', items: [
+    ['Alargue', "Nuevo: el alargue. Se desbloquea al ganar las 3 canchas, con cualquier jugador. Al llegar al 90' podés elegir seguir con el mismo partido y las mismas mejoras: dos tiempos de 15' (unos 1:20 reales cada uno) donde la dificultad sube 3 veces más rápido, hay contraataque cada medio minuto y salen más especiales."],
+    ['Alargue', "En el 105' hay cambio de lado (pausa de 3 s) y después vuelven los dos jefes de esa cancha juntos, con 30% más de vida."],
+    ['Alargue', "Si te ganan en el alargue, el partido cuenta igual como ganado. Suma fichas por cada minuto de alargue y +60 si llegás al 120'. El récord de cada cancha ahora puede llegar al minuto 120."],
+    ['Menú', 'Debajo de las canchas se ve si el alargue está desbloqueado o cuántas canchas te faltan ganar.'],
+  ] },
   { v: '2.39', date: '20 oct 2026', items: [
     ['Técnicas', 'Si ganás las 3 canchas con El Árbitro, el Spray de distancia se libera para todos los jugadores: también les puede salir a El 10 y a El Muro al subir de nivel. La tarjeta de El Árbitro en el menú muestra cuántas canchas le ganaste.'],
   ] },
@@ -923,6 +947,8 @@ function loadBest() {
 function saveBest(b) { try { localStorage.setItem('picado-eterno-best', JSON.stringify(b)); } catch (e) {} }
 function showBestLine() {
   $('bestLine').textContent = SAVE.tokens ? `Tenés ${SAVE.tokens} fichas para el vestuario.` : '';
+  $('etLine').textContent = etOpen() ? 'Alargue desbloqueado: al llegar al 90\' podés seguir jugando hasta el 120\'.'
+    : `Alargue: ganá las 3 canchas para desbloquearlo (${etWon()}/3).`;
 }
 function renderLevels() {
   const box = $('levels'); box.innerHTML = '';
@@ -1036,7 +1062,19 @@ $('btnRefund').addEventListener('click', () => {
   $('shopNote').textContent = 'Te devolvimos todas las fichas. Podés repartirlas de nuevo.';
 });
 
-function hideAll() { ['start', 'levelup', 'pause', 'over', 'shop', 'changes'].forEach(id => $(id).hidden = true); }
+function hideAll() { ['start', 'levelup', 'pause', 'over', 'shop', 'changes', 'etAsk'].forEach(id => $(id).hidden = true); }
+function askExtra() {
+  state = 'etask'; joy = null; G.etAsked = true; sfx('whistle');
+  $('etAsk').hidden = false; $('btnEtGo').focus();
+}
+function startExtra() {
+  $('etAsk').hidden = true; state = 'play'; last = performance.now();
+  G.et = true; G.nextWave = G.t + 30 / PACE;
+  bannerQ = []; bannerLock = 0;
+  banner('¡Alargue! Primer tiempo', true); sfx('whistle'); cheer = 3;
+}
+$('btnEtGo').addEventListener('click', startExtra);
+$('btnEtNo').addEventListener('click', () => endScreen(true));
 function openShop() {
   state = 'shop'; hideAll(); $('hud').hidden = true; $('shopNote').textContent = ''; renderShop(); $('shop').hidden = false;
 }
@@ -1149,7 +1187,23 @@ function update(dt) {
   }
   if (G.hydra > 0) G.hydra = Math.max(0, G.hydra - dt);
   else G.t += dt;
-  if (G.t >= MATCH) { endScreen(true); return; }
+  if (!G.et && G.t >= MATCH) {
+    if (etOpen() && !G.etAsked) { G.t = MATCH; askExtra(); } else endScreen(true);
+    return;
+  }
+  if (G.et) {
+    // Cambio de lado en el 105': pausa corta y vuelven los dos jefes de la cancha, con más vida
+    if (!G.etHalf && G.t >= MATCH + ET_LEN / 2) {
+      G.etHalf = true; G.hydra = ET_BREAK; G.hydraTxt = 'CAMBIO DE LADO · SEGUNDO TIEMPO DEL ALARGUE';
+      banner('¡Cambio de lado! Segundo tiempo del alargue', true); sfx('whistle');
+    }
+    if (G.etHalf && !G.etBoss && G.hydra <= 0) {
+      G.etBoss = true;
+      for (const b of LV.bosses) { spawn(b); const e = G.enemies[G.enemies.length - 1]; e.hp *= ET_BOSS_HP; e.maxHp *= ET_BOSS_HP; }
+      banner("Minuto 105': ¡vuelven los dos jefes, juntos!", true); sfx('boss'); cheer = 3;
+    }
+    if (G.t >= MATCH + ET_LEN) { endScreen(true); return; }
+  }
 
   let mx = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
   let my = (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0);
@@ -1245,7 +1299,7 @@ function onScreen(x, y, m = 20) {
 }
 // Achica la distancia a la que se quedan los que te esquivan para que entren en la pantalla
 const reach = band => clamp((Math.min(viewW, viewH) / 2 - 40) / band, .55, 1);
-const ht = () => G.t * PACE + LV.head;   // cada cancha arranca más adelante en la curva de dificultad
+const ht = () => G.t * PACE + LV.head + (G.t > MATCH ? (G.t - MATCH) * PACE * (ET_MULT - 1) : 0);   // cada cancha arranca más adelante en la curva de dificultad
 // La vida de los rivales crece con el tiempo de dificultad; en El Potrero crece un 25% más lento
 const hpMult = () => 1 + ht() / 140 * (LV.id === 'potrero' ? .75 : 1);
 function pickType(t) {
@@ -1254,7 +1308,7 @@ function pickType(t) {
   // (medido en tiempo real de partido); los jefes no pasan por acá.
   const after = thr => LV.id === 'potrero' ? t > thr : G.t > 1.1 * Math.max(0, (thr - LV.head) / PACE);
   // En El Potrero los especiales (árbitros, arqueros y grandotes) salen un 25% menos seguido
-  const f = LV.id === 'potrero' ? .75 : 1;
+  const f = (LV.id === 'potrero' ? .75 : 1) * (G.et ? 1.4 : 1);
   if (after(240) && r < .07 * f) return 'arbitro';
   // Arqueros: en esas canchas ya salían desde el arranque, así que tardan un 25% más que en El Potrero (36 s → 45 s)
   // En El Potrero el orden va al revés: primero los grandotes (minuto 7) y después los arqueros (minuto 22)
@@ -1298,7 +1352,7 @@ function spawn(type, x, y, baseHp) {
 function spawning() {
   const t = G.t, tt = ht();
   if (t >= G.nextWave) {
-    G.nextWave += 60 / PACE;
+    G.nextWave += (G.et ? 30 : 60) / PACE;   // en el alargue, contraataque cada medio minuto
     const n = Math.round(Math.min(40, 14 + Math.floor(tt / 12)) * MOB_RATE * (LV.wave || 1)), R = Math.hypot(viewW, viewH) / 2 + 30;
     for (let i = 0; i < n; i++) {
       const a = i / n * Math.PI * 2;
@@ -2189,7 +2243,7 @@ function updateLoadout() {
 function setText(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $(id).textContent = v; } }
 function hud() {
   const m = minuteOf(G.t);
-  setText('clock', m + "'"); setText('half', m < 45 ? '1T' : '2T');
+  setText('clock', m + "'"); setText('half', m < 45 ? '1T' : m < 90 || !G.et ? '2T' : m < 105 ? '1T AL' : '2T AL');
   setText('lvl', String(G.level)); setText('kills', String(G.kills));
   const w = (G.xp / G.xpNext * 100).toFixed(1) + '%';
   if (hudCache.xp !== w) { hudCache.xp = w; $('xpfill').style.width = w; }
@@ -2222,8 +2276,12 @@ function renderStats(el, full) {
   return total;
 }
 function endScreen(won) {
-  state = 'over'; joy = null;
-  if (won) G.t = MATCH;
+  state = 'over'; joy = null; hideAll();
+  const lostET = !won && G.et;          // te ganaron en el alargue: el partido igual cuenta como ganado
+  const fullET = won && G.et;           // aguantaste hasta el 120'
+  if (lostET) won = true;
+  if (won && !G.et) G.t = MATCH;
+  if (fullET) G.t = MATCH + ET_LEN;
   sfx('whistle');
   const best = SAVE.best[LV.id];
   const curMin = minuteOf(G.t);
@@ -2241,9 +2299,9 @@ function endScreen(won) {
     if (!SAVE.sprayAll && LEVELS.every(L => SAVE.arbWins[L.id])) { SAVE.sprayAll = true; sprayNew = true; }
   }
   if (!SAVE.chars.arbitro && SAVE.rojas >= ROJAS_NEED) { SAVE.chars.arbitro = true; newChar = newChar ? newChar + ' y El Árbitro' : 'El Árbitro'; }
-  $('overTitle').textContent = won ? "¡Aguantaste los 90'!" : 'Fin del partido';
+  $('overTitle').textContent = fullET ? '¡Aguantaste el alargue!' : won ? "¡Aguantaste los 90'!" : 'Fin del partido';
   $('overSub').textContent = won
-    ? `El árbitro pita el final y seguís en pie en ${LV.name}.` + (opened ? ` ¡Se abrió ${next.name}!` : '') + (newChar ? ` ¡Desbloqueaste a ${newChar}!` : '') + (sprayNew ? ' ¡El Spray de distancia ahora lo pueden elegir todos los jugadores!' : '')
+    ? (fullET ? `Llegaste al 120' en ${LV.name}.` : lostET ? `Ganaste los 90' en ${LV.name} y caíste en el alargue, en el minuto ${minuteOf(G.t)}'.` : `El árbitro pita el final y seguís en pie en ${LV.name}.`) + (opened ? ` ¡Se abrió ${next.name}!` : '') + (newChar ? ` ¡Desbloqueaste a ${newChar}!` : '') + (sprayNew ? ' ¡El Spray de distancia ahora lo pueden elegir todos los jugadores!' : '')
     : `Te sacaron de la cancha de ${LV.name} en el minuto ${minuteOf(G.t)}'.` + (newChar ? ` ¡Igual desbloqueaste a ${newChar}!` : '');
   $('btnNext').hidden = !(won && next);
   $('oTime').textContent = fmt(G.t); $('oLvl').textContent = G.level; $('oKills').textContent = G.kills;
@@ -2253,6 +2311,8 @@ function endScreen(won) {
   const earn = [['Minutos jugados', Math.round(m * .8)], ['Rivales vencidos', Math.floor(G.kills / 8)], ['Nivel alcanzado', Math.round(G.level * 1.5)]];
   if (G.bossKills) earn.push(['Jefes vencidos', G.bossKills * 15]);
   if (won) earn.push(['Partido ganado', 40]);
+  if (G.et && m > 90) earn.push(['Minutos de alargue', Math.round((m - 90) * 1.2)]);
+  if (fullET) earn.push(["Aguantaste hasta el 120'", 60]);
   const sub = earn.reduce((a, r) => a + r[1], 0);
   if (LV.reward > 1) earn.push([`Bonus ${LV.name} ×${String(LV.reward).replace('.', ',')}`, Math.round(sub * (LV.reward - 1))]);
   const total = earn.reduce((a, r) => a + r[1], 0);
@@ -3217,7 +3277,7 @@ function render() {
     ctx.fillStyle = 'rgba(124,196,255,.10)'; ctx.fillRect(0, 0, VW, VH);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.font = '600 16px "Barlow Condensed", "Arial Narrow", sans-serif'; ctx.fillStyle = 'rgba(230,246,255,.9)';
-    ctx.fillText('PAUSA DE HIDRATACIÓN · LOS RIVALES NO SE MUEVEN', VW / 2, VH * .72);
+    ctx.fillText(G.hydraTxt || 'PAUSA DE HIDRATACIÓN · LOS RIVALES NO SE MUEVEN', VW / 2, VH * .72);
     ctx.font = '700 64px Teko, "Arial Narrow", sans-serif'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.6)';
     const n = String(Math.ceil(G.hydra)); ctx.strokeText(n, VW / 2, VH * .72 + 46); ctx.fillStyle = '#bfe3ff'; ctx.fillText(n, VW / 2, VH * .72 + 46);
   }
