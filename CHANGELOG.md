@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.44 · 22 oct 2026
+
+- **Combos:** Tiki-taka: la pelota que sale de nuevo desde el rondo pega 40% menos y ahora es naranja con estela, para distinguirla.
+
 ## 2.43 · 22 oct 2026
 
 - **Jugadores:** El aliento de El Barra se llena mucho más despacio: cada rival suma 1,5 en vez de 4 (hacen falta unos 67 para una Avalancha) y un jefe suma 20 en vez de 40.
