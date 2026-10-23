@@ -712,6 +712,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.53', date: '23 oct 2026', items: [
+    ['Jefes', 'La jefa del entretiempo de El Coloso, golpeada, te tira un caño: marca un carril dorado que te atraviesa, te pasa entre las piernas sin pegarte y, desde atrás tuyo, patea su abanico de pelotas.'],
+  ] },
   { v: '2.52', date: '23 oct 2026', items: [
     ['Pantalla', 'Al subir de nivel la cancha ya no se ve borrosa detrás de las opciones: se ve nítida y solo un poco más oscura.'],
   ] },
@@ -2132,7 +2135,7 @@ function updateEnemies(dt) {
     if (G.combos.barrera && G.sprays.length && !e.boss && !e.fly && e.type !== 'hincha') barrierBlock(e, ox, oy);
     e.kx *= decay; e.ky *= decay;
     e.flash -= dt; e.rcd -= dt; e.tcd = (e.tcd || 0) - dt;
-    if (e.type !== 'camillero' && !e.fly && !stn && d < e.r + p.r - 2) {   // la Spidercam vuela: no choca
+    if (e.type !== 'camillero' && !e.fly && !stn && e.mode !== 'cano' && d < e.r + p.r - 2) {   // la Spidercam vuela: no choca
       if (p.inv <= 0) hurt(e.mode === 'dive' || e.mode === 'charge' ? e.dmg * 1.6 : e.dmg);
       codazo(e, dx / d, dy / d);
     }
@@ -2280,10 +2283,33 @@ function bossAI(e, d, ux, uy, sp, dt) {
       if (d < 300 * kd) { ux = -ux; uy = -uy; sp *= .8; } else if (d < 430 * kd) { const tx = -uy; uy = ux; ux = tx; sp *= .6; }
       if (e.acd <= 0) { e.mode = 'cast'; e.mt = 1; e.aimLine = false; e.acd = enr ? 5 : 6.5; }
       break;
-    case 'estrella': // gambetas cortas en diagonal y un abanico de tiros con comba
+    case 'estrella': // gambetas cortas en diagonal y un abanico de tiros; golpeada, te tira un caño
+      if (e.mode === 'canoAim') {
+        // Caño: se marca el carril dorado que te atraviesa; la salida queda fija
+        e.mt -= dt;
+        if (e.mt <= 0) { e.mode = 'cano'; sfx('dive'); }
+        return [e.ddx, e.ddy, 0];
+      }
+      if (e.mode === 'cano') {
+        // Te pasa por entre las piernas (no pega) y desde atrás tuyo patea el abanico
+        const tx = e.tx - e.x, ty = e.ty - e.y, td = Math.hypot(tx, ty);
+        if (!RM && Math.random() < dt * 40) part(e.x, e.y, '#ffd34d');
+        if (td < 20) {
+          e.mode = 'cast'; e.mt = .45; e.aimLine = true; e.acd = .9;
+          G.texts.push({ x: p.x, y: p.y - p.r - 30, txt: '¡CAÑO!', life: 1.1, big: true }); cheer = 2.5;
+          return [ux, uy, 0];
+        }
+        return [tx / td, ty / td, 900];
+      }
       if (enr) sp *= 1.15;
       if (e.acd <= 0) {
         e.combo = (e.combo || 0) + 1;
+        if (enr && e.combo % 3 === 1 && d > 120 && d < 520 && onScreen(e.x, e.y)) {
+          // Apunta a un punto 170 más allá tuyo, en línea recta: te va a cruzar
+          e.mode = 'canoAim'; e.mt = .7; e.ddx = ux; e.ddy = uy;
+          e.tx = clamp(p.x + ux * 170, -RUN + e.r, FW + RUN - e.r); e.ty = clamp(p.y + uy * 170, -RUN + e.r, FH + RUN - e.r);
+          break;
+        }
         if (e.combo % 3 === 0 && d < 680 && onScreen(e.x, e.y)) { e.mode = 'cast'; e.mt = .75; e.aimLine = true; e.acd = 1; }
         else if (d < 540 && onScreen(e.x, e.y)) startCharge(e, .38, .34, 780, enr ? .55 : .85, (Math.random() < .5 ? -1 : 1) * .32);
         else e.acd = .25;
@@ -3265,7 +3291,7 @@ function drawFoe(e) {
   }
   shadow(e.x, e.y, e.r);
   const K = kitFor(e.type), still = e.still;
-  const useDir = e.type === 'hincha' || e.mode === 'dive' || e.mode === 'down' || e.mode === 'charge' || e.mode === 'aimCharge' || (e.mode === 'cast' && e.aimLine);
+  const useDir = e.type === 'hincha' || e.mode === 'cano' || e.mode === 'canoAim' || e.mode === 'dive' || e.mode === 'down' || e.mode === 'charge' || e.mode === 'aimCharge' || (e.mode === 'cast' && e.aimLine);
   const ang = useDir ? Math.atan2(e.ddy, e.ddx) : Math.atan2(G.p.y - e.y, G.p.x - e.x);
   const fl = e.flash > 0, fc = LV.flash;
   if (e.buff > 0) { ctx.strokeStyle = 'rgba(255,211,77,.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 5, 0, Math.PI * 2); ctx.stroke(); }
@@ -3301,7 +3327,7 @@ function drawFoe(e) {
     ctx.fillStyle = '#fff3b0';
     for (let i = 0; i < 3; i++) { const a = G.t * 6 + i * 2.09; ctx.beginPath(); ctx.arc(e.x + Math.cos(a) * 9, e.y - e.r - 6 + Math.sin(a) * 3, 2.2, 0, Math.PI * 2); ctx.fill(); }
   }
-  const warn = e.mode === 'aim' || (e.boss && (e.mode === 'aimCharge' || e.mode === 'cast'));
+  const warn = e.mode === 'aim' || (e.boss && (e.mode === 'aimCharge' || e.mode === 'cast' || e.mode === 'canoAim'));
   if (warn) {
     const wy = e.boss ? e.y - e.r - 52 : e.y - e.r - 12;
     ctx.font = '700 28px Teko, "Arial Narrow", sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.75)';
@@ -3402,6 +3428,16 @@ function drawHazard(h) {
   ctx.font = '600 16px Teko, "Arial Narrow", sans-serif'; ctx.fillStyle = '#39ff9a'; ctx.fillText('REVISIÓN', h.x, y + 12);
 }
 function drawBossTell(e) {
+  if (e.mode === 'canoAim') {
+    // Carril dorado del caño: de La Estrella hasta donde sale, pasando por vos
+    const len = Math.hypot(e.tx - e.x, e.ty - e.y);
+    ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(Math.atan2(e.ty - e.y, e.tx - e.x));
+    ctx.fillStyle = 'rgba(255,211,77,.18)'; ctx.fillRect(0, -e.r, len, e.r * 2);
+    ctx.strokeStyle = 'rgba(255,211,77,.9)'; ctx.lineWidth = 2; ctx.setLineDash([12, 8]); ctx.strokeRect(0, -e.r, len, e.r * 2); ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,211,77,.9)'; ctx.beginPath(); ctx.moveTo(len, 0); ctx.lineTo(len - 16, -10); ctx.lineTo(len - 16, 10); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    return;
+  }
   if (e.mode === 'aimCharge') {
     const len = e.chargeSp * e.chargeT;
     if (e.type === 'capitan') {

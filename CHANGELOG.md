@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.53 · 23 oct 2026
+
+- **Jefes:** La jefa del entretiempo de El Coloso, golpeada, te tira un caño: marca un carril dorado que te atraviesa, te pasa entre las piernas sin pegarte y, desde atrás tuyo, patea su abanico de pelotas.
+
 ## 2.52 · 23 oct 2026
 
 - **Pantalla:** Al subir de nivel la cancha ya no se ve borrosa detrás de las opciones: se ve nítida y solo un poco más oscura.
