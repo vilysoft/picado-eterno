@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.51 · 23 oct 2026
+
+- **Jefes:** Después de que el VAR retrotrae la jugada, el juego queda quieto un segundo (como al elegir una mejora) para que veas dónde apareciste.
+
 ## 2.50 · 23 oct 2026
 
 - **Textos:** Ya no se repite el mismo aviso dos veces: si un cartel ya está en pantalla o en espera, no se vuelve a mostrar. La pausa de hidratación, el cambio de lado del alargue y la revisión del VAR muestran su aviso una sola vez, en el centro de la pantalla.

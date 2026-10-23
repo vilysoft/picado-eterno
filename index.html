@@ -710,6 +710,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.51', date: '23 oct 2026', items: [
+    ['Jefes', 'Después de que el VAR retrotrae la jugada, el juego queda quieto un segundo (como al elegir una mejora) para que veas dónde apareciste.'],
+  ] },
   { v: '2.50', date: '23 oct 2026', items: [
     ['Textos', 'Ya no se repite el mismo aviso dos veces: si un cartel ya está en pantalla o en espera, no se vuelve a mostrar. La pausa de hidratación, el cambio de lado del alargue y la revisión del VAR muestran su aviso una sola vez, en el centro de la pantalla.'],
     ['Textos', 'El aviso de los árbitros ahora lleva signos de exclamación, como los demás.'],
@@ -1228,6 +1231,8 @@ function update(dt) {
       for (let i = 0; i < 16; i++) { part(p.x, p.y, '#39ff9a'); part(R.x, R.y, '#39ff9a'); }
       p.x = R.x; p.y = R.y; p.inv = Math.max(p.inv, .2);
       if (!RM) G.shake = 6; sfx('zap');
+      // Un segundo quieto (como al elegir mejora) para ubicarte en el lugar nuevo
+      state = 'resume'; resumeAt = performance.now() + RESUME_MS; joy = null;
     }
     return;
   }
