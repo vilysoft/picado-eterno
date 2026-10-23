@@ -2,11 +2,15 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.48 · 23 oct 2026
+
+- **Textos:** Se cambia "voltear" por "eliminar" en todo el juego: la planilla, los avisos y el changelog.
+
 ## 2.47 · 23 oct 2026
 
 - **Textos:** Revisión de todos los textos del juego: las técnicas, físicos, mejoras del vestuario y combos usan el mismo formato (en vos, primero el número y después el efecto) y dicen exactamente lo que hacen.
 - **Textos:** Algunas descripciones estaban desactualizadas: Físico ahora dice que agranda todas tus técnicas, Tarjeta roja aclara cuándo expulsa y los combos exclusivos avisan para qué jugador son.
-- **Textos:** La planilla habla de "técnicas" y de rivales "volteados", igual que el resto del juego. La presentación del menú ya no dice que sos el 10, porque ahora hay más jugadores.
+- **Textos:** La planilla habla de "técnicas" y de rivales "eliminados", igual que el resto del juego. La presentación del menú ya no dice que sos el 10, porque ahora hay más jugadores.
 
 ## 2.46 · 23 oct 2026
 
@@ -36,7 +40,7 @@ Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 ## 2.41 · 22 oct 2026
 
 - **Jugadores:** Nuevo jugador: El Barra, disponible desde el arranque. No pelea solo: sus técnicas llaman a gente de la barra, con tus colores y gorro, que pega por él y se va. Las técnicas comunes le pegan 25% menos y tiene 10% menos de vida.
-- **Jugadores:** Avalancha (Shift, solo El Barra): cada rival que volteás llena el aliento; con la barra llena, un toque manda una fila de 8 barras que cruza corriendo hacia donde vas y pisotea a todos a su paso.
+- **Jugadores:** Avalancha (Shift, solo El Barra): cada rival que eliminás llena el aliento; con la barra llena, un toque manda una fila de 8 barras que cruza corriendo hacia donde vas y pisotea a todos a su paso.
 - **Técnicas:** Los pibes, solo para El Barra (arranca con ella): cada 4 s cae un pibe que corre al rival más cercano y le pega varias veces. 6 niveles: más pibes, más daño, más duración, menos espera y una piña de despedida en área.
 - **Técnicas:** El Bombo, solo para El Barra: un barra planta un bombo 6 s y cada golpe larga una onda que daña y empuja. 5 niveles: más radio, más daño, dos bombos y en el último toca más rápido y marea.
 - **Combos:** Fiesta en la tribuna (Los pibes nivel 5 y El Bombo nivel 5): los pibes que pelean cerca de un bombo se agrandan y pegan el doble de rápido.
@@ -59,11 +63,11 @@ Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
 ## 2.37 · 20 oct 2026
 
-- **Jefes:** El jefe del minuto 80 de La Cancha del Club, ya expulsado, manda 10 rivales por cambio en vez de 8, y cada uno que volteás le saca 2% de la vida en vez de 2,5%.
+- **Jefes:** El jefe del minuto 80 de La Cancha del Club, ya expulsado, manda 10 rivales por cambio en vez de 8, y cada uno que eliminás le saca 2% de la vida en vez de 2,5%.
 
 ## 2.36 · 20 oct 2026
 
-- **Rivales:** El hincha invasor hace ida y vuelta: cruza la cancha, frena del otro lado, se vuelve a marcar su franja y vuelve corriendo por el mismo camino. Si lo volteás deja una gema celeste grande que vale 60 de experiencia (antes 20).
+- **Rivales:** El hincha invasor hace ida y vuelta: cruza la cancha, frena del otro lado, se vuelve a marcar su franja y vuelve corriendo por el mismo camino. Si lo eliminás deja una gema celeste grande que vale 60 de experiencia (antes 20).
 
 ## 2.35 · 20 oct 2026
 
@@ -72,7 +76,7 @@ Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 ## 2.34 · 20 oct 2026
 
 - **Jefes:** El jefe del entretiempo de La Cancha del Club, golpeado, grita "¡Vamos, muchachos!": antes de cada embestida forma en fila detrás suyo hasta 6 rivales cercanos (la fila se ve unida por una línea amarilla) y salen todos juntos embistiendo.
-- **Jefes:** El jefe del minuto 80 de La Cancha del Club, golpeado, se va expulsado a la tribuna: desde ahí no lo podés tocar, pero sigue mandando gente a la cancha cada 4 s. Cada uno de los que manda que volteás le baja un 2,5% de la vida. Le ganás desarmándole el equipo.
+- **Jefes:** El jefe del minuto 80 de La Cancha del Club, golpeado, se va expulsado a la tribuna: desde ahí no lo podés tocar, pero sigue mandando gente a la cancha cada 4 s. Cada uno de los que manda que eliminás le baja un 2,5% de la vida. Le ganás desarmándole el equipo.
 
 ## 2.33 · 20 oct 2026
 
@@ -146,7 +150,7 @@ Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
 ## 2.18 · 18 oct 2026
 
-- **Rivales:** Hincha invasor en La Cancha del Club: desde el minuto 60, como mucho 2 veces por partido, un hincha salta a la cancha y la cruza a toda velocidad perseguido por un guardia. Antes de entrar se marca su franja en el piso. Si te agarra, pega fuerte; si lo volteás, deja muchas gemas.
+- **Rivales:** Hincha invasor en La Cancha del Club: desde el minuto 60, como mucho 2 veces por partido, un hincha salta a la cancha y la cruza a toda velocidad perseguido por un guardia. Antes de entrar se marca su franja en el piso. Si te agarra, pega fuerte; si lo eliminás, deja muchas gemas.
 - **Rivales:** Spidercam en El Coloso: la cámara aérea flota sobre la cancha colgada de cables, no choca, y cada tanto marca un círculo y baja de golpe. Solo la alcanzan los remates (Pelota, Tiro libre y Tres dedos); barrida, rondo y codazo no llegan.
 
 ## 2.17 · 17 oct 2026
@@ -211,7 +215,7 @@ Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
 ## 2.6 · 15 oct 2026
 
-- **Estadísticas:** La planilla del partido muestra el daño de cada habilidad (total, porcentaje y rivales que volteó), el daño recibido, lo que frenaron las canilleras, el golpe más fuerte y el daño por minuto.
+- **Estadísticas:** La planilla del partido muestra el daño de cada habilidad (total, porcentaje y rivales que eliminó), el daño recibido, lo que frenaron las canilleras, el golpe más fuerte y el daño por minuto.
 - **Estadísticas:** En la pausa se ve el daño de cada habilidad hasta ese momento.
 
 ## 2.5 · 15 oct 2026

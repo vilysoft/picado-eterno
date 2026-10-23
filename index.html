@@ -710,10 +710,13 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.48', date: '23 oct 2026', items: [
+    ['Textos', 'Se cambia "voltear" por "eliminar" en todo el juego: la planilla, los avisos y el changelog.'],
+  ] },
   { v: '2.47', date: '23 oct 2026', items: [
     ['Textos', 'Revisión de todos los textos del juego: las técnicas, físicos, mejoras del vestuario y combos usan el mismo formato (en vos, primero el número y después el efecto) y dicen exactamente lo que hacen.'],
     ['Textos', 'Algunas descripciones estaban desactualizadas: Físico ahora dice que agranda todas tus técnicas, Tarjeta roja aclara cuándo expulsa y los combos exclusivos avisan para qué jugador son.'],
-    ['Textos', 'La planilla habla de "técnicas" y de rivales "volteados", igual que el resto del juego. La presentación del menú ya no dice que sos el 10, porque ahora hay más jugadores.'],
+    ['Textos', 'La planilla habla de "técnicas" y de rivales "eliminados", igual que el resto del juego. La presentación del menú ya no dice que sos el 10, porque ahora hay más jugadores.'],
   ] },
   { v: '2.46', date: '23 oct 2026', items: [
     ['Página', 'El juego tiene ícono propio: una pelota con un ∞ naranja, en la pestaña del navegador y al guardarlo en la pantalla de inicio del celular.'],
@@ -737,7 +740,7 @@ const CHANGELOG = [
   ] },
   { v: '2.41', date: '22 oct 2026', items: [
     ['Jugadores', 'Nuevo jugador: El Barra, disponible desde el arranque. No pelea solo: sus técnicas llaman a gente de la barra, con tus colores y gorro, que pega por él y se va. Las técnicas comunes le pegan 25% menos y tiene 10% menos de vida.'],
-    ['Jugadores', 'Avalancha (Shift, solo El Barra): cada rival que volteás llena el aliento; con la barra llena, un toque manda una fila de 8 barras que cruza corriendo hacia donde vas y pisotea a todos a su paso.'],
+    ['Jugadores', 'Avalancha (Shift, solo El Barra): cada rival que eliminás llena el aliento; con la barra llena, un toque manda una fila de 8 barras que cruza corriendo hacia donde vas y pisotea a todos a su paso.'],
     ['Técnicas', 'Los pibes, solo para El Barra (arranca con ella): cada 4 s cae un pibe que corre al rival más cercano y le pega varias veces. 6 niveles: más pibes, más daño, más duración, menos espera y una piña de despedida en área.'],
     ['Técnicas', 'El Bombo, solo para El Barra: un barra planta un bombo 6 s y cada golpe larga una onda que daña y empuja. 5 niveles: más radio, más daño, dos bombos y en el último toca más rápido y marea.'],
     ['Combos', 'Fiesta en la tribuna (Los pibes nivel 5 y El Bombo nivel 5): los pibes que pelean cerca de un bombo se agrandan y pegan el doble de rápido.'],
@@ -756,17 +759,17 @@ const CHANGELOG = [
     ['Técnicas', 'El nivel 6 de Pelota da +1 rebote en vez de +2 (sigue sumando +40% de daño).'],
   ] },
   { v: '2.37', date: '20 oct 2026', items: [
-    ['Jefes', 'El jefe del minuto 80 de La Cancha del Club, ya expulsado, manda 10 rivales por cambio en vez de 8, y cada uno que volteás le saca 2% de la vida en vez de 2,5%.'],
+    ['Jefes', 'El jefe del minuto 80 de La Cancha del Club, ya expulsado, manda 10 rivales por cambio en vez de 8, y cada uno que eliminás le saca 2% de la vida en vez de 2,5%.'],
   ] },
   { v: '2.36', date: '20 oct 2026', items: [
-    ['Rivales', 'El hincha invasor hace ida y vuelta: cruza la cancha, frena del otro lado, se vuelve a marcar su franja y vuelve corriendo por el mismo camino. Si lo volteás deja una gema celeste grande que vale 60 de experiencia (antes 20).'],
+    ['Rivales', 'El hincha invasor hace ida y vuelta: cruza la cancha, frena del otro lado, se vuelve a marcar su franja y vuelve corriendo por el mismo camino. Si lo eliminás deja una gema celeste grande que vale 60 de experiencia (antes 20).'],
   ] },
   { v: '2.35', date: '20 oct 2026', items: [
     ['Técnicas', 'Pelota pega 10% menos: 10,8 por golpe en vez de 12. Las mejoras de daño suman encima de eso.'],
   ] },
   { v: '2.34', date: '20 oct 2026', items: [
     ['Jefes', 'El jefe del entretiempo de La Cancha del Club, golpeado, grita "¡Vamos, muchachos!": antes de cada embestida forma en fila detrás suyo hasta 6 rivales cercanos (la fila se ve unida por una línea amarilla) y salen todos juntos embistiendo.'],
-    ['Jefes', 'El jefe del minuto 80 de La Cancha del Club, golpeado, se va expulsado a la tribuna: desde ahí no lo podés tocar, pero sigue mandando gente a la cancha cada 4 s. Cada uno de los que manda que volteás le baja un 2,5% de la vida. Le ganás desarmándole el equipo.'],
+    ['Jefes', 'El jefe del minuto 80 de La Cancha del Club, golpeado, se va expulsado a la tribuna: desde ahí no lo podés tocar, pero sigue mandando gente a la cancha cada 4 s. Cada uno de los que manda que eliminás le baja un 2,5% de la vida. Le ganás desarmándole el equipo.'],
   ] },
   { v: '2.33', date: '20 oct 2026', items: [
     ['Combos', 'Barrera, solo para El Árbitro (Tarjeta roja y Spray de distancia en nivel 5): las líneas de spray se vuelven una barrera que los rivales comunes no pueden cruzar, y una roja que pega cerca de una línea la hace estallar en una llamarada que quema a todos alrededor. Los jefes y el hincha invasor sí la cruzan.'],
@@ -824,7 +827,7 @@ const CHANGELOG = [
     ['Rivales', 'La Spidercam aparece un 20% menos seguido y se mueve un 20% más lento.'],
   ] },
   { v: '2.18', date: '18 oct 2026', items: [
-    ['Rivales', 'Hincha invasor en La Cancha del Club: desde el minuto 60, como mucho 2 veces por partido, un hincha salta a la cancha y la cruza a toda velocidad perseguido por un guardia. Antes de entrar se marca su franja en el piso. Si te agarra, pega fuerte; si lo volteás, deja muchas gemas.'],
+    ['Rivales', 'Hincha invasor en La Cancha del Club: desde el minuto 60, como mucho 2 veces por partido, un hincha salta a la cancha y la cruza a toda velocidad perseguido por un guardia. Antes de entrar se marca su franja en el piso. Si te agarra, pega fuerte; si lo eliminás, deja muchas gemas.'],
     ['Rivales', 'Spidercam en El Coloso: la cámara aérea flota sobre la cancha colgada de cables, no choca, y cada tanto marca un círculo y baja de golpe. Solo la alcanzan los remates (Pelota, Tiro libre y Tres dedos); barrida, rondo y codazo no llegan.'],
   ] },
   { v: '2.17', date: '17 oct 2026', items: [
@@ -877,7 +880,7 @@ const CHANGELOG = [
     ['Técnicas', 'Ritmo de juego y Pulmones ahora también mejoran el Rondo: las pelotas giran más rápido y pueden volver a pegarle al mismo rival antes.'],
   ] },
   { v: '2.6', date: '15 oct 2026', items: [
-    ['Estadísticas', 'La planilla del partido muestra el daño de cada habilidad (total, porcentaje y rivales que volteó), el daño recibido, lo que frenaron las canilleras, el golpe más fuerte y el daño por minuto.'],
+    ['Estadísticas', 'La planilla del partido muestra el daño de cada habilidad (total, porcentaje y rivales que eliminó), el daño recibido, lo que frenaron las canilleras, el golpe más fuerte y el daño por minuto.'],
     ['Estadísticas', 'En la pausa se ve el daño de cada habilidad hasta ese momento.'],
   ] },
   { v: '2.5', date: '15 oct 2026', items: [
@@ -1635,7 +1638,7 @@ function hitEnemy(e, dmg, kx, ky, src, exact) {
   if (e.yellow > 0) dmg *= 1.25;
   if (CH.aliento && !BARRA_SRC[src]) dmg *= .75;   // El Barra: lo que no es de su gente pega menos
   dmg = exact ? Math.ceil(dmg) : Math.max(1, Math.round(dmg * rnd(.9, 1.1)));   // exact: sin variación ni número flotante
-  // Para las estadísticas cuenta el daño que de verdad le sacaste (no lo que sobra al voltearlo)
+  // Para las estadísticas cuenta el daño que de verdad le sacaste (no lo que sobra al eliminarlo)
   const R = G.rec, real = Math.min(dmg, Math.max(0, e.hp));
   R.dmg[src] = (R.dmg[src] || 0) + real; R.hits[src] = (R.hits[src] || 0) + 1;
   if (dmg > R.maxHit) { R.maxHit = dmg; R.maxSrc = src; }
@@ -2033,7 +2036,7 @@ function updateEnemies(dt) {
     }
     if (e.type === 'hincha') {
       // Corre en línea recta por su franja; al llegar al otro lado frena, se marca la franja de nuevo y vuelve.
-      // Si llega otra vez al lado donde entró, se va (sin contar como volteado)
+      // Si llega otra vez al lado donde entró, se va (sin contar como eliminado)
       ux = e.ddx; uy = e.ddy; sp = e.waiting ? 0 : e.speed;
       if (!e.waiting && (e.x - e.ex) * e.ddx + (e.y - e.ey) * e.ddy > -8) {
         if (e.back) { e.dead = true; continue; }
@@ -2240,7 +2243,7 @@ function bossAI(e, d, ux, uy, sp, dt) {
         e.awayY = p.y < FH / 2 ? -RUN - 34 : FH + RUN + 34;   // justo del otro lado de la línea, a la vista
         G.texts.push({ x: e.x, y: e.y - e.r - 34, txt: '¡AFUERA!', life: 1.4, big: true });
         banner('¡Expulsaron al DT rival! Dirige desde la tribuna', true);
-        banner('Volteá a los que manda a la cancha para ganarle', true);
+        banner('Eliminá a los que manda a la cancha para ganarle', true);
         sfx('whistle'); cheer = 2.5;
       }
       if (e.away) {
@@ -2503,7 +2506,7 @@ function renderStats(el, full) {
   let h = '';
   if (!total) h = '<p class="best" style="margin:6px 0 10px">Tus habilidades todavía no tocaron a nadie.</p>';
   else {
-    h = '<div class="srows"><div class="shead"><span>Técnica</span><span></span><span>Daño</span><span>%</span><span>Volteados</span></div>'
+    h = '<div class="srows"><div class="shead"><span>Técnica</span><span></span><span>Daño</span><span>%</span><span>Eliminados</span></div>'
       + rows.map(([k, v]) => `<div class="srow${k === 'codazo' ? ' fis' : k === 'amarilla' || k === 'tapones' || k === 'olimpico' || k === 'barrera' || k === 'contragolpe' || k === 'pique' ? ' combo' : ''}"><span class="sname">${SRC_NAMES[k] || k}</span>`
         + `<span class="sbar"><i style="width:${(v / rows[0][1] * 100).toFixed(1)}%"></i></span>`
         + `<span class="snum">${nf(v)}</span><span class="spct">${Math.round(v / total * 100)}%</span><span class="skill">${R.kills[k] || 0}</span></div>`).join('')
@@ -2554,8 +2557,8 @@ function endScreen(won) {
   $('dmgTotal').textContent = nf(renderStats($('statList'), true));
   // Fichas para el vestuario según cómo te fue
   const m = minuteOf(G.t);
-  const earn = [['Minutos jugados', Math.round(m * .8)], ['Rivales volteados', Math.floor(G.kills / 8)], ['Nivel alcanzado', Math.round(G.level * 1.5)]];
-  if (G.bossKills) earn.push(['Jefes volteados', G.bossKills * 15]);
+  const earn = [['Minutos jugados', Math.round(m * .8)], ['Rivales eliminados', Math.floor(G.kills / 8)], ['Nivel alcanzado', Math.round(G.level * 1.5)]];
+  if (G.bossKills) earn.push(['Jefes eliminados', G.bossKills * 15]);
   if (won) earn.push(['Partido ganado', 40]);
   if (G.et && m > 90) earn.push(['Minutos de alargue', Math.round((m - 90) * 1.2)]);
   if (fullET) earn.push(["Aguantaste hasta el 120'", 60]);
@@ -3322,7 +3325,7 @@ function drawPlayer(p) {
     return;
   }
   if (CH.aliento) {
-    // Aliento: se llena volteando rivales; llena, titila
+    // Aliento: se llena eliminando rivales; llena, titila
     const af = Math.min(1, p.al / 100), ready = af >= 1;
     ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(p.x - w / 2, p.y + p.r + 15, w, 4);
     ctx.fillStyle = ready ? '#7cc4ff' : '#3d6a8f'; ctx.fillRect(p.x - w / 2, p.y + p.r + 15, w * af, 4);
