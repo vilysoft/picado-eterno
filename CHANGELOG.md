@@ -2,6 +2,12 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.47 · 23 oct 2026
+
+- **Textos:** Revisión de todos los textos del juego: las técnicas, físicos, mejoras del vestuario y combos usan el mismo formato (en vos, primero el número y después el efecto) y dicen exactamente lo que hacen.
+- **Textos:** Algunas descripciones estaban desactualizadas: Físico ahora dice que agranda todas tus técnicas, Tarjeta roja aclara cuándo expulsa y los combos exclusivos avisan para qué jugador son.
+- **Textos:** La planilla habla de "técnicas" y de rivales "volteados", igual que el resto del juego. La presentación del menú ya no dice que sos el 10, porque ahora hay más jugadores.
+
 ## 2.46 · 23 oct 2026
 
 - **Página:** El juego tiene ícono propio: una pelota con un ∞ naranja, en la pestaña del navegador y al guardarlo en la pantalla de inicio del celular.
