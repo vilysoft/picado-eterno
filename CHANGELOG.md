@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.46 · 23 oct 2026
+
+- **Página:** El juego tiene ícono propio: una pelota con un ∞ naranja, en la pestaña del navegador y al guardarlo en la pantalla de inicio del celular.
+
 ## 2.45 · 22 oct 2026
 
 - **Combos:** Contragolpe (Codazo + Barrida): cada codazo dispara una mini-barrida a tu alrededor, como mucho una por segundo.
