@@ -636,25 +636,30 @@ const WEAPONS = {
     'Cada pocos segundos barrés en círculo: dañás y empujás a los rivales cercanos.',
     '+30% de área.', '+40% de daño.', '25% menos de espera entre barridas.', '+30% de área y +40% de daño.',
     'Onda expansiva: 0,5 s después de cada barrida sale una segunda onda, 40% más grande y con el 60% del daño.'] },
-  tiroLibre: { name: 'Tiro libre', max: 5, desc: [
+  tiroLibre: { name: 'Tiro libre', max: 6, desc: [
     'Rematás al rival más cercano: la pelota le pega y sigue derecho atravesando a todos.',
-    '+50% de daño.', 'Rematás 2 pelotas en abanico.', '25% menos de espera entre remates.', 'Rematás 3 pelotas y +50% de daño.'] },
-  roja: { name: 'Tarjeta roja', max: 5, only: 'arbitro', desc: [
+    '+50% de daño.', 'Rematás 2 pelotas en abanico.', '25% menos de espera entre remates.', 'Rematás 3 pelotas y +50% de daño.',
+    'Al ángulo: al final del recorrido (o si toca el borde) la pelota rebota y vuelve atravesando a todos otra vez.'] },
+  roja: { name: 'Tarjeta roja', max: 6, only: 'arbitro', desc: [
     'Le sacás una roja al rival más cercano: le pega y, si le queda menos vida que el doble del daño, lo expulsa.',
-    '+1 tarjeta en cada tiro.', '+40% de daño.', '25% menos de espera entre tarjetas.', '+1 tarjeta y expulsa si le queda menos vida que el triple del daño.'] },
-  spray: { name: 'Spray de distancia', max: 5, only: 'arbitro', desc: [
+    '+1 tarjeta en cada tiro.', '+40% de daño.', '25% menos de espera entre tarjetas.', '+1 tarjeta y expulsa si le queda menos vida que el triple del daño.',
+    'Expulsión en cadena: cuando una tarjeta expulsa a alguien, sigue hacia el rival más cercano, hasta 3 veces.'] },
+  spray: { name: 'Spray de distancia', max: 6, only: 'arbitro', desc: [
     'Marcás una línea de spray en el piso delante del rival más cercano. Quema: los que la pisan se prenden fuego un rato.',
-    '+40% de largo de la línea.', '+50% de quemadura.', 'Marcás 2 líneas a la vez.', 'La línea dura 6 s en vez de 4 y +50% de quemadura.'] },
+    '+40% de largo de la línea.', '+50% de quemadura.', 'Marcás 2 líneas a la vez.', 'La línea dura 6 s en vez de 4 y +50% de quemadura.',
+    'Barrera de fuego: cada línea sale cruzada en X y quema el doble en el centro.'] },
   pibes: { name: 'Los pibes', max: 6, only: 'barra', desc: [
     'Cada pocos segundos llamás a un pibe de la barra: corre al rival más cercano, le pega varias veces y se va.',
     '+1 pibe por llamada.', '+40% de daño.', 'Los pibes se quedan 2 s más en la cancha.', '+1 pibe y 25% menos de espera.',
     '¡Se quedan a pelear!: al irse, cada pibe tira una piña fuerte que daña a todos alrededor.'] },
-  bombo: { name: 'El Bombo', max: 5, only: 'barra', desc: [
+  bombo: { name: 'El Bombo', max: 6, only: 'barra', desc: [
     'Plantás un bombo durante 6 s: cada golpe larga una onda que daña y empuja a los rivales cercanos.',
-    '+30% de radio.', '+50% de daño.', 'Plantás 2 bombos a la vez.', 'El bombo toca más rápido y cada golpe marea a los rivales.'] },
-  tresDedos: { name: 'Tres dedos', max: 5, desc: [
+    '+30% de radio.', '+50% de daño.', 'Plantás 2 bombos a la vez.', 'El bombo toca más rápido y cada golpe marea a los rivales.',
+    'Redoblante: cada cuarto golpe es uno fuerte, con una onda el doble de grande que empuja lejos.'] },
+  tresDedos: { name: 'Tres dedos', max: 6, desc: [
     'Rematás con comba: la pelota sale derecho hacia el rival más cercano y después dobla 45° a un costado, atravesando a todos.',
-    '+40% de daño.', 'Rematás 2 pelotas: una dobla a la derecha y otra a la izquierda.', '25% menos de espera entre remates.', 'El recorrido es más largo y +50% de daño.'] },
+    '+40% de daño.', 'Rematás 2 pelotas: una dobla a la derecha y otra a la izquierda.', '25% menos de espera entre remates.', 'El recorrido es más largo y +50% de daño.',
+    'Comba doble: después de doblar, la pelota vuelve a doblar para el otro lado y dibuja una S.'] },
 };
 const PASSIVES = {
   potencia:    { name: 'Potencia', max: 6, desc: '+12% de daño en todas tus técnicas.', l6: ['Bombazo', 'cada 10 golpes que das, el siguiente pega el doble.'] },
@@ -814,14 +819,14 @@ const HAIRS = ['#1b1410', '#3b2416', '#6b4423', '#c99a4c', '#111111'];
 function wp(k, l) {
   switch (k) {
     case 'pelota': return { count: 1 + (l >= 3) + (l >= 5), bounces: 2 + (l >= 2) + (l >= 6 ? 1 : 0), dmg: 10.8 * (l >= 4 ? 1.4 : 1) * (l >= 6 ? 1.4 : 1), cd: 1.15, speed: 470 };
-    case 'rondo': return { count: 3 + (l >= 2) + (l >= 4) + (l >= 5), dmg: 13.5 * (l >= 3 ? 1.35 : 1) * (l >= 5 ? 1.35 : 1), spin: 3 + (l >= 4 ? 1.3 : 0), R: 78, push: l >= 6 ? 1150 : 200 };
+    case 'rondo': return { count: 3 + (l >= 2) + (l >= 4) + (l >= 5), dmg: 16.9 * (l >= 3 ? 1.35 : 1) * (l >= 5 ? 1.35 : 1), spin: 3.3 + (l >= 4 ? 1.3 : 0), R: 78, push: l >= 6 ? 1150 : 200 };
     case 'barrida': return { R: 137 * (l >= 2 ? 1.3 : 1) * (l >= 5 ? 1.3 : 1), dmg: 24.75 * (l >= 3 ? 1.4 : 1) * (l >= 5 ? 1.4 : 1), cd: 2.56 * (l >= 4 ? .75 : 1), shock: l >= 6 };
-    case 'tresDedos': return { dmg: 20 * (l >= 2 ? 1.4 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 3 ? 2 : 1, cd: 1.9 * (l >= 4 ? .75 : 1), speed: 620, straight: 190, life: l >= 5 ? 1.6 : 1.25 };
-    case 'roja': return { dmg: 12 * (l >= 3 ? 1.4 : 1), n: 1 + (l >= 2) + (l >= 5), cd: 1.7 * (l >= 4 ? .75 : 1), exp: l >= 5 ? 3 : 2, speed: 560 };
-    case 'spray': return { len: 140 * (l >= 2 ? 1.4 : 1), dps: 12 * (l >= 3 ? 1.5 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 4 ? 2 : 1, life: l >= 5 ? 6 : 4, cd: 3 };
+    case 'tresDedos': return { dmg: 20 * (l >= 2 ? 1.4 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 3 ? 2 : 1, cd: 1.9 * (l >= 4 ? .75 : 1), speed: 620, straight: 190, life: l >= 6 ? 2.1 : l >= 5 ? 1.6 : 1.25, s2: l >= 6 };
+    case 'roja': return { dmg: 12 * (l >= 3 ? 1.4 : 1), n: 1 + (l >= 2) + (l >= 5), cd: 1.7 * (l >= 4 ? .75 : 1), exp: l >= 5 ? 3 : 2, speed: 560, chain: l >= 6 ? 3 : 0 };
+    case 'spray': return { len: 140 * (l >= 2 ? 1.4 : 1), dps: 12 * (l >= 3 ? 1.5 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 4 ? 2 : 1, life: l >= 5 ? 6 : 4, cd: 3, cross: l >= 6 };
     case 'pibes': return { n: 1 + (l >= 2) + (l >= 5), dmg: 9 * (l >= 3 ? 1.4 : 1), life: 5 + (l >= 4 ? 2 : 0), cd: 4 * (l >= 5 ? .75 : 1), boom: l >= 6 };
-    case 'bombo': return { R: 110 * (l >= 2 ? 1.3 : 1), dmg: 14 * (l >= 3 ? 1.5 : 1), n: l >= 4 ? 2 : 1, beat: l >= 5 ? .7 : 1, dizzy: l >= 5, life: 6, cd: 7 };
-    case 'tiroLibre': return { dmg: 24 * (l >= 2 ? 1.5 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 5 ? 3 : l >= 3 ? 2 : 1, cd: 2.6 * (l >= 4 ? .75 : 1), speed: 720 };
+    case 'bombo': return { R: 110 * (l >= 2 ? 1.3 : 1), dmg: 14 * (l >= 3 ? 1.5 : 1), n: l >= 4 ? 2 : 1, beat: l >= 5 ? .7 : 1, dizzy: l >= 5, life: 6, cd: 7, roll: l >= 6 };
+    case 'tiroLibre': return { dmg: 24 * (l >= 2 ? 1.5 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 5 ? 3 : l >= 3 ? 2 : 1, cd: 2.6 * (l >= 4 ? .75 : 1), speed: 720, rico: l >= 6 };
   }
 }
 // Los primeros niveles (2 a 5) piden 15% menos de experiencia, para que el arranque no sea tan lento
@@ -845,6 +850,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.57', date: '23 oct 2026', items: [
+    ['Técnicas', 'Nuevo nivel 6 para cinco técnicas: Tiro libre (Al ángulo: la pelota rebota y vuelve atravesando a todos), Tres dedos (Comba doble: dobla para un lado y después para el otro, en S), Tarjeta roja (Expulsión en cadena: hasta 3 expulsiones seguidas por tarjeta), Spray de distancia (Barrera de fuego: líneas en X que queman el doble en el cruce) y El Bombo (Redoblante: cada cuarto golpe es uno fuerte que empuja lejos).'],
+    ['Técnicas', 'Rondo más fuerte desde el arranque: 25% más de daño (16,9 por golpe en vez de 13,5) y gira 10% más rápido.'],
+  ] },
   { v: '2.56', date: '23 oct 2026', items: [
     ['Físicos', 'Todos los físicos tienen nivel 6 con un efecto propio: Bombazo (Potencia), Botines de oro (Botines nuevos), Garra (Resistencia), Pausa del 5 (Ritmo de juego), Panorama (Visión de juego), Isotónica (Hidratación), Cuerpo a cuerpo (Físico), Segundo pulmón (Aguante), Pique corto (Arranque explosivo), Planchazo (Codazo) y Tobilleras (Canilleras).'],
     ['Físicos', 'El nivel 6 no suma más números: los porcentajes quedan como en el nivel 5 y se agrega el efecto, que se ve en dorado al elegir la mejora.'],
@@ -1726,7 +1735,10 @@ function fireWeapons(dt) {
     for (const e of G.enemies) {
       if (e.dead || e.fly) continue;
       const t = clamp(((e.x - L.x1) * vx + (e.y - L.y1) * vy) / l2, 0, 1), qx = L.x1 + vx * t, qy = L.y1 + vy * t;
-      if ((e.x - qx) ** 2 + (e.y - qy) ** 2 < (e.r + 9) ** 2) { e.burn = 1.5; e.burnDps = Math.max(e.burn > 0 && e.burnDps || 0, L.dps); }
+      if ((e.x - qx) ** 2 + (e.y - qy) ** 2 < (e.r + 9) ** 2) {
+        const centro = L.cross && (e.x - L.cx) ** 2 + (e.y - L.cy) ** 2 < 40 * 40;   // Barrera de fuego: el cruce quema el doble
+        e.burn = 1.5; e.burnDps = Math.max(e.burn > 0 && e.burnDps || 0, L.dps * (centro ? 2 : 1));
+      }
     }
   }
   G.sprays = G.sprays.filter(L => L.life > 0);
@@ -1768,7 +1780,7 @@ function fireWeapons(dt) {
       for (const s of spread) {
         const a = base + s;
         G.shots.push({ k: 'tiro', x: p.x, y: p.y, vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed,
-          r: 10 * S.area, dmg: w.dmg * S.dmg, hit: new Set(), life: 1.3, rot: 0 });
+          r: 10 * S.area, dmg: w.dmg * S.dmg, hit: new Set(), life: 1.3, rot: 0, rico: w.rico });
       }
       sfx('kick');
     } else if (k === 'pibes') {
@@ -1785,7 +1797,7 @@ function fireWeapons(dt) {
         const t = near[i], a = t ? Math.atan2(t.y - p.y, t.x - p.x) : Math.atan2(p.fy, p.fx) + i * Math.PI;
         const dd = t ? Math.min(120, Math.hypot(t.x - p.x, t.y - p.y) * .6) : 70;
         G.bombos.push({ x: clamp(p.x + Math.cos(a) * dd, -RUN + 30, FW + RUN - 30), y: clamp(p.y + Math.sin(a) * dd, -RUN + 30, FH + RUN - 30),
-          life: w.life, beat: w.beat * S.cd, bt: .25, R: w.R * S.area, dmg: w.dmg * S.dmg, dizzy: w.dizzy, hit: 0, skin: SKINS[Math.random() * SKINS.length | 0] });
+          life: w.life, beat: w.beat * S.cd, bt: .25, R: w.R * S.area, dmg: w.dmg * S.dmg, dizzy: w.dizzy, hit: 0, roll: w.roll, n: 0, skin: SKINS[Math.random() * SKINS.length | 0] });
       }
     } else if (k === 'roja') {
       const near = nearestList(p.x, p.y, w.n, 520);
@@ -1793,7 +1805,7 @@ function fireWeapons(dt) {
       for (let i = 0; i < w.n; i++) {
         const t = near[i % near.length], a = Math.atan2(t.y - p.y, t.x - p.x);
         G.shots.push({ k: 'roja', x: p.x, y: p.y, vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed, r: 8, dmg: w.dmg * S.dmg, exp: w.exp,
-          target: t, life: 1.6, rot: 0, speed: w.speed, hit: new Set() });
+          target: t, life: 1.6, rot: 0, speed: w.speed, hit: new Set(), chain: w.chain });
       }
       sfx('card');
     } else if (k === 'spray') {
@@ -1802,7 +1814,8 @@ function fireWeapons(dt) {
       const spots = near.length ? near.map(t => [t.x, t.y]) : [[p.x + p.fx * 120, p.y + p.fy * 120]];
       for (const [tx, ty] of spots) {
         const a = Math.atan2(ty - p.y, tx - p.x), cx = tx - Math.cos(a) * 18, cy = ty - Math.sin(a) * 18, nx = -Math.sin(a), ny = Math.cos(a);
-        G.sprays.push({ x1: cx - nx * half, y1: cy - ny * half, x2: cx + nx * half, y2: cy + ny * half, life: w.life, max: w.life, dps: w.dps * S.dmg, grow: 0 });
+        G.sprays.push({ x1: cx - nx * half, y1: cy - ny * half, x2: cx + nx * half, y2: cy + ny * half, life: w.life, max: w.life, dps: w.dps * S.dmg, grow: 0, cx, cy, cross: w.cross });
+        if (w.cross) G.sprays.push({ x1: cx - ny * half * .8, y1: cy + nx * half * .8, x2: cx + ny * half * .8, y2: cy - nx * half * .8, life: w.life, max: w.life, dps: w.dps * S.dmg, grow: 0, cx, cy, cross: true, second: true });
       }
       sfx('zap');
     } else if (k === 'tresDedos') {
@@ -1813,7 +1826,7 @@ function fireWeapons(dt) {
       const sides = w.n === 2 ? [1, -1] : [G.tresSide];
       for (const side of sides) {
         G.shots.push({ k: 'tres', x: p.x, y: p.y, vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed, r: 9 * S.area,
-          dmg: w.dmg * S.dmg, hit: new Set(), life: w.life, rot: 0, dist: 0, straight: w.straight, side, turned: 0, trail: [] });
+          dmg: w.dmg * S.dmg, hit: new Set(), life: w.life, rot: 0, dist: 0, straight: w.straight, side, turned: 0, trail: [], s2: w.s2, turned2: 0 });
       }
       sfx('kick');
     }
@@ -1911,13 +1924,15 @@ function updateAllies(dt) {
   for (const b of G.bombos) {
     b.life -= dt; b.bt -= dt; b.hit = Math.max(0, b.hit - dt);
     if (b.bt <= 0 && b.life > 0) {
-      b.bt = b.beat; b.hit = .15;
-      G.rings.push({ x: b.x, y: b.y, R: b.R, life: .3, max: .3, col: '124,196,255' });
+      b.bt = b.beat; b.hit = .15; b.n++;
+      const fuerte = b.roll && b.n % 4 === 0, R = b.R * (fuerte ? 2 : 1), kb = fuerte ? 650 : 240;   // Redoblante
+      G.rings.push({ x: b.x, y: b.y, R, life: fuerte ? .45 : .3, max: fuerte ? .45 : .3, col: fuerte ? '255,182,39' : '124,196,255' });
       for (const e of G.enemies) {
         if (e.dead || e.fly || e.away) continue;
         const dx = e.x - b.x, dy = e.y - b.y, d = Math.hypot(dx, dy) || 1;
-        if (d < b.R + e.r) { hitEnemy(e, b.dmg, dx / d * 240, dy / d * 240, 'bombo'); if (b.dizzy && !e.boss && !e.dead) e.dizzy = 1.2; }
+        if (d < R + e.r) { hitEnemy(e, b.dmg, dx / d * kb, dy / d * kb, 'bombo'); if (b.dizzy && !e.boss && !e.dead) e.dizzy = 1.2; }
       }
+      if (fuerte) { sfx('stomp'); if (!RM) G.shake = Math.max(G.shake, 3); }
       sfx('kick');
     }
   }
@@ -2031,6 +2046,15 @@ function updateShots(dt) {
   const p = G.p;
   for (const s of G.shots) {
     s.life -= dt; s.rot += dt * 15;
+    if (s.k === 'tiro' && s.rico && !s.bounced) {
+      // Al ángulo: rebota en el borde o al final del recorrido y vuelve por todos
+      const bx = s.x < -RUN + 12 || s.x > FW + RUN - 12, by = s.y < -RUN + 12 || s.y > FH + RUN - 12;
+      if (bx || by || s.life <= 0) {
+        if (bx) s.vx = -s.vx; if (by) s.vy = -s.vy; if (!bx && !by) { s.vx = -s.vx; s.vy = -s.vy; }
+        s.bounced = true; s.hit = new Set(); s.life = 1.1;
+        G.rings.push({ x: s.x, y: s.y, R: 22, life: .25, max: .25, col: '255,182,39' });
+      }
+    }
     if (s.k === 'pelota') {
       if (s.state === 'go') {
         if (!s.target || s.target.dead) { s.target = nearestEnemy(s.x, s.y, s.last, 450); if (!s.target) s.state = 'back'; }
@@ -2065,9 +2089,10 @@ function updateShots(dt) {
         s.vx = dx / d * s.speed; s.vy = dy / d * s.speed;
       }
       for (const e of G.enemies) {
-        if (e.dead) continue;
+        if (e.dead || e.away || s.hit.has(e)) continue;
         const dx = e.x - s.x, dy = e.y - s.y;
         if (dx * dx + dy * dy < (e.r + s.r) ** 2) {
+          s.hit.add(e);
           if (!e.boss && e.type !== 'hincha' && e.hp <= s.dmg * s.exp) {
             // Expulsado: se va de la cancha sin importar cuánta vida le quedaba
             G.texts.push({ x: e.x, y: e.y - e.r - 18, txt: '¡ROJA!', life: 1, big: true });
@@ -2076,6 +2101,11 @@ function updateShots(dt) {
             hitEnemy(e, e.hp + 1, 0, 0, 'roja', true);
           } else hitEnemy(e, s.dmg, s.vx / s.speed * 140, s.vy / s.speed * 140, 'roja');
           if (G.combos.barrera) sprayFlare(e.x, e.y, s.dmg);
+          if (e.dead && s.chain > 0) {
+            // Expulsión en cadena: la tarjeta sigue al rival más cercano
+            const nx = G.enemies.filter(o => !o.dead && !o.away && !s.hit.has(o)).reduce((b, o) => { const d2 = (o.x - e.x) ** 2 + (o.y - e.y) ** 2; return d2 < 320 * 320 && (!b || d2 < b[0]) ? [d2, o] : b; }, null);
+            if (nx) { s.chain--; s.target = nx[1]; s.life = 1.2; break; }
+          }
           s.life = 0; break;
         }
       }
@@ -2087,6 +2117,12 @@ function updateShots(dt) {
           const da = Math.min(Math.PI / 4 - s.turned, (Math.PI / 4) / .15 * dt) * s.side;
           const c = Math.cos(da), sn = Math.sin(da), vx = s.vx * c - s.vy * sn;
           s.vy = s.vx * sn + s.vy * c; s.vx = vx; s.turned += Math.abs(da);
+        }
+        if (s.s2 && s.turned >= Math.PI / 4 && s.dist > s.straight * 2.2 && s.turned2 < Math.PI / 2) {
+          // Comba doble: segunda curva para el otro lado (90°), queda una S
+          const da = -Math.min(Math.PI / 2 - s.turned2, (Math.PI / 2) / .2 * dt) * s.side;
+          const c = Math.cos(da), sn = Math.sin(da), vx = s.vx * c - s.vy * sn;
+          s.vy = s.vx * sn + s.vy * c; s.vx = vx; s.turned2 += Math.abs(da);
         }
         s.trail.push(s.x, s.y); if (s.trail.length > 24) s.trail.splice(0, 2);
         if (s.life <= 0 && G.combos.olimpico && !s.boom) {
