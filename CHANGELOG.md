@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.58 · 23 oct 2026
+
+- **Sonido:** Se saca el ambiente de cancha (murmullo, cantos y bombo de la hinchada) y su control de volumen. Quedan la música y los efectos.
+
 ## 2.57 · 23 oct 2026
 
 - **Técnicas:** Nuevo nivel 6 para cinco técnicas: Tiro libre (Al ángulo: la pelota rebota y vuelve atravesando a todos), Tres dedos (Comba doble: dobla para un lado y después para el otro, en S), Tarjeta roja (Expulsión en cadena: hasta 3 expulsiones seguidas por tarjeta), Spray de distancia (Barrera de fuego: líneas en X que queman el doble en el cruce) y El Bombo (Redoblante: cada cuarto golpe es uno fuerte que empuja lejos).

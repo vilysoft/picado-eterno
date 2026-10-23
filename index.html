@@ -235,7 +235,6 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
     <details class="vols"><summary>Volumen</summary>
       <label><span>Música</span><input type="range" min="0" max="100" step="5" data-vol="music" id="mVolMusic"></label>
       <label><span>Efectos</span><input type="range" min="0" max="100" step="5" data-vol="sfx" id="mVolSfx"></label>
-      <label><span>Ambiente</span><input type="range" min="0" max="100" step="5" data-vol="amb" id="mVolAmb"></label>
     </details>
     </div>
   </div>
@@ -294,7 +293,6 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
     <details class="vols"><summary>Volumen</summary>
       <label><span>Música</span><input type="range" min="0" max="100" step="5" data-vol="music" id="pVolMusic"></label>
       <label><span>Efectos</span><input type="range" min="0" max="100" step="5" data-vol="sfx" id="pVolSfx"></label>
-      <label><span>Ambiente</span><input type="range" min="0" max="100" step="5" data-vol="amb" id="pVolAmb"></label>
     </details>
     </div>
   </div>
@@ -376,7 +374,7 @@ addEventListener('resize', resize); resize();
 // ---------- Sonido ----------
 let AC = null, muted = false;
 // Volúmenes (0 a 1) que se eligen en el menú o en la pausa; se guardan en el navegador
-const VOL = { music: 1, sfx: 1, amb: 1 };
+const VOL = { music: 1, sfx: 1 };
 const lastS = {};
 function tone(f1, f2, dur, type, vol, delay = 0) {
   const t0 = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
@@ -506,121 +504,9 @@ function musicTick() {
 function audioUnlock() {
   if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
   if (AC && AC.state === 'suspended') AC.resume();
-  if (AC && !MUS.timer) MUS.timer = setInterval(() => { musicTick(); ambTick(); }, 30);
+  if (AC && !MUS.timer) MUS.timer = setInterval(musicTick, 30);
 }
 ['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, audioUnlock, { capture: true }));
-
-// ---------- Ambiente de cancha ----------
-// Murmullo de tribuna hecho con ruido filtrado: varias "bandas de voz" que cambian de tono al azar
-// (suena a gente hablando, sin palabras). Cada cancha tiene su mezcla; con un jefe en la cancha
-// la hinchada se enciende, y los festejos del juego (cheer) disparan un grito de tribuna.
-const AMB_LV = {
-  //        murmullo  grave  grito  canto  bombo  eco   voces (centros de banda)
-  potrero: { mur: .10, low: .05, roar: .16, chant: 0,   drum: 0,   rev: 0,   bands: [420, 760, 1300] },
-  club:    { mur: .18, low: .07, roar: .30, chant: .05, drum: .30, rev: .18, bands: [380, 650, 1050, 1600] },
-  lujo:    { mur: .24, low: .10, roar: .40, chant: .08, drum: .18, rev: .38, bands: [340, 560, 900, 1350, 1900] },
-};
-const AMB_VOL = .6;   // volumen general del ambiente, por debajo de los efectos
-const AMB = { lv: null, bus: null, nodes: null, next: 0, beat: 0, chantT: 0 };
-function ambBuild(id) {
-  const P = AMB_LV[id], now = AC.currentTime;
-  const out = AC.createGain(); out.gain.value = 0; out.connect(AC.destination);
-  const dry = AC.createGain(); dry.connect(out);
-  // Eco de estadio: respuesta impulsiva hecha de ruido que se apaga
-  if (P.rev) {
-    const len = AC.sampleRate * 2.4, ir = AC.createBuffer(2, len, AC.sampleRate);
-    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
-    const conv = AC.createConvolver(); conv.buffer = ir; const wet = AC.createGain(); wet.gain.value = P.rev;
-    dry.connect(conv); conv.connect(wet).connect(out);
-  }
-  const nb = AC.createBuffer(1, AC.sampleRate * 3, AC.sampleRate), nd = nb.getChannelData(0);
-  for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
-  const noise = () => { const n = AC.createBufferSource(); n.buffer = nb; n.loop = true; n.loopStart = Math.random(); n.start(now, Math.random() * 2); return n; };
-  // Murmullo: una banda por "grupo de voces", cada una con su volumen y tono que se mueven
-  const mur = AC.createGain(); mur.gain.value = 0; mur.connect(dry);
-  const bands = P.bands.map((f, i) => {
-    const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = 2.2;
-    const g = AC.createGain(); g.gain.value = .5;
-    const pan = AC.createStereoPanner ? AC.createStereoPanner() : null;
-    const n = noise(); n.connect(bp).connect(g);
-    if (pan) { pan.pan.value = (i / Math.max(1, P.bands.length - 1)) * 1.2 - .6; g.connect(pan).connect(mur); } else g.connect(mur);
-    return { bp, g, f };
-  });
-  // Rumor grave de fondo (tribuna lejana, calle en El Potrero)
-  const lowF = AC.createBiquadFilter(); lowF.type = 'lowpass'; lowF.frequency.value = 160;
-  const low = AC.createGain(); low.gain.value = 0; noise().connect(lowF).connect(low).connect(dry);
-  // Grito de tribuna: ruido ancho que sube con los festejos
-  const roarF = AC.createBiquadFilter(); roarF.type = 'bandpass'; roarF.frequency.value = 800; roarF.Q.value = .5;
-  const roar = AC.createGain(); roar.gain.value = 0; noise().connect(roarF).connect(roar).connect(dry);
-  // Canto: un "ooo" de muchas voces (acordes graves filtrados como vocal), sin letra
-  const chant = AC.createGain(); chant.gain.value = 0;
-  const vow = AC.createBiquadFilter(); vow.type = 'bandpass'; vow.frequency.value = 520; vow.Q.value = 1.4;
-  const vowLP = AC.createBiquadFilter(); vowLP.type = 'lowpass'; vowLP.frequency.value = 1100;
-  vow.connect(vowLP).connect(chant).connect(dry);
-  const oscs = [];
-  if (P.chant) for (const f of [110, 110.7, 138.6, 164.8, 165.6, 220.4]) {
-    const o = AC.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f;
-    const lfo = AC.createOscillator(), lg = AC.createGain(); lfo.frequency.value = 4 + Math.random() * 2; lg.gain.value = f * .012;
-    lfo.connect(lg).connect(o.frequency); o.connect(vow); o.start(now); lfo.start(now); oscs.push(o, lfo);
-  }
-  const drum = AC.createGain(); drum.gain.value = 1; drum.connect(dry);
-  return { P, out, mur, bands, low, roar, roarF, chant, vow, drum, oscs };
-}
-function ambDrum(t, v) {
-  const N = AMB.nodes, o = AC.createOscillator(), g = AC.createGain();
-  o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(48, t + .18);
-  g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + .3);
-  o.connect(g).connect(N.drum); o.start(t); o.stop(t + .32);
-}
-function ambStop() {
-  if (!AMB.nodes) return;
-  const N = AMB.nodes, t = AC.currentTime;
-  N.out.gain.cancelScheduledValues(t); N.out.gain.setValueAtTime(N.out.gain.value, t); N.out.gain.linearRampToValueAtTime(0, t + .6);
-  setTimeout(() => { try { N.out.disconnect(); N.oscs.forEach(o => o.stop()); } catch (e) {} }, 800);
-  AMB.nodes = null; AMB.lv = null;
-}
-function ambTick() {
-  if (!AC || AC.state !== 'running') return;
-  const inMatch = G && (state === 'play' || state === 'resume' || state === 'levelup' || state === 'pause' || state === 'etask');
-  if (!inMatch || muted) { ambStop(); return; }
-  if (AMB.lv !== LV.id) { ambStop(); AMB.nodes = ambBuild(LV.id); AMB.lv = LV.id; AMB.next = 0; }
-  const N = AMB.nodes, P = N.P, t = AC.currentTime;
-  const boss = G.enemies.some(e => e.boss && !e.dead);
-  const live = state === 'play' || state === 'resume';
-  const heat = (boss ? 1 : 0) + (G.et ? .5 : 0);                 // jefe en cancha o alargue: la hinchada se enciende
-  const duck = live ? 1 : .35;                                    // en pausa o eligiendo mejora, más bajito
-  N.out.gain.setTargetAtTime(AMB_VOL * VOL.amb * duck * (G.hydra > 0 ? .6 : 1), t, .25);
-  N.mur.gain.setTargetAtTime(P.mur * (1 + heat * .7), t, .6);
-  N.low.gain.setTargetAtTime(P.low * (1 + heat * .5), t, .8);
-  N.roar.gain.setTargetAtTime(P.roar * Math.min(1, cheer / 2.2) + P.roar * .12 * heat, t, .15);
-  N.roarF.frequency.setTargetAtTime(700 + cheer * 220, t, .2);
-  // Canto: aparece y se va de a ratos; con un jefe canta más seguido y más fuerte
-  if (P.chant) {
-    AMB.chantT -= .03;
-    if (AMB.chantT <= 0) { AMB.chantT = rnd(5, 12) / (1 + heat); AMB.chantOn = Math.random() < .45 + heat * .3; }
-    N.chant.gain.setTargetAtTime(AMB.chantOn ? P.chant * (1 + heat) : 0, t, 1.2);
-    N.vow.frequency.setTargetAtTime(480 + Math.sin(t * .7) * 90, t, .5);
-  }
-  // Voces: cada banda cambia de tono y volumen al azar cada tanto (murmullo sin palabras)
-  if (t >= AMB.next) {
-    AMB.next = t + .08;
-    for (const b of N.bands) {
-      if (Math.random() < .35) {
-        b.bp.frequency.setTargetAtTime(b.f * (0.8 + Math.random() * .45), t, .06);
-        b.g.gain.setTargetAtTime(.25 + Math.random() * .75, t, .08);
-      }
-    }
-  }
-  // Bombo de la hinchada: solo en las canchas con tribuna; con un jefe, golpea parejo
-  if (P.drum && live) {
-    if (!AMB.beat || AMB.beat < t) AMB.beat = t + .05;
-    while (AMB.beat < t + .15) {
-      const on = boss || G.et || (Math.floor(AMB.beat / 8) % 3 === 0);
-      if (on) ambDrum(AMB.beat, P.drum * (boss ? 1 : .6));
-      AMB.beat += boss ? .46 : .92;
-    }
-  }
-}
 
 // ---------- Datos del juego ----------
 const WEAPONS = {
@@ -850,6 +736,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.58', date: '23 oct 2026', items: [
+    ['Sonido', 'Se saca el ambiente de cancha (murmullo, cantos y bombo de la hinchada) y su control de volumen. Quedan la música y los efectos.'],
+  ] },
   { v: '2.57', date: '23 oct 2026', items: [
     ['Técnicas', 'Nuevo nivel 6 para cinco técnicas: Tiro libre (Al ángulo: la pelota rebota y vuelve atravesando a todos), Tres dedos (Comba doble: dobla para un lado y después para el otro, en S), Tarjeta roja (Expulsión en cadena: hasta 3 expulsiones seguidas por tarjeta), Spray de distancia (Barrera de fuego: líneas en X que queman el doble en el cruce) y El Bombo (Redoblante: cada cuarto golpe es uno fuerte que empuja lejos).'],
     ['Técnicas', 'Rondo más fuerte desde el arranque: 25% más de daño (16,9 por golpe en vez de 13,5) y gira 10% más rápido.'],
