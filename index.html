@@ -107,6 +107,10 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
 .topbar .eyebrow{margin:0}
 .btn.music{flex:none;padding:6px 14px;font-size:14px}
 .btn.music[aria-pressed="true"]{border-color:var(--led);color:var(--led)}
+.vols{width:100%;border:1px solid var(--line);border-radius:6px;padding:8px 12px}
+.vols summary{cursor:pointer;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.vols label{display:grid;grid-template-columns:90px 1fr;align-items:center;gap:10px;margin-top:8px;font-size:15px}
+.vols input{width:100%;accent-color:var(--led)}
 .actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px}
 .best{color:var(--muted);font-size:16px;margin:0}
 .btn{font-family:var(--display);font-size:26px;font-weight:600;line-height:1;padding:12px 22px 7px;border:0;border-radius:4px;background:var(--led);color:#1a1205;cursor:pointer;text-transform:uppercase;letter-spacing:.03em}
@@ -226,6 +230,13 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
       <button id="btnLog" class="btn ghost" type="button">Changelog</button>
       <p id="bestLine" class="best"></p>
     </div>
+    <div class="actions">
+    <details class="vols"><summary>Volumen</summary>
+      <label><span>Música</span><input type="range" min="0" max="100" step="5" data-vol="music" id="mVolMusic"></label>
+      <label><span>Efectos</span><input type="range" min="0" max="100" step="5" data-vol="sfx" id="mVolSfx"></label>
+      <label><span>Ambiente</span><input type="range" min="0" max="100" step="5" data-vol="amb" id="mVolAmb"></label>
+    </details>
+    </div>
   </div>
 </div>
 
@@ -277,6 +288,13 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
       <button id="btnResume" class="btn" type="button">Seguir jugando</button>
       <button id="btnMute" class="btn ghost" type="button">Sonido: sí</button>
       <button id="btnQuit" class="btn ghost" type="button">Terminar partido</button>
+    </div>
+    <div class="actions" style="margin-top:12px">
+    <details class="vols"><summary>Volumen</summary>
+      <label><span>Música</span><input type="range" min="0" max="100" step="5" data-vol="music" id="pVolMusic"></label>
+      <label><span>Efectos</span><input type="range" min="0" max="100" step="5" data-vol="sfx" id="pVolSfx"></label>
+      <label><span>Ambiente</span><input type="range" min="0" max="100" step="5" data-vol="amb" id="pVolAmb"></label>
+    </details>
     </div>
   </div>
 </div>
@@ -356,12 +374,14 @@ addEventListener('resize', resize); resize();
 
 // ---------- Sonido ----------
 let AC = null, muted = false;
+// Volúmenes (0 a 1) que se eligen en el menú o en la pausa; se guardan en el navegador
+const VOL = { music: 1, sfx: 1, amb: 1 };
 const lastS = {};
 function tone(f1, f2, dur, type, vol, delay = 0) {
   const t0 = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
   o.type = type; o.frequency.setValueAtTime(f1, t0);
   o.frequency.exponentialRampToValueAtTime(Math.max(1, f2), t0 + dur);
-  g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+  g.gain.setValueAtTime(Math.max(.0001, vol * VOL.sfx), t0); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
   o.connect(g).connect(AC.destination); o.start(t0); o.stop(t0 + dur + .02);
 }
 function sfx(n) {
@@ -467,13 +487,13 @@ function musicStep(i, t) {
   if (pass && bar === 3 && s >= 13) drum(t, 's', B.master, B.noise);   // redoble antes de volver
   if (s % 2 === 0) drum(t, s % 4 ? 'h' : 'H', B.master, B.noise);
 }
-function musicWanted() { return MUS.on && !muted && (state === 'menu' || state === 'shop' || state === 'changes'); }
+function musicWanted() { return MUS.on && !muted && VOL.music > 0 && (state === 'menu' || state === 'shop' || state === 'changes'); }
 function musicTick() {
   if (!AC || AC.state !== 'running') return;
   const want = musicWanted(), now = AC.currentTime;
   if (want && !MUS.playing) {
     const B = musicBus(); MUS.playing = true; MUS.step = 0; MUS.next = now + .08;
-    B.master.gain.cancelScheduledValues(now); B.master.gain.setValueAtTime(B.master.gain.value, now); B.master.gain.linearRampToValueAtTime(.5, now + .4);
+    B.master.gain.cancelScheduledValues(now); B.master.gain.setValueAtTime(B.master.gain.value, now); B.master.gain.linearRampToValueAtTime(.5 * VOL.music, now + .4);
   } else if (!want && MUS.playing) {
     const g = MUS.bus.master.gain; MUS.playing = false;
     g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(0, now + .35);
@@ -568,7 +588,7 @@ function ambTick() {
   const live = state === 'play' || state === 'resume';
   const heat = (boss ? 1 : 0) + (G.et ? .5 : 0);                 // jefe en cancha o alargue: la hinchada se enciende
   const duck = live ? 1 : .35;                                    // en pausa o eligiendo mejora, más bajito
-  N.out.gain.setTargetAtTime(AMB_VOL * duck * (G.hydra > 0 ? .6 : 1), t, .25);
+  N.out.gain.setTargetAtTime(AMB_VOL * VOL.amb * duck * (G.hydra > 0 ? .6 : 1), t, .25);
   N.mur.gain.setTargetAtTime(P.mur * (1 + heat * .7), t, .6);
   N.low.gain.setTargetAtTime(P.low * (1 + heat * .5), t, .8);
   N.roar.gain.setTargetAtTime(P.roar * Math.min(1, cheer / 2.2) + P.roar * .12 * heat, t, .15);
@@ -824,6 +844,11 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.55', date: '23 oct 2026', items: [
+    ['Sonido', 'Controles de volumen para Música, Efectos y Ambiente, en el menú y en la pausa. Se guardan en el navegador.'],
+    ['Jugadores', 'El Árbitro muestra la tarjeta roja parada en la mano, como cuando la levanta, en vez de acostada.'],
+    ['Textos', 'La pausa dice "técnicas" en vez de "habilidades", como el resto del juego.'],
+  ] },
   { v: '2.54', date: '23 oct 2026', items: [
     ['Sonido', 'Ambiente de cancha durante el partido: un murmullo de tribuna sin palabras, distinto en cada cancha. En El Potrero se escuchan pocos vecinos; en La Cancha del Club hay más gente, cantos y bombo; El Coloso suena lleno y con eco de estadio.'],
     ['Sonido', 'Con un jefe en la cancha (y en el alargue) la hinchada se enciende: más murmullo, cantos más seguidos y el bombo marcando el ritmo. Los festejos del partido disparan un grito de tribuna. En pausa o al elegir una mejora el ambiente baja.'],
@@ -1235,6 +1260,16 @@ $('btnStart').addEventListener('click', startGame);
 $('btnAgain').addEventListener('click', startGame);
 $('btnPause').addEventListener('click', togglePause);
 $('btnResume').addEventListener('click', togglePause);
+// Volúmenes: los dos juegos de controles (menú y pausa) muestran lo mismo
+function syncVolInputs() { document.querySelectorAll('[data-vol]').forEach(i => { i.value = Math.round(VOL[i.dataset.vol] * 100); }); }
+try { const v = JSON.parse(localStorage.getItem('picado-eterno-vol')); if (v) for (const k in VOL) if (typeof v[k] === 'number') VOL[k] = clamp(v[k], 0, 1); } catch (e) {}
+syncVolInputs();
+document.querySelectorAll('[data-vol]').forEach(i => i.addEventListener('input', () => {
+  VOL[i.dataset.vol] = i.value / 100; syncVolInputs();
+  try { localStorage.setItem('picado-eterno-vol', JSON.stringify(VOL)); } catch (e) {}
+  if (i.dataset.vol === 'music' && MUS.playing && MUS.bus && AC) { const g = MUS.bus.master.gain; g.cancelScheduledValues(AC.currentTime); g.setTargetAtTime(.5 * VOL.music, AC.currentTime, .05); }
+  if (i.dataset.vol === 'sfx') sfx('gem');
+}));
 $('btnMute').addEventListener('click', () => { muted = !muted; $('btnMute').textContent = 'Sonido: ' + (muted ? 'no' : 'sí'); });
 // La música arranca apagada: los navegadores no dejan sonar nada hasta que tocás algo, así que la prende el jugador
 MUS.on = false;
@@ -2683,7 +2718,7 @@ function renderStats(el, full) {
   const rows = Object.keys(R.dmg).map(k => [k, R.dmg[k]]).sort((a, b) => b[1] - a[1]);
   const total = rows.reduce((a, r) => a + r[1], 0);
   let h = '';
-  if (!total) h = '<p class="best" style="margin:6px 0 10px">Tus habilidades todavía no tocaron a nadie.</p>';
+  if (!total) h = '<p class="best" style="margin:6px 0 10px">Tus técnicas todavía no tocaron a nadie.</p>';
   else {
     h = '<div class="srows"><div class="shead"><span>Técnica</span><span></span><span>Daño</span><span>%</span><span>Eliminados</span></div>'
       + rows.map(([k, v]) => `<div class="srow${k === 'codazo' ? ' fis' : k === 'amarilla' || k === 'tapones' || k === 'olimpico' || k === 'barrera' || k === 'contragolpe' || k === 'pique' ? ' combo' : ''}"><span class="sname">${SRC_NAMES[k] || k}</span>`
@@ -3479,12 +3514,16 @@ function drawPlayer(p) {
     });
     if (CH.whistle) {
       // El Árbitro: brazo estirado hacia adelante mostrando la tarjeta roja
-      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(Math.atan2(p.fy, p.fx)); ctx.scale(p.r / 14, p.r / 14);
+      const a = Math.atan2(p.fy, p.fx), sc = p.r / 14;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a); ctx.scale(sc, sc);
       ell(9, 9.5, 6.5, 3.4, K.sleeve); ell(16.5, 9, 3, 3, CH.skin);
-      ctx.save(); ctx.translate(20, 8.5); ctx.rotate(-.15);
-      ctx.fillStyle = '#e23b3b'; ctx.fillRect(-2, -8, 7, 11);
-      ctx.strokeStyle = 'rgba(0,0,0,.45)'; ctx.lineWidth = 1; ctx.strokeRect(-2, -8, 7, 11);
-      ctx.restore(); ctx.restore();
+      ctx.restore();
+      // La tarjeta se dibuja parada en pantalla (como cuando el árbitro la levanta), sobre la mano
+      const hx = p.x + (Math.cos(a) * 16.5 - Math.sin(a) * 9) * sc, hy = p.y + (Math.sin(a) * 16.5 + Math.cos(a) * 9) * sc;
+      ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(hx - 3, hy - 14, 9, 14);
+      ctx.fillStyle = '#e23b3b'; ctx.fillRect(hx - 4.5, hy - 16, 9, 13);
+      ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1; ctx.strokeRect(hx - 4.5, hy - 16, 9, 13);
+      ell(hx, hy - 2, 2.6, 2.6, CH.skin);
     }
   }
   const w = 38, f = Math.max(0, p.hp / p.maxHp);

@@ -2,6 +2,12 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.55 · 23 oct 2026
+
+- **Sonido:** Controles de volumen para Música, Efectos y Ambiente, en el menú y en la pausa. Se guardan en el navegador.
+- **Jugadores:** El Árbitro muestra la tarjeta roja parada en la mano, como cuando la levanta, en vez de acostada.
+- **Textos:** La pausa dice "técnicas" en vez de "habilidades", como el resto del juego.
+
 ## 2.54 · 23 oct 2026
 
 - **Sonido:** Ambiente de cancha durante el partido: un murmullo de tribuna sin palabras, distinto en cada cancha. En El Potrero se escuchan pocos vecinos; en La Cancha del Club hay más gente, cantos y bombo; El Coloso suena lleno y con eco de estadio.
