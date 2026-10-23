@@ -107,6 +107,7 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
 .topbar .eyebrow{margin:0}
 .btn.music{flex:none;padding:6px 14px;font-size:14px}
 .btn.music[aria-pressed="true"]{border-color:var(--led);color:var(--led)}
+.card .l6{color:var(--led)}
 .vols{width:100%;border:1px solid var(--line);border-radius:6px;padding:8px 12px}
 .vols summary{cursor:pointer;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .vols label{display:grid;grid-template-columns:90px 1fr;align-items:center;gap:10px;margin-top:8px;font-size:15px}
@@ -656,17 +657,17 @@ const WEAPONS = {
     '+40% de daño.', 'Rematás 2 pelotas: una dobla a la derecha y otra a la izquierda.', '25% menos de espera entre remates.', 'El recorrido es más largo y +50% de daño.'] },
 };
 const PASSIVES = {
-  potencia:    { name: 'Potencia', max: 5, desc: '+12% de daño en todas tus técnicas.' },
-  botines:     { name: 'Botines nuevos', max: 5, desc: '+10% de velocidad de carrera.' },
-  resistencia: { name: 'Resistencia', max: 5, desc: '+20 de vida máxima y te cura 20.' },
-  ritmo:       { name: 'Ritmo de juego', max: 5, desc: '8% menos de espera en todas tus técnicas. El rondo gira más rápido y pega más seguido.' },
-  vision:      { name: 'Visión de juego', max: 5, desc: '+35% de distancia para juntar experiencia.' },
-  hidratacion: { name: 'Hidratación', max: 5, desc: 'Recuperás 0,6 de vida por segundo.' },
-  fisico:      { name: 'Físico', max: 5, desc: '+12% de área en todas tus técnicas.' },
-  aguante:     { name: 'Aguante', max: 5, desc: '+20% de barra de sprint y se recarga 15% más rápido.' },
-  arranque:    { name: 'Arranque explosivo', max: 5, desc: '+6% de velocidad al sprintar y gastás 10% menos de barra.' },
-  codazo:      { name: 'Codazo', max: 5, desc: 'El rival que te toca se lleva un codazo: le hacés daño (12, +6 por nivel) y sale despedido.' },
-  canilleras:  { name: 'Canilleras', max: 5, desc: 'Recibís 8% menos de daño de todo: rivales, tarjetas, pelotazos y pisotones.' },
+  potencia:    { name: 'Potencia', max: 6, desc: '+12% de daño en todas tus técnicas.', l6: ['Bombazo', 'cada 10 golpes que das, el siguiente pega el doble.'] },
+  botines:     { name: 'Botines nuevos', max: 6, desc: '+10% de velocidad de carrera.', l6: ['Botines de oro', 'si corrés sin parar 2 s, vas 15% más rápido hasta que frenes.'] },
+  resistencia: { name: 'Resistencia', max: 6, desc: '+20 de vida máxima y te cura 20.', l6: ['Garra', 'si te quedás con menos del 25% de vida, durante 5 s recibís 30% menos de daño (una vez cada 30 s).'] },
+  ritmo:       { name: 'Ritmo de juego', max: 6, desc: '8% menos de espera en todas tus técnicas. El rondo gira más rápido y pega más seguido.', l6: ['Pausa del 5', 'cada 20 s, todas tus técnicas quedan listas de golpe.'] },
+  vision:      { name: 'Visión de juego', max: 6, desc: '+35% de distancia para juntar experiencia.', l6: ['Panorama', 'cada 15 s, todas las gemas de la pantalla vuelan hacia vos.'] },
+  hidratacion: { name: 'Hidratación', max: 6, desc: 'Recuperás 0,6 de vida por segundo.', l6: ['Isotónica', 'con la vida llena, cada gema te da 10% más de experiencia.'] },
+  fisico:      { name: 'Físico', max: 6, desc: '+12% de área en todas tus técnicas.', l6: ['Cuerpo a cuerpo', 'los rivales comunes que te tocan salen empujados.'] },
+  aguante:     { name: 'Aguante', max: 6, desc: '+20% de barra de sprint y se recarga 15% más rápido.', l6: ['Segundo pulmón', 'si te fundís, la barra de sprint se recarga entera en 2 s.'] },
+  arranque:    { name: 'Arranque explosivo', max: 6, desc: '+6% de velocidad al sprintar y gastás 10% menos de barra.', l6: ['Pique corto', 'mientras sprintás, los rivales que te alcanzan por detrás no te pegan.'] },
+  codazo:      { name: 'Codazo', max: 6, desc: 'El rival que te toca se lleva un codazo: le hacés daño (12, +6 por nivel) y sale despedido.', l6: ['Planchazo', 'el codazo también marea 1 s al rival.'] },
+  canilleras:  { name: 'Canilleras', max: 6, desc: 'Recibís 8% menos de daño de todo: rivales, tarjetas, pelotazos y pisotones.', l6: ['Tobilleras', 'los pisotones, las zonas marcadas en el piso y las embestidas de los jefes te sacan 25% menos.'] },
 };
 // Personajes jugables
 const CHARS = {
@@ -844,6 +845,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.56', date: '23 oct 2026', items: [
+    ['Físicos', 'Todos los físicos tienen nivel 6 con un efecto propio: Bombazo (Potencia), Botines de oro (Botines nuevos), Garra (Resistencia), Pausa del 5 (Ritmo de juego), Panorama (Visión de juego), Isotónica (Hidratación), Cuerpo a cuerpo (Físico), Segundo pulmón (Aguante), Pique corto (Arranque explosivo), Planchazo (Codazo) y Tobilleras (Canilleras).'],
+    ['Físicos', 'El nivel 6 no suma más números: los porcentajes quedan como en el nivel 5 y se agrega el efecto, que se ve en dorado al elegir la mejora.'],
+  ] },
   { v: '2.55', date: '23 oct 2026', items: [
     ['Sonido', 'Controles de volumen para Música, Efectos y Ambiente, en el menú y en la pausa. Se guardan en el navegador.'],
     ['Jugadores', 'El Árbitro muestra la tarjeta roja parada en la mano, como cuando la levanta, en vez de acostada.'],
@@ -1134,13 +1139,13 @@ function newGame() {
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '' },   // estadísticas del partido
     weapons: { [CH.start || 'pelota']: 1 }, passives: {}, timers: { [CH.start || 'pelota']: .4 }, sprays: [], rojas: 0, allies: [], bombos: [], rondoAng: 0, rondoBalls: null,
     enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [], fenceGaps: [],
-    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
+    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, hitN: 0, runT: 0, garra: 0, garraCd: 0, p5T: 0, panT: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
   };
 }
 // Stats de arranque de cualquier personaje, antes del vestuario
 const BASE = { hp: 130, dmg: 1.1, speed: 1.05, cd: .95, xp: 1.1, magnet: 1.1, st: 110 };
 function recalc() {
-  const l = k => G.passives[k] || 0, S = G.stats;
+  const l = k => Math.min(5, G.passives[k] || 0), S = G.stats;   // el nivel 6 de los físicos es un efecto aparte, no suma números
   S.dmg = BASE.dmg * (1 + .12 * l('potencia')) * (1 + .04 * pl('pegada'));
   S.speed = BASE.speed * (1 + .1 * l('botines')) * (1 + .03 * pl('piques')) * CH.speed;
   S.cd = BASE.cd * Math.pow(.92, l('ritmo')) * Math.pow(.97, pl('pulmones'));
@@ -1487,7 +1492,8 @@ function update(dt) {
     if (holding && !p.whPrev && p.wh >= S.whCd) whistle();
     p.whPrev = holding;
   }
-  if (p.tired && p.st >= p.stMax * .35) p.tired = false;
+  if (p.tired && (G.passives.aguante || 0) >= 6) p.st = Math.min(p.stMax, p.st + p.stMax * .5 * dt);   // Segundo pulmón
+  if (p.tired && p.st >= p.stMax * ((G.passives.aguante || 0) >= 6 ? .99 : .35)) p.tired = false;
   const wasSprinting = p.sprinting;
   p.sprinting = wantSprint && !p.tired && p.st > 0;
   G.piqueT = Math.max(0, G.piqueT - dt); G.piqueCd = Math.max(0, G.piqueCd - dt);
@@ -1511,7 +1517,9 @@ function update(dt) {
   }
   const boost = p.sprinting ? S.sprint : 1;
   if (mag > 0) { p.fx = mx; p.fy = my; p.step += dt * mag * 12 * (p.sprinting ? 1.45 : 1); }
-  const spd = 175 * S.speed * mag * boost;
+  G.runT = mag > 0 ? G.runT + dt : 0;
+  const oro = (G.passives.botines || 0) >= 6 && G.runT > 2 ? 1.15 : 1;   // Botines de oro
+  const spd = 175 * S.speed * mag * boost * oro;
   p.x = clamp(p.x + mx * spd * dt, -RUN + p.r, FW + RUN - p.r);
   p.y = clamp(p.y + my * spd * dt, -RUN + p.r, FH + RUN - p.r);
   // Historial de posiciones (últimos 3 s) para que el VAR pueda retrotraer la jugada
@@ -1521,7 +1529,10 @@ function update(dt) {
   if (G.rewind) { G.rewind.t -= dt; if (G.rewind.t <= 0) { G.rewind.phase = 'freeze'; G.rewind.t = .5; G.rewind.max = .5; hideBanner(); sfx('var'); } }
   if (p.inv > 0) p.inv -= dt;
   p.hp = Math.min(p.maxHp, p.hp + S.regen * dt * (G.combos.pulmon && p.tired ? 2 : 1));
-  G.cgCd -= dt; G.paredCd -= dt;
+  G.cgCd -= dt; G.paredCd -= dt; G.garra = Math.max(0, G.garra - dt); G.garraCd -= dt;
+  // Pausa del 5 y Panorama
+  if ((G.passives.ritmo || 0) >= 6 && (G.p5T += dt) >= 20) { G.p5T = 0; for (const k in G.timers) G.timers[k] = 0; G.texts.push({ x: p.x, y: p.y - p.r - 26, txt: '¡PAUSA DEL 5!', life: 1, big: true }); }
+  if ((G.passives.vision || 0) >= 6 && (G.panT += dt) >= 15) { G.panT = 0; for (const g of G.gems) g.pull = true; if (G.gems.length) G.rings.push({ x: p.x, y: p.y, R: 120, life: .4, max: .4, col: '124,240,208' }); }
   G.shake = Math.max(0, G.shake - dt * 30);
   G.hurtFlash = Math.max(0, G.hurtFlash - dt);
 
@@ -1815,6 +1826,8 @@ function hitEnemy(e, dmg, kx, ky, src, exact) {
   if (e.dead || e.away || (e.fly && GROUND[src])) return;
   if (e.yellow > 0) dmg *= 1.25;
   if (CH.aliento && !BARRA_SRC[src]) dmg *= .75;   // El Barra: lo que no es de su gente pega menos
+  let bomb = false;
+  if (!exact && (G.passives.potencia || 0) >= 6 && ++G.hitN % 10 === 0) { dmg *= 2; bomb = true; }   // Bombazo
   dmg = exact ? Math.ceil(dmg) : Math.max(1, Math.round(dmg * rnd(.9, 1.1)));   // exact: sin variación ni número flotante
   // Para las estadísticas cuenta el daño que de verdad le sacaste (no lo que sobra al eliminarlo)
   const R = G.rec, real = Math.min(dmg, Math.max(0, e.hp));
@@ -1823,7 +1836,7 @@ function hitEnemy(e, dmg, kx, ky, src, exact) {
   e.hp -= dmg; e.flash = .1;
   const kb = e.boss || e.type === 'hincha' ? .12 : e.type === 'central' || e.type === 'camillero' || e.fly ? .45 : 1;
   e.kx += kx * kb; e.ky += ky * kb;
-  if (!exact && G.texts.length < 70) G.texts.push({ x: e.x + rnd(-5, 5), y: e.y - e.r, txt: dmg, life: .6, big: dmg >= 60 });
+  if (!exact && G.texts.length < 70) G.texts.push({ x: e.x + rnd(-5, 5), y: e.y - e.r, txt: dmg, life: bomb ? .9 : .6, big: bomb || dmg >= 60 });
   sfx('hit');
   if (e.hp <= 0) { R.kills[src] = (R.kills[src] || 0) + 1; kill(e); }
 }
@@ -1862,6 +1875,7 @@ function codazo(e, ux, uy) {
   const p = G.p;
   G.rings.push({ x: p.x - ux * (p.r + 4), y: p.y - uy * (p.r + 4), R: 22, life: .2, max: .2 });
   hitEnemy(e, G.stats.thorns * G.stats.dmg, -ux * 420, -uy * 420, 'codazo');
+  if ((G.passives.codazo || 0) >= 6 && !e.boss && !e.dead) e.dizzy = Math.max(e.dizzy || 0, 1);   // Planchazo
   if (G.combos.contragolpe && G.cgCd <= 0 && G.weapons.barrida) {
     // Contragolpe: mini-barrida alrededor tuyo
     G.cgCd = 1;
@@ -1980,7 +1994,7 @@ function whistle() {
   if (n && G.texts.length < 70) G.texts.push({ x: p.x, y: p.y - p.r - 26, txt: '¡PRRRT!', life: .9, big: true });
   sfx('whistle');
 }
-function hurt(n) {
+function hurt(n, heavy) {
   const p = G.p;
   if (G.piqueT > 0) return;   // Pique al vacío: atravesás sin recibir daño
   if (G.paredOn) {
@@ -1992,6 +2006,8 @@ function hurt(n) {
   }
   const raw = n;
   n *= G.stats.armor ?? 1;
+  if (heavy && (G.passives.canilleras || 0) >= 6) n *= .75;   // Tobilleras
+  if (G.garra > 0) n *= .7;                                    // Garra activa
   if (G.ttOn) { n *= .5; G.ttOn = false; G.ttBank = 0; G.ttInv = true; G.texts.push({ x: p.x, y: p.y - p.r - 26, txt: '¡TERCER TIEMPO!', life: .9, big: true }); }
   G.rec.blocked += raw - n;
   if (p.shMax && p.shOn) {
@@ -2004,6 +2020,9 @@ function hurt(n) {
   }
   G.rec.taken += n;
   if (G.combos.pared && G.paredCd <= 0 && n > p.maxHp * .2) { G.paredOn = true; G.paredCd = 8; }   // se levanta para el próximo golpe
+  if ((G.passives.resistencia || 0) >= 6 && G.garraCd <= 0 && p.hp - n < p.maxHp * .25 && p.hp - n > 0) {
+    G.garra = 5; G.garraCd = 30; G.texts.push({ x: p.x, y: p.y - p.r - 26, txt: '¡GARRA!', life: 1, big: true });
+  }
   p.hp -= n; p.inv = G.ttInv ? 1.05 : .55; G.ttInv = false; G.hurtFlash = .25; sfx('hurt');
   if (!RM) G.shake = 8;
 }
@@ -2272,7 +2291,7 @@ function updateEnemies(dt) {
           G.rings.push({ x: e.x, y: e.y, R: STOMP_R, life: .4, max: .4, col: '217,74,61' });
           for (let i = 0; i < 8; i++) part(e.x + rnd(-STOMP_R, STOMP_R) * .6, e.y + rnd(-STOMP_R, STOMP_R) * .6, '#6b5a3a');
           sfx('stomp');
-          if (d < STOMP_R + p.r && p.inv <= 0) hurt(e.dmg * 1.3);
+          if (d < STOMP_R + p.r && p.inv <= 0) hurt(e.dmg * 1.3, true);
           if (!RM) G.shake = Math.max(G.shake, 5);
         }
       }
@@ -2285,10 +2304,12 @@ function updateEnemies(dt) {
     e.x += (ux * sp + e.kx) * dt; e.y += (uy * sp + e.ky) * dt;
     if (G.combos.barrera && G.sprays.length && !e.boss && !e.fly && e.type !== 'hincha') barrierBlock(e, ox, oy);
     e.kx *= decay; e.ky *= decay;
-    e.flash -= dt; e.rcd -= dt; e.tcd = (e.tcd || 0) - dt;
+    e.flash -= dt; e.rcd -= dt; e.tcd = (e.tcd || 0) - dt; e.pushCd = (e.pushCd || 0) - dt;
     if (e.type !== 'camillero' && !e.fly && !stn && e.mode !== 'cano' && d < e.r + p.r - 2) {   // la Spidercam vuela: no choca
-      if (p.inv <= 0) hurt(e.mode === 'dive' || e.mode === 'charge' ? e.dmg * 1.6 : e.dmg);
+      const behind = p.sprinting && (G.passives.arranque || 0) >= 6 && ((e.x - p.x) * p.fx + (e.y - p.y) * p.fy) < 0;   // Pique corto
+      if (p.inv <= 0 && !behind) hurt(e.mode === 'dive' || e.mode === 'charge' ? e.dmg * 1.6 : e.dmg, e.boss && e.mode === 'charge');
       codazo(e, dx / d, dy / d);
+      if ((G.passives.fisico || 0) >= 6 && !e.boss && e.type !== 'hincha' && (e.pushCd || 0) <= 0) { e.kx -= dx / d * 380; e.ky -= dy / d * 380; e.pushCd = .4; }   // Cuerpo a cuerpo
     }
     if (rb && e.rcd <= 0 && Math.abs(d - rR) < e.r + rbr) {
       for (const b of rb) {
@@ -2572,7 +2593,7 @@ function updateHazards(dt) {
     const hit = h.kind === 'var'
       ? Math.abs(p.x - h.x) < h.w / 2 && Math.abs(p.y - h.y) < h.h / 2
       : (p.x - h.x) ** 2 + (p.y - h.y) ** 2 < (h.R + p.r) ** 2;
-    if (hit && p.inv <= 0) hurt(h.dmg);
+    if (hit && p.inv <= 0) hurt(h.dmg, true);
     if (h.kind === 'stomp') {
       h.fx = 0;
       G.rings.push({ x: h.x, y: h.y, R: h.R, life: .45, max: .45, col: '217,74,61' });
@@ -2604,7 +2625,7 @@ function updateGems(dt) {
     if (!g.pull && d < R) g.pull = true;
     if (g.pull) { g.sp = Math.min(900, g.sp + 1400 * dt); g.x += dx / d * g.sp * dt; g.y += dy / d * g.sp * dt; }
     if (d < p.r + 8) {
-      g.got = true; gainXp(g.v); sfx('gem');
+      g.got = true; gainXp(g.v * ((G.passives.hidratacion || 0) >= 6 && p.hp >= p.maxHp ? 1.1 : 1)); sfx('gem');   // Isotónica
       if (G.combos.tercer) {
         const heal = Math.min(1, p.maxHp - p.hp); p.hp += heal;
         if (!G.ttOn) { G.ttBank += 1 - heal; if (G.ttBank >= 15) G.ttOn = true; }
@@ -2661,7 +2682,7 @@ function openLevelUp(sound = true) {
   G.options.forEach((o, i) => {
     let name, desc, tag, cls;
     if (o.t === 'w') { const W = WEAPONS[o.k]; name = W.name; desc = W.desc[o.l - 1]; tag = (o.l === 1 ? 'Técnica nueva' : 'Técnica · nivel ' + o.l) + (W.only && !(o.k === 'spray' && sprayFree()) ? ' · solo ' + CHARS[W.only].name : ''); cls = 'tec'; }
-    else if (o.t === 'p') { const P = PASSIVES[o.k]; name = P.name; desc = P.desc; tag = o.l === 1 ? 'Físico nuevo' : 'Físico · nivel ' + o.l; cls = 'fis'; }
+    else if (o.t === 'p') { const P = PASSIVES[o.k]; name = P.name; desc = o.l === 6 && P.l6 ? `<b class="l6">${P.l6[0]}:</b> ${P.l6[1]}` : P.desc; tag = o.l === 1 ? 'Físico nuevo' : 'Físico · nivel ' + o.l; cls = 'fis'; }
     else { name = 'Agua fresca'; desc = 'Recuperás 40 de vida.'; tag = 'Banco de suplentes'; cls = 'heal'; }
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'card ' + cls;
@@ -3499,6 +3520,7 @@ function drawPlayer(p) {
     for (let i = 0; i <= 6; i++) { const a = i * Math.PI / 3 + G.t; const x = p.x + Math.cos(a) * (p.r + 12), y = p.y + Math.sin(a) * (p.r + 12); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
     ctx.stroke();
   }
+  if (G.garra > 0) { ctx.strokeStyle = 'rgba(255,90,74,.85)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 9, 0, Math.PI * 2); ctx.stroke(); }
   if (G.ttOn) { ctx.strokeStyle = 'rgba(155,227,138,.8)'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 16, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
   const cl = G.passives.canilleras || 0;
   if (cl) {

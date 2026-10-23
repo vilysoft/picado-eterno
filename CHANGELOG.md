@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.56 · 23 oct 2026
+
+- **Físicos:** Todos los físicos tienen nivel 6 con un efecto propio: Bombazo (Potencia), Botines de oro (Botines nuevos), Garra (Resistencia), Pausa del 5 (Ritmo de juego), Panorama (Visión de juego), Isotónica (Hidratación), Cuerpo a cuerpo (Físico), Segundo pulmón (Aguante), Pique corto (Arranque explosivo), Planchazo (Codazo) y Tobilleras (Canilleras).
+- **Físicos:** El nivel 6 no suma más números: los porcentajes quedan como en el nivel 5 y se agrega el efecto, que se ve en dorado al elegir la mejora.
+
 ## 2.55 · 23 oct 2026
 
 - **Sonido:** Controles de volumen para Música, Efectos y Ambiente, en el menú y en la pausa. Se guardan en el navegador.
