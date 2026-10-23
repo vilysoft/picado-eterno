@@ -710,6 +710,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.49', date: '23 oct 2026', items: [
+    ['Jefes', 'El jefe del entretiempo de La Cancha del Club, golpeado, ya no junta a los rivales que tiene cerca: con "¡Vamos, muchachos!" llama a 6 compañeros nuevos que aparecen formados en fila detrás suyo y embisten con él. Los que siguen vivos vuelven a la fila en la siguiente embestida y solo llama nuevos para completar los 6.'],
+  ] },
   { v: '2.48', date: '23 oct 2026', items: [
     ['Textos', 'Se cambia "voltear" por "eliminar" en todo el juego: la planilla, los avisos y el changelog.'],
   ] },
@@ -2298,14 +2301,27 @@ function bossAI(e, d, ux, uy, sp, dt) {
   }
   return [ux, uy, sp];
 }
-// "¡Vamos, muchachos!": hasta 6 rivales comunes cercanos se forman en fila detrás del capitán y embisten con él
+// "¡Vamos, muchachos!": el capitán llama a 6 compañeros que aparecen en fila detrás suyo y embisten con él
 const TRAIN_MAX = 6;
 function recruitTrain(e) {
-  const pool = G.enemies.filter(o => !o.dead && !o.boss && !o.fly && !o.away && !o.train && o.type !== 'hincha' && o.type !== 'camillero'
-    && (o.x - e.x) ** 2 + (o.y - e.y) ** 2 < 300 * 300);
-  pool.sort((a, b) => ((a.x - e.x) ** 2 + (a.y - e.y) ** 2) - ((b.x - e.x) ** 2 + (b.y - e.y) ** 2));
-  pool.slice(0, TRAIN_MAX).forEach((o, i) => { o.train = { leader: e, i }; o.dizzy = 0; o.mode = o.type === 'camillero' ? o.mode : 'run'; });
-  if (pool.length) { G.texts.push({ x: e.x, y: e.y - e.r - 34, txt: '¡VAMOS, MUCHACHOS!', life: 1.2, big: true }); sfx('whistle'); }
+  // Llama a 6 compañeros que aparecen formados en fila detrás suyo y embisten con él.
+  // Los que siguen vivos de otras embestidas vuelven a la fila; solo llama nuevos para completar los 6
+  const dx0 = G.p.x - e.x, dy0 = G.p.y - e.y, d0 = Math.hypot(dx0, dy0) || 1, bx = -dx0 / d0, by = -dy0 / d0;   // atrás = del lado opuesto a vos
+  const team = G.enemies.filter(o => o.capTeam && !o.dead && !o.train);
+  team.sort((a, b) => ((a.x - e.x) ** 2 + (a.y - e.y) ** 2) - ((b.x - e.x) ** 2 + (b.y - e.y) ** 2));
+  const alive = team.length;
+  for (let i = 0; i < TRAIN_MAX; i++) {
+    let o = team[i];
+    if (!o && alive + (i - team.length) < 12) {
+      const gap = e.r + 16 + 13 + i * 30;
+      const x = clamp(e.x + bx * gap, -RUN + 20, FW + RUN - 20), y = clamp(e.y + by * gap, -RUN + 20, FH + RUN - 20);
+      spawn(i % 2 ? 'extremo' : 'defensor', x, y);
+      o = G.enemies[G.enemies.length - 1]; o.capTeam = true;
+      for (let k = 0; k < 4; k++) part(x + rnd(-8, 8), y + rnd(-8, 8), '#ffd34d');
+    }
+    if (o) { o.train = { leader: e, i }; o.dizzy = 0; o.mode = 'run'; }
+  }
+  G.texts.push({ x: e.x, y: e.y - e.r - 34, txt: '¡VAMOS, MUCHACHOS!', life: 1.2, big: true }); sfx('whistle');
 }
 function bossCast(e, enr) {
   const a = Math.atan2(e.ddy, e.ddx);

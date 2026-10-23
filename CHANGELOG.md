@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.49 · 23 oct 2026
+
+- **Jefes:** El jefe del entretiempo de La Cancha del Club, golpeado, ya no junta a los rivales que tiene cerca: con "¡Vamos, muchachos!" llama a 6 compañeros nuevos que aparecen formados en fila detrás suyo y embisten con él. Los que siguen vivos vuelven a la fila en la siguiente embestida y solo llama nuevos para completar los 6.
+
 ## 2.48 · 23 oct 2026
 
 - **Textos:** Se cambia "voltear" por "eliminar" en todo el juego: la planilla, los avisos y el changelog.
