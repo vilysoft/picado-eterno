@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.50 · 23 oct 2026
+
+- **Textos:** Ya no se repite el mismo aviso dos veces: si un cartel ya está en pantalla o en espera, no se vuelve a mostrar. La pausa de hidratación, el cambio de lado del alargue y la revisión del VAR muestran su aviso una sola vez, en el centro de la pantalla.
+- **Textos:** El aviso de los árbitros ahora lleva signos de exclamación, como los demás.
+
 ## 2.49 · 23 oct 2026
 
 - **Jefes:** El jefe del entretiempo de La Cancha del Club, golpeado, ya no junta a los rivales que tiene cerca: con "¡Vamos, muchachos!" llama a 6 compañeros nuevos que aparecen formados en fila detrás suyo y embisten con él. Los que siguen vivos vuelven a la fila en la siguiente embestida y solo llama nuevos para completar los 6.

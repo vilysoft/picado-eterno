@@ -710,6 +710,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.50', date: '23 oct 2026', items: [
+    ['Textos', 'Ya no se repite el mismo aviso dos veces: si un cartel ya está en pantalla o en espera, no se vuelve a mostrar. La pausa de hidratación, el cambio de lado del alargue y la revisión del VAR muestran su aviso una sola vez, en el centro de la pantalla.'],
+    ['Textos', 'El aviso de los árbitros ahora lleva signos de exclamación, como los demás.'],
+  ] },
   { v: '2.49', date: '23 oct 2026', items: [
     ['Jefes', 'El jefe del entretiempo de La Cancha del Club, golpeado, ya no junta a los rivales que tiene cerca: con "¡Vamos, muchachos!" llama a 6 compañeros nuevos que aparecen formados en fila detrás suyo y embisten con él. Los que siguen vivos vuelven a la fila en la siguiente embestida y solo llama nuevos para completar los 6.'],
   ] },
@@ -1194,10 +1198,13 @@ function togglePause() {
 }
 let bannerT = 0, bannerLock = 0, bannerQ = [];
 function banner(txt, important) {
-  // Un cartel importante (combo) se queda sus 2,3 s; lo que llegue mientras tanto espera en fila
-  const now = performance.now();
+  // Un cartel importante (combo) se queda sus 2,3 s; lo que llegue mientras tanto espera en fila.
+  // El mismo texto nunca se muestra dos veces seguidas ni se encola repetido
+  const now = performance.now(), b = $('banner');
+  if (b.classList.contains('show') && b.textContent === txt) return;
+  if (bannerQ.some(q => q[0] === txt)) return;
   if (now < bannerLock) { bannerQ.push([txt, important]); return; }
-  const b = $('banner'); b.textContent = txt; b.classList.add('show');
+  b.textContent = txt; b.classList.add('show');
   if (important) bannerLock = now + 2300;
   clearTimeout(bannerT);
   bannerT = setTimeout(() => {
@@ -1207,6 +1214,10 @@ function banner(txt, important) {
 }
 
 // ---------- Lógica ----------
+function hideBanner() {
+  // Lo usan las pantallas que ya muestran su propio texto grande (pausa de hidratación, VAR)
+  clearTimeout(bannerT); bannerLock = 0; $('banner').classList.remove('show');
+}
 function update(dt) {
   const p = G.p, S = G.stats;
   // "Retrotrae la jugada": durante el congelado no se mueve nada; al terminar te devuelve a donde estabas
@@ -1225,7 +1236,7 @@ function update(dt) {
     const m = minuteOf(G.t);
     for (const hm of [30, 60]) if (m >= hm && !G.hydraDone[hm]) {
       G.hydraDone[hm] = true; G.hydra = HYDRA_S;
-      banner('¡Pausa de hidratación!', true); sfx('whistle'); cheer = 1.5;
+      hideBanner(); sfx('whistle'); cheer = 1.5;   // el aviso lo muestra la pantalla de la pausa
     }
   }
   if (LV.id === 'club' && G.invaders < 2 && minuteOf(G.t) >= 60) {
@@ -1265,7 +1276,7 @@ function update(dt) {
     // Cambio de lado en el 105': pausa corta y vuelven los dos jefes de la cancha, con más vida
     if (!G.etHalf && G.t >= MATCH + ET_LEN / 2) {
       G.etHalf = true; G.hydra = ET_BREAK; G.hydraTxt = 'CAMBIO DE LADO · SEGUNDO TIEMPO DEL ALARGUE';
-      banner('¡Cambio de lado! Segundo tiempo del alargue', true); sfx('whistle');
+      hideBanner(); sfx('whistle');   // el aviso lo muestra la pantalla de la pausa
     }
     if (G.etHalf && !G.etBoss && G.hydra <= 0) {
       G.etBoss = true;
@@ -1343,7 +1354,7 @@ function update(dt) {
   G.rt += dt;
   if (!G.hist.length || G.rt - G.hist[G.hist.length - 1].t >= .05) G.hist.push({ t: G.rt, x: p.x, y: p.y });
   while (G.hist.length && G.hist[0].t < G.rt - 3) G.hist.shift();
-  if (G.rewind) { G.rewind.t -= dt; if (G.rewind.t <= 0) { G.rewind.phase = 'freeze'; G.rewind.t = .5; G.rewind.max = .5; sfx('var'); } }
+  if (G.rewind) { G.rewind.t -= dt; if (G.rewind.t <= 0) { G.rewind.phase = 'freeze'; G.rewind.t = .5; G.rewind.max = .5; hideBanner(); sfx('var'); } }
   if (p.inv > 0) p.inv -= dt;
   p.hp = Math.min(p.maxHp, p.hp + S.regen * dt * (G.combos.pulmon && p.tired ? 2 : 1));
   G.cgCd -= dt; G.paredCd -= dt;
@@ -1436,7 +1447,7 @@ function spawn(type, x, y, baseHp) {
   if (type === 'spidercam' && !G.seenCamTV) { G.seenCamTV = true; banner('¡Baja la Spidercam: ojo con la sombra!'); }
   if (type === 'camillero' && !G.seenCam) { G.seenCam = true; banner('¡Entran los camilleros: ojo con la camilla!'); }
   if (type === 'central' && !G.seenBig) { G.seenBig = true; banner('¡Llegan los grandotes: cuidado con el pisotón!'); }
-  if (type === 'arbitro' && !G.seenRef) { G.seenRef = true; banner('Los árbitros empiezan a revolear tarjetas'); sfx('whistle'); }
+  if (type === 'arbitro' && !G.seenRef) { G.seenRef = true; banner('¡Los árbitros empiezan a revolear tarjetas!'); sfx('whistle'); }
 }
 function spawning() {
   const t = G.t, tt = ht();
