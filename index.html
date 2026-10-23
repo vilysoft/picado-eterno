@@ -89,6 +89,8 @@ body{touch-action:none;-webkit-user-select:none;user-select:none}
 .banner.show{opacity:1;transform:translate(-50%,0)}
 
 .overlay{position:fixed;inset:0;display:flex;padding:16px;background:rgba(8,12,9,.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);overflow:auto}
+/* Al subir de nivel la cancha se sigue viendo nítida, solo un poco más oscura */
+#levelup{background:rgba(8,12,9,.45);backdrop-filter:none;-webkit-backdrop-filter:none}
 .panel{margin:auto;width:min(760px,100%);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:28px 28px 24px;box-shadow:0 24px 60px rgba(0,0,0,.5)}
 .panel.small{width:min(520px,100%)}
 .eyebrow{margin:0 0 6px;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
@@ -710,6 +712,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.52', date: '23 oct 2026', items: [
+    ['Pantalla', 'Al subir de nivel la cancha ya no se ve borrosa detrás de las opciones: se ve nítida y solo un poco más oscura.'],
+  ] },
   { v: '2.51', date: '23 oct 2026', items: [
     ['Jefes', 'Después de que el VAR retrotrae la jugada, el juego queda quieto un segundo (como al elegir una mejora) para que veas dónde apareciste.'],
   ] },

@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.52 · 23 oct 2026
+
+- **Pantalla:** Al subir de nivel la cancha ya no se ve borrosa detrás de las opciones: se ve nítida y solo un poco más oscura.
+
 ## 2.51 · 23 oct 2026
 
 - **Jefes:** Después de que el VAR retrotrae la jugada, el juego queda quieto un segundo (como al elegir una mejora) para que veas dónde apareciste.
