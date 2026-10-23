@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.54 · 23 oct 2026
+
+- **Sonido:** Ambiente de cancha durante el partido: un murmullo de tribuna sin palabras, distinto en cada cancha. En El Potrero se escuchan pocos vecinos; en La Cancha del Club hay más gente, cantos y bombo; El Coloso suena lleno y con eco de estadio.
+- **Sonido:** Con un jefe en la cancha (y en el alargue) la hinchada se enciende: más murmullo, cantos más seguidos y el bombo marcando el ritmo. Los festejos del partido disparan un grito de tribuna. En pausa o al elegir una mejora el ambiente baja.
+
 ## 2.53 · 23 oct 2026
 
 - **Jefes:** La jefa del entretiempo de El Coloso, golpeada, te tira un caño: marca un carril dorado que te atraviesa, te pasa entre las piernas sin pegarte y, desde atrás tuyo, patea su abanico de pelotas.
