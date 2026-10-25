@@ -736,6 +736,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.59', date: '24 oct 2026', items: [
+    ['Técnicas', 'Arreglo: durante la pausa de hidratación y el cambio de lado del alargue, el rondo se quedaba quieto donde estaba en vez de seguirte. Ahora te sigue y sigue pegando.'],
+  ] },
   { v: '2.58', date: '23 oct 2026', items: [
     ['Sonido', 'Se saca el ambiente de cancha (murmullo, cantos y bombo de la hinchada) y su control de volumen. Quedan la música y los efectos.'],
   ] },
@@ -1442,7 +1445,12 @@ function update(dt) {
   if (!frozen) { updateEnemies(dt); updateCards(dt); updateHazards(dt); updateFoeShots(dt); }
   else {
     // Rivales quietos: solo se limpian los que voltees y se apaga el destello de los golpes
-    for (const e of G.enemies) { e.flash -= dt; e.still = true; }
+    // El rondo sigue girando con vos y pegando aunque los rivales estén quietos
+    const RG = rondoGeom(), p = G.p;
+    for (const e of G.enemies) {
+      e.flash -= dt; e.still = true; e.rcd -= dt;
+      if (RG && !e.dead) { const dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy) || 1; rondoHit(e, dx, dy, d, RG); e.kx = e.ky = 0; }
+    }
     G.enemies = G.enemies.filter(e => !e.dead);
   }
   updateGems(dt);
@@ -2088,18 +2096,34 @@ function sprayFlare(x, y, dmg) {
     return;
   }
 }
+// Posición de las pelotas del rondo alrededor tuyo (se calcula siempre, aunque los rivales estén quietos)
+function rondoGeom() {
+  if (!G.weapons.rondo) { G.rondoBalls = null; return null; }
+  const p = G.p, S = G.stats, rw = wp('rondo', G.weapons.rondo), rR = rw.R * S.area, rbr = 9 * S.area, rb = [];
+  for (let i = 0; i < rw.count; i++) {
+    const a = G.rondoAng + i * Math.PI * 2 / rw.count;
+    rb.push([p.x + Math.cos(a) * rR, p.y + Math.sin(a) * rR]);
+  }
+  G.rondoBalls = rb;
+  return { rb, rw, rR, rbr };
+}
+function rondoHit(e, dx, dy, d, RG) {
+  const { rb, rw, rR, rbr } = RG, S = G.stats;
+  if (e.rcd > 0 || Math.abs(d - rR) >= e.r + rbr) return;
+  for (const b of rb) {
+    const bx = e.x - b[0], by = e.y - b[1];
+    if (bx * bx + by * by < (e.r + rbr) ** 2) {
+      // Empuje hacia afuera (desde vos hacia el rival); en nivel 6 lo despeja lejos
+      hitEnemy(e, rw.dmg * S.dmg, -dx / d * rw.push, -dy / d * rw.push, 'rondo'); e.rcd = .45 * S.cd;
+      if (rw.push > 200) G.rings.push({ x: b[0], y: b[1], R: 18 * S.area, life: .2, max: .2 });
+      break;
+    }
+  }
+}
 const grid = new Map();
 function updateEnemies(dt) {
   const p = G.p, E = G.enemies, decay = Math.pow(.004, dt), S = G.stats;
-  let rb = null, rw, rR, rbr;
-  if (G.weapons.rondo) {
-    rw = wp('rondo', G.weapons.rondo); rR = rw.R * S.area; rbr = 9 * S.area; rb = [];
-    for (let i = 0; i < rw.count; i++) {
-      const a = G.rondoAng + i * Math.PI * 2 / rw.count;
-      rb.push([p.x + Math.cos(a) * rR, p.y + Math.sin(a) * rR]);
-    }
-  }
-  G.rondoBalls = rb;
+  const RG = rondoGeom(), rb = RG && RG.rb, rw = RG && RG.rw, rR = RG && RG.rR, rbr = RG && RG.rbr;
 
   for (const e of E) {
     if (e.dead) continue;
@@ -2236,17 +2260,7 @@ function updateEnemies(dt) {
       codazo(e, dx / d, dy / d);
       if ((G.passives.fisico || 0) >= 6 && !e.boss && e.type !== 'hincha' && (e.pushCd || 0) <= 0) { e.kx -= dx / d * 380; e.ky -= dy / d * 380; e.pushCd = .4; }   // Cuerpo a cuerpo
     }
-    if (rb && e.rcd <= 0 && Math.abs(d - rR) < e.r + rbr) {
-      for (const b of rb) {
-        const bx = e.x - b[0], by = e.y - b[1];
-        if (bx * bx + by * by < (e.r + rbr) ** 2) {
-          // Empuje hacia afuera (desde vos hacia el rival); en nivel 6 lo despeja lejos
-          hitEnemy(e, rw.dmg * S.dmg, -dx / d * rw.push, -dy / d * rw.push, 'rondo'); e.rcd = .45 * S.cd;
-          if (rw.push > 200) G.rings.push({ x: b[0], y: b[1], R: 18 * S.area, life: .2, max: .2 });
-          break;
-        }
-      }
-    }
+    if (RG) rondoHit(e, dx, dy, d, RG);
     if (!e.boss && e.type !== 'hincha' && d > 1500) [e.x, e.y] = ringPos();
   }
 

@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.59 · 24 oct 2026
+
+- **Técnicas:** Arreglo: durante la pausa de hidratación y el cambio de lado del alargue, el rondo se quedaba quieto donde estaba en vez de seguirte. Ahora te sigue y sigue pegando.
+
 ## 2.58 · 23 oct 2026
 
 - **Sonido:** Se saca el ambiente de cancha (murmullo, cantos y bombo de la hinchada) y su control de volumen. Quedan la música y los efectos.
