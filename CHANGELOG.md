@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.61 · 25 oct 2026
+
+- **Online:** Se activa la conexión con la base de datos: al terminar cada partido se guardan sus estadísticas, y aparece el ranking por cancha (botón Ranking en el menú y "Subir mi marca" en la planilla).
+
 ## 2.60 · 25 oct 2026
 
 - **Online:** El juego está listo para conectarse a una base de datos: al terminar cada partido puede subir sus estadísticas (cancha, jugador, minuto, técnicas y daño, sin datos personales) y, si querés, tu marca con un apodo a un ranking por cancha. Se activa cuando se configura la base; mientras tanto todo funciona igual que antes.

@@ -769,6 +769,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.61', date: '25 oct 2026', items: [
+    ['Online', 'Se activa la conexión con la base de datos: al terminar cada partido se guardan sus estadísticas, y aparece el ranking por cancha (botón Ranking en el menú y "Subir mi marca" en la planilla).'],
+  ] },
   { v: '2.60', date: '25 oct 2026', items: [
     ['Online', 'El juego está listo para conectarse a una base de datos: al terminar cada partido puede subir sus estadísticas (cancha, jugador, minuto, técnicas y daño, sin datos personales) y, si querés, tu marca con un apodo a un ranking por cancha. Se activa cuando se configura la base; mientras tanto todo funciona igual que antes.'],
   ] },
@@ -1230,11 +1233,12 @@ $('btnLogBack').addEventListener('click', goMenu);
 // ---------- Base de datos (Supabase) ----------
 // Pegá acá la URL del proyecto y la clave pública "anon" (Supabase → Project Settings → API).
 // Sin estos datos el juego funciona igual, sin ranking ni estadísticas online.
-const ONLINE = { url: '', key: '' };
+const ONLINE = { url: 'https://tdceukayyczlqjimivgu.supabase.co', key: 'sb_publishable_zv6Zy3BrofQY_VczTFJb5w_od4xKOGV' };
 const online = () => !!(ONLINE.url && ONLINE.key);
 function sbReq(path, opts = {}) {
   return fetch(ONLINE.url.replace(/\/$/, '') + '/rest/v1/' + path, {
-    ...opts, headers: { apikey: ONLINE.key, Authorization: 'Bearer ' + ONLINE.key, 'Content-Type': 'application/json', ...(opts.headers || {}) },
+    // Las claves nuevas (sb_publishable_…) van solo en "apikey"; las viejas (anon, JWT) también como Bearer
+    ...opts, headers: { apikey: ONLINE.key, ...(ONLINE.key.startsWith('sb_') ? {} : { Authorization: 'Bearer ' + ONLINE.key }), 'Content-Type': 'application/json', ...(opts.headers || {}) },
   });
 }
 function playerId() {
