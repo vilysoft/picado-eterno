@@ -282,7 +282,7 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
       <h2>Vestuario</h2>
       <div class="wallet"><span class="lbl">Tus fichas</span><b id="wallet">0</b></div>
     </div>
-    <p class="lede">Lo que compres acá vale para todos los partidos que vengan. Se guarda en este navegador.</p>
+    <p class="lede">Lo que compres acá vale para todos los partidos que vengan. Desde el nivel 4, cada nivel de una mejora rinde 20% menos. Se guarda en este navegador.</p>
     <div id="perms" class="perms"></div>
     <div class="actions">
       <button id="btnShopPlay" class="btn" type="button">Jugar otro partido</button>
@@ -604,7 +604,7 @@ const CHARS = {
     kit: { shirt: '#7cc4ff', sleeve: '#7cc4ff', stripe: '#f4f7fb', shorts: '#14181f' }, skin: '#d9a47c', hair: '#1b1410',
     swatch: 'repeating-linear-gradient(90deg,#7cc4ff 0 14px,#f4f7fb 14px 28px)',
     traits: ['<b>Sprint</b> con Shift'] },
-  muro: { name: 'El Muro', desc: 'Central grandote: se cubre con el escudo y todas sus técnicas llegan más lejos.', r: 16, speed: .9, area: 1.2, sprint: false, shield: 60,
+  muro: { name: 'El Muro', desc: 'Central grandote: se cubre con el escudo y todas sus técnicas llegan más lejos.', r: 16, speed: .9, area: 1.2, sprint: false, shield: 66,
     kit: { shirt: '#f4f7fb', sleeve: '#7cc4ff', shorts: '#14181f' }, skin: '#b97d55', hair: '#111111',
     swatch: 'linear-gradient(90deg,#f4f7fb,#bfe3ff)',
     traits: ['<b>Escudo</b> con Shift', '<b>+20%</b> de área', '<i>10% más lento</i>', '<i>Sin sprint</i>'] },
@@ -770,10 +770,15 @@ const PERMS = {
   zancada:      { name: 'Zancada', max: 6, only: 'diez', desc: '+3% de velocidad al sprintar y gastás 5% menos de barra.', cost: [20, 35, 55, 80, 120, 170] },
   blindaje:     { name: 'Blindaje', max: 6, only: 'muro', desc: '+7 de barra de escudo.', cost: [20, 35, 55, 80, 120, 170] },
   recuperacion: { name: 'Recuperación', max: 6, only: 'muro', desc: 'El escudo se recarga 15% más rápido y empieza 0,2 s antes.', cost: [20, 35, 55, 80, 120, 170] },
-  suplente:     { name: 'Segundo aire', max: 2, desc: '+1 vuelta por partido: si te quedás sin vida, volvés con el 35%.', cost: [150, 300] },
+  suplente:     { name: 'Segundo aire', max: 1, desc: 'Una vez por partido: si te quedás sin vida, volvés con el 35%.', cost: [150] },
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.64', date: '25 oct 2026', items: [
+    ['Jugadores', 'Todos los jugadores arrancan 10% mejor: más vida (143), daño, velocidad, experiencia, distancia para juntar gemas y barra de sprint, y 10% menos de espera en las técnicas. El escudo de El Muro arranca en 66.'],
+    ['Vestuario', 'Del nivel 4 en adelante, cada nivel de las mejoras del vestuario rinde 20% menos. Los primeros 3 niveles quedan igual.'],
+    ['Vestuario', 'Segundo aire tiene un solo nivel: una vuelta por partido. Si habías comprado el segundo nivel, se te devuelven las 300 fichas.'],
+  ] },
   { v: '2.63', date: '25 oct 2026', items: [
     ['Celular', 'La opción para mover el botón de sprint, escudo, silbato o avalancha ahora se llama "Botón habilidad especial".'],
   ] },
@@ -1066,12 +1071,16 @@ function loadSave() {
   }
   // Si ya ganaste El Potrero antes de que existiera El Muro, ya lo tenés
   if (out.unlocked >= 2) out.chars.muro = true;
+  // Segundo aire ahora tiene un solo nivel: se devuelven las 300 fichas del segundo
+  if ((out.perm.suplente || 0) > 1) { out.tokens += 300; out.perm.suplente = 1; }
   return out;
 }
 let SAVE = loadSave();
 const isOpen = i => ALL_OPEN || i < SAVE.unlocked;
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) {} }
 const pl = k => SAVE.perm[k] || 0;
+// Nivel efectivo de una mejora del vestuario para los números: del 4 en adelante cada nivel rinde 80%
+const pv = k => { const l = pl(k); return Math.min(l, 3) + Math.max(0, l - 3) * .8; };
 function spentTotal() {
   let n = 0;
   for (const k in PERMS) for (let i = 0; i < pl(k); i++) n += PERMS[k].cost[i];
@@ -1095,29 +1104,29 @@ function newGame() {
   };
 }
 // Stats de arranque de cualquier personaje, antes del vestuario
-const BASE = { hp: 130, dmg: 1.1, speed: 1.05, cd: .95, xp: 1.1, magnet: 1.1, st: 110 };
+const BASE = { hp: 143, dmg: 1.21, speed: 1.155, cd: .855, xp: 1.21, magnet: 1.21, st: 121 };   // +10% en todo respecto de la 2.62
 function recalc() {
   const l = k => Math.min(5, G.passives[k] || 0), S = G.stats;   // el nivel 6 de los físicos es un efecto aparte, no suma números
-  S.dmg = BASE.dmg * (1 + .12 * l('potencia')) * (1 + .04 * pl('pegada'));
-  S.speed = BASE.speed * (1 + .1 * l('botines')) * (1 + .03 * pl('piques')) * CH.speed;
-  S.cd = BASE.cd * Math.pow(.92, l('ritmo')) * Math.pow(.97, pl('pulmones'));
-  S.magnet = BASE.magnet * (1 + .35 * l('vision')) * (1 + .12 * pl('lectura'));
+  S.dmg = BASE.dmg * (1 + .12 * l('potencia')) * (1 + .04 * pv('pegada'));
+  S.speed = BASE.speed * (1 + .1 * l('botines')) * (1 + .03 * pv('piques')) * CH.speed;
+  S.cd = BASE.cd * Math.pow(.92, l('ritmo')) * Math.pow(.97, pv('pulmones'));
+  S.magnet = BASE.magnet * (1 + .35 * l('vision')) * (1 + .12 * pv('lectura'));
   S.regen = .6 * l('hidratacion'); S.area = (1 + .12 * l('fisico')) * CH.area;
   S.armor = 1 - .08 * l('canilleras');          // multiplica todo el daño que recibís
   S.thorns = l('codazo') ? 6 + 6 * l('codazo') : 0;   // daño de rebote por contacto
-  S.xp = BASE.xp * (1 + .06 * pl('inferiores'));
-  G.p.maxHp = Math.round(BASE.hp * (CH.hp || 1)) + 20 * l('resistencia') + 6 * pl('pretemporada');
+  S.xp = BASE.xp * (1 + .06 * pv('inferiores'));
+  G.p.maxHp = Math.round(Math.round(BASE.hp * (CH.hp || 1)) + 20 * l('resistencia') + 6 * pv('pretemporada'));
   // Escudo (El Muro)
-  G.p.shMax = CH.shield ? CH.shield + 7 * pl('blindaje') : 0;
-  S.shRegen = 14 * (1 + .15 * pl('recuperacion'));
-  S.shDelay = 1.5 - .2 * pl('recuperacion');   // espera tras soltarlo antes de recargar
+  G.p.shMax = CH.shield ? Math.round(CH.shield + 7 * pv('blindaje')) : 0;
+  S.shRegen = 14 * (1 + .15 * pv('recuperacion'));
+  S.shDelay = 1.5 - .2 * pv('recuperacion');   // espera tras soltarlo antes de recargar
   S.whCd = 10;                                    // silbato del árbitro: espera entre pitazos
   S.shDrain = 12;                                 // lo que gasta por segundo mientras está levantado
   // Sprint
-  G.p.stMax = BASE.st * (1 + .2 * l('aguante')) * (1 + .07 * pl('fuelle'));
-  S.stRegen = 16 * (1 + .15 * l('aguante')) * (1 + .08 * pl('fuelle'));
-  S.sprint = 1.4 + .06 * l('arranque') + .03 * pl('zancada');
-  S.stDrain = Math.pow(.9, l('arranque')) * Math.pow(.95, pl('zancada'));
+  G.p.stMax = BASE.st * (1 + .2 * l('aguante')) * (1 + .07 * pv('fuelle'));
+  S.stRegen = 16 * (1 + .15 * l('aguante')) * (1 + .08 * pv('fuelle'));
+  S.sprint = 1.4 + .06 * l('arranque') + .03 * pv('zancada');
+  S.stDrain = Math.pow(.9, l('arranque')) * Math.pow(.95, pv('zancada'));
 }
 function loadBest() {
   try {

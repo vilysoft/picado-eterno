@@ -2,6 +2,12 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.64 · 25 oct 2026
+
+- **Jugadores:** Todos los jugadores arrancan 10% mejor: más vida (143), daño, velocidad, experiencia, distancia para juntar gemas y barra de sprint, y 10% menos de espera en las técnicas. El escudo de El Muro arranca en 66.
+- **Vestuario:** Del nivel 4 en adelante, cada nivel de las mejoras del vestuario rinde 20% menos. Los primeros 3 niveles quedan igual.
+- **Vestuario:** Segundo aire tiene un solo nivel: una vuelta por partido. Si habías comprado el segundo nivel, se te devuelven las 300 fichas.
+
 ## 2.63 · 25 oct 2026
 
 - **Celular:** La opción para mover el botón de sprint, escudo, silbato o avalancha ahora se llama "Botón habilidad especial".
