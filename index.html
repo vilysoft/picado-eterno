@@ -235,7 +235,7 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
     <dl class="ficha">
       <div><dt>Duración</dt><dd>90' = 8 min reales</dd></div>
       <div><dt>Controles</dt><dd>WASD o flechas · en celular, arrastrá el dedo</dd></div>
-      <div><dt>Shift</dt><dd>Mantenelo para el sprint o el escudo; tocalo para el silbato o la avalancha · en celular, el botón redondo</dd></div>
+      <div><dt>Shift</dt><dd>Mantenelo para el sprint o el escudo; tocalo para el silbato o la avalancha · en celular, el botón habilidad especial</dd></div>
       <div><dt>Pausa</dt><dd>P o Esc</dd></div>
     </dl>
     <div class="actions">
@@ -249,7 +249,7 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
     <details class="vols"><summary>Opciones</summary>
       <label><span>Música</span><input type="range" min="0" max="100" step="5" data-vol="music" id="mVolMusic"></label>
       <label><span>Efectos</span><input type="range" min="0" max="100" step="5" data-vol="sfx" id="mVolSfx"></label>
-      <label class="touchonly"><span>Botón redondo</span><button type="button" class="btn ghost small sideBtn" data-side>A la derecha</button></label>
+      <label class="touchonly"><span>Botón habilidad especial</span><button type="button" class="btn ghost small sideBtn" data-side>A la derecha</button></label>
     </details>
     </div>
   </div>
@@ -308,7 +308,7 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
     <details class="vols"><summary>Opciones</summary>
       <label><span>Música</span><input type="range" min="0" max="100" step="5" data-vol="music" id="pVolMusic"></label>
       <label><span>Efectos</span><input type="range" min="0" max="100" step="5" data-vol="sfx" id="pVolSfx"></label>
-      <label class="touchonly"><span>Botón redondo</span><button type="button" class="btn ghost small sideBtn" data-side>A la derecha</button></label>
+      <label class="touchonly"><span>Botón habilidad especial</span><button type="button" class="btn ghost small sideBtn" data-side>A la derecha</button></label>
     </details>
     </div>
   </div>
@@ -774,6 +774,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.63', date: '25 oct 2026', items: [
+    ['Celular', 'La opción para mover el botón de sprint, escudo, silbato o avalancha ahora se llama "Botón habilidad especial".'],
+  ] },
   { v: '2.62', date: '25 oct 2026', items: [
     ['Celular', 'En Opciones (menú y pausa) se puede elegir si el botón redondo (sprint, escudo, silbato o avalancha) va a la derecha o a la izquierda de la pantalla. Se guarda en el navegador.'],
     ['Menú', 'El desplegable de volumen ahora se llama Opciones.'],

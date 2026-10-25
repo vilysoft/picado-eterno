@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.63 · 25 oct 2026
+
+- **Celular:** La opción para mover el botón de sprint, escudo, silbato o avalancha ahora se llama "Botón habilidad especial".
+
 ## 2.62 · 25 oct 2026
 
 - **Celular:** En Opciones (menú y pausa) se puede elegir si el botón redondo (sprint, escudo, silbato o avalancha) va a la derecha o a la izquierda de la pantalla. Se guarda en el navegador.
