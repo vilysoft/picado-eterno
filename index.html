@@ -82,7 +82,9 @@ body{touch-action:none;-webkit-user-select:none;user-select:none}
 .sprintbtn{width:64px;height:64px;font-size:30px;touch-action:none;background:rgba(124,196,255,.18);border-color:rgba(124,196,255,.55)}
 .sprintbtn.on{background:rgba(124,196,255,.45)}
 .btns{display:flex;gap:10px;align-items:flex-end;flex:none}
-@media (hover:hover) and (pointer:fine){.sprintbtn{display:none}}
+@media (hover:hover) and (pointer:fine){.sprintbtn{display:none}.touchonly{display:none}}
+/* Botón redondo a la izquierda (opción del celular): queda arriba de las técnicas */
+body.sprint-left #btnSprint{position:fixed;left:calc(env(safe-area-inset-left,0px) + 16px);bottom:calc(env(safe-area-inset-bottom,0px) + 72px)}
 .iconbtn:focus-visible{outline:3px solid var(--led);outline-offset:2px}
 
 .banner{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 92px);transform:translate(-50%,-10px);width:max-content;max-width:calc(100vw - 32px);text-align:center;text-wrap:balance;font-family:var(--display);font-size:clamp(28px,6vw,44px);line-height:1;font-weight:600;color:var(--led);text-shadow:0 2px 0 #000,0 0 18px rgba(255,182,39,.5);opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;text-transform:uppercase;letter-spacing:.02em}
@@ -110,8 +112,9 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
 .card .l6{color:var(--led)}
 .vols{width:100%;border:1px solid var(--line);border-radius:6px;padding:8px 12px}
 .vols summary{cursor:pointer;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.vols label{display:grid;grid-template-columns:90px 1fr;align-items:center;gap:10px;margin-top:8px;font-size:15px}
+.vols label{display:grid;grid-template-columns:110px 1fr;align-items:center;gap:10px;margin-top:8px;font-size:15px}
 .vols input{width:100%;accent-color:var(--led)}
+.vols .sideBtn{justify-self:start}
 .actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px}
 .best{color:var(--muted);font-size:16px;margin:0}
 .btn{font-family:var(--display);font-size:26px;font-weight:600;line-height:1;padding:12px 22px 7px;border:0;border-radius:4px;background:var(--led);color:#1a1205;cursor:pointer;text-transform:uppercase;letter-spacing:.03em}
@@ -243,9 +246,10 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
       <p id="bestLine" class="best"></p>
     </div>
     <div class="actions">
-    <details class="vols"><summary>Volumen</summary>
+    <details class="vols"><summary>Opciones</summary>
       <label><span>Música</span><input type="range" min="0" max="100" step="5" data-vol="music" id="mVolMusic"></label>
       <label><span>Efectos</span><input type="range" min="0" max="100" step="5" data-vol="sfx" id="mVolSfx"></label>
+      <label class="touchonly"><span>Botón redondo</span><button type="button" class="btn ghost small sideBtn" data-side>A la derecha</button></label>
     </details>
     </div>
   </div>
@@ -301,9 +305,10 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
       <button id="btnQuit" class="btn ghost" type="button">Terminar partido</button>
     </div>
     <div class="actions" style="margin-top:12px">
-    <details class="vols"><summary>Volumen</summary>
+    <details class="vols"><summary>Opciones</summary>
       <label><span>Música</span><input type="range" min="0" max="100" step="5" data-vol="music" id="pVolMusic"></label>
       <label><span>Efectos</span><input type="range" min="0" max="100" step="5" data-vol="sfx" id="pVolSfx"></label>
+      <label class="touchonly"><span>Botón redondo</span><button type="button" class="btn ghost small sideBtn" data-side>A la derecha</button></label>
     </details>
     </div>
   </div>
@@ -769,6 +774,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.62', date: '25 oct 2026', items: [
+    ['Celular', 'En Opciones (menú y pausa) se puede elegir si el botón redondo (sprint, escudo, silbato o avalancha) va a la derecha o a la izquierda de la pantalla. Se guarda en el navegador.'],
+    ['Menú', 'El desplegable de volumen ahora se llama Opciones.'],
+  ] },
   { v: '2.61', date: '25 oct 2026', items: [
     ['Online', 'Se activa la conexión con la base de datos: al terminar cada partido se guardan sus estadísticas, y aparece el ranking por cancha (botón Ranking en el menú y "Subir mi marca" en la planilla).'],
   ] },
@@ -1215,6 +1224,18 @@ document.querySelectorAll('[data-vol]').forEach(i => i.addEventListener('input',
   try { localStorage.setItem('picado-eterno-vol', JSON.stringify(VOL)); } catch (e) {}
   if (i.dataset.vol === 'music' && MUS.playing && MUS.bus && AC) { const g = MUS.bus.master.gain; g.cancelScheduledValues(AC.currentTime); g.setTargetAtTime(.5 * VOL.music, AC.currentTime, .05); }
   if (i.dataset.vol === 'sfx') sfx('gem');
+}));
+// Celular: el botón redondo (sprint, escudo, silbato o avalancha) puede ir a la izquierda o a la derecha
+let sprintLeft = false;
+try { sprintLeft = localStorage.getItem('picado-eterno-lado') === 'izq'; } catch (e) {}
+function applySide() {
+  document.body.classList.toggle('sprint-left', sprintLeft);
+  document.querySelectorAll('[data-side]').forEach(b => { b.textContent = sprintLeft ? 'A la izquierda' : 'A la derecha'; });
+}
+applySide();
+document.querySelectorAll('[data-side]').forEach(b => b.addEventListener('click', () => {
+  sprintLeft = !sprintLeft; applySide();
+  try { localStorage.setItem('picado-eterno-lado', sprintLeft ? 'izq' : 'der'); } catch (e) {}
 }));
 $('btnMute').addEventListener('click', () => { muted = !muted; $('btnMute').textContent = 'Sonido: ' + (muted ? 'no' : 'sí'); });
 // La música arranca apagada: los navegadores no dejan sonar nada hasta que tocás algo, así que la prende el jugador

@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.62 · 25 oct 2026
+
+- **Celular:** En Opciones (menú y pausa) se puede elegir si el botón redondo (sprint, escudo, silbato o avalancha) va a la derecha o a la izquierda de la pantalla. Se guarda en el navegador.
+- **Menú:** El desplegable de volumen ahora se llama Opciones.
+
 ## 2.61 · 25 oct 2026
 
 - **Online:** Se activa la conexión con la base de datos: al terminar cada partido se guardan sus estadísticas, y aparece el ranking por cancha (botón Ranking en el menú y "Subir mi marca" en la planilla).
