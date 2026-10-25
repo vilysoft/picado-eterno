@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.60 · 25 oct 2026
+
+- **Online:** El juego está listo para conectarse a una base de datos: al terminar cada partido puede subir sus estadísticas (cancha, jugador, minuto, técnicas y daño, sin datos personales) y, si querés, tu marca con un apodo a un ranking por cancha. Se activa cuando se configura la base; mientras tanto todo funciona igual que antes.
+
 ## 2.59 · 24 oct 2026
 
 - **Técnicas:** Arreglo: durante la pausa de hidratación y el cambio de lado del alargue, el rondo se quedaba quieto donde estaba en vez de seguirte. Ahora te sigue y sigue pegando.
