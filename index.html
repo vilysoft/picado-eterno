@@ -159,6 +159,15 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
 .ranklist li.me{color:var(--led)}
 .ranklist .rk-min{font-family:var(--display);font-size:20px;font-variant-numeric:tabular-nums}
 .ranklist .rk-sub{font-size:13px;color:var(--muted)}
+.album{max-height:min(52vh,480px);overflow:auto;display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));margin:2px 0 18px;padding-right:6px}
+.album article{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:rgba(255,255,255,.03)}
+.album article.off{border-style:dashed;opacity:.62}
+.album h4{margin:0;font-family:var(--display);font-weight:600;font-size:24px;line-height:1.05;color:var(--led)}
+.album article.off h4{color:var(--muted)}
+.album small{display:block;margin:2px 0 5px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--sky)}
+.album p{margin:0;font-size:15px;line-height:1.3;color:#d5dccf}
+.album p+p{margin-top:5px}
+.album p b{color:var(--led);font-weight:600}
 .ranktabs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px}
 .ranktabs button[aria-selected="true"]{border-color:var(--led);color:var(--led)}
 .log h3 span{font-family:var(--body);font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
@@ -242,6 +251,7 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
       <button id="btnStart" class="btn" type="button">Sacar del medio</button>
       <button id="btnStartShop" class="btn ghost" type="button">Vestuario</button>
       <button id="btnLog" class="btn ghost" type="button">Changelog</button>
+      <button id="btnAlbum" class="btn ghost" type="button">Enciclopedia</button>
       <button id="btnRanking" class="btn ghost" type="button" hidden>Ranking</button>
       <p id="bestLine" class="best"></p>
     </div>
@@ -363,6 +373,19 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
   </div>
 </div>
 
+<div id="album" class="overlay" hidden>
+  <div class="panel">
+    <p class="eyebrow">Lo que fuiste descubriendo en la cancha</p>
+    <h2>Enciclopedia</h2>
+    <div id="albTabs" class="ranktabs" role="tablist"></div>
+    <p id="albCount" class="best"></p>
+    <div id="albList" class="album"></div>
+    <div class="actions">
+      <button id="btnAlbBack" class="btn" type="button">Volver al menú</button>
+    </div>
+  </div>
+</div>
+
 <div id="ranking" class="overlay" hidden>
   <div class="panel small">
     <p class="eyebrow">La mejor marca de cada apodo</p>
@@ -397,6 +420,10 @@ const fmt = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(
 const minuteOf = t => Math.min(120, Math.floor(t / MATCH * 90));
 // Alargue: dos tiempos de 15' a la misma escala (30' = 160 s reales); la dificultad corre 3 veces más rápido
 const ET_LEN = MATCH * 30 / 90, ET_MULT = 3, ET_BOSS_HP = 1.3, ET_BREAK = 3;
+// Alargue cada vez más pesado: por cada minuto pasado el 90', los rivales nuevos pegan 3% más y salen 2% más seguido.
+// En el 95', 100', 110' y 115' entran 2 refuerzos (grandotes con 5 veces la vida, borde dorado y gema celeste)
+const ET_DMG = .03, ET_RATE = .02, ET_ELITE = [95, 100, 110, 115], ET_ELITE_N = 2, ET_ELITE_HP = 5;
+const etMin = () => G.et ? Math.max(0, minuteOf(G.t) - 90) : 0;
 
 // ---------- Pantalla ----------
 let VW = 0, VH = 0, DPR = 1, ZOOM = 1, viewW = 0, viewH = 0;
@@ -524,7 +551,7 @@ function musicStep(i, t) {
   if (pass && bar === 3 && s >= 13) drum(t, 's', B.master, B.noise);   // redoble antes de volver
   if (s % 2 === 0) drum(t, s % 4 ? 'h' : 'H', B.master, B.noise);
 }
-function musicWanted() { return MUS.on && !muted && VOL.music > 0 && (state === 'menu' || state === 'shop' || state === 'changes'); }
+function musicWanted() { return MUS.on && !muted && VOL.music > 0 && (state === 'menu' || state === 'shop' || state === 'changes' || state === 'album'); }
 function musicTick() {
   if (!AC || AC.state !== 'running') return;
   const want = musicWanted(), now = AC.currentTime;
@@ -593,9 +620,9 @@ const PASSIVES = {
   vision:      { name: 'Visión de juego', max: 6, desc: '+35% de distancia para juntar experiencia.', l6: ['Panorama', 'cada 15 s, todas las gemas de la pantalla vuelan hacia vos.'] },
   hidratacion: { name: 'Hidratación', max: 6, desc: 'Recuperás 0,6 de vida por segundo.', l6: ['Isotónica', 'con la vida llena, cada gema te da 10% más de experiencia.'] },
   fisico:      { name: 'Físico', max: 6, desc: '+12% de área en todas tus técnicas.', l6: ['Cuerpo a cuerpo', 'los rivales comunes que te tocan salen empujados.'] },
-  aguante:     { name: 'Aguante', max: 6, desc: '+20% de barra de sprint y se recarga 15% más rápido.', l6: ['Segundo pulmón', 'si te fundís, la barra de sprint se recarga entera en 2 s.'] },
-  arranque:    { name: 'Arranque explosivo', max: 6, desc: '+6% de velocidad al sprintar y gastás 10% menos de barra.', l6: ['Pique corto', 'mientras sprintás, los rivales que te alcanzan por detrás no te pegan.'] },
-  codazo:      { name: 'Codazo', max: 6, desc: 'El rival que te toca se lleva un codazo: le hacés daño (12, +6 por nivel) y sale despedido.', l6: ['Planchazo', 'el codazo también marea 1 s al rival.'] },
+  aguante:     { name: 'Aguante', max: 6, desc: '+21% de barra de sprint y se recarga 15,75% más rápido.', l6: ['Segundo pulmón', 'si te fundís, la barra de sprint se recarga entera en 2 s.'] },
+  arranque:    { name: 'Arranque explosivo', max: 6, desc: '+6,3% de velocidad al sprintar y gastás 10,5% menos de barra.', l6: ['Pique corto', 'mientras sprintás, los rivales que te alcanzan por detrás no te pegan.'] },
+  codazo:      { name: 'Codazo', max: 6, desc: 'El rival que te toca se lleva un codazo: le hacés daño (12,6, +6,3 por nivel) y sale despedido.', l6: ['Planchazo', 'el codazo también marea 1 s al rival.'] },
   canilleras:  { name: 'Canilleras', max: 6, desc: 'Recibís 8% menos de daño de todo: rivales, tarjetas, pelotazos y pisotones.', l6: ['Tobilleras', 'los pisotones, las zonas marcadas en el piso y las embestidas de los jefes te sacan 25% menos.'] },
 };
 // Personajes jugables
@@ -618,6 +645,7 @@ CHARS.barra = { name: 'El Barra', desc: 'Nunca pelea solo: llama a su gente para
   swatch: 'repeating-linear-gradient(90deg,#7cc4ff 0 10px,#f4f7fb 10px 20px,#1d1f1c 20px 24px)',
   traits: ['<b>Avalancha</b> con Shift', 'Arranca con <b>Los pibes</b>', '<i>25% menos de daño en técnicas comunes</i>', '<i>10% menos de vida</i>'] };
 // Daño de las técnicas propias de El Barra (las demás le pegan 25% menos)
+const BOMBO_MAX = 20;   // rivales que puede golpear cada golpe del bombo
 const BARRA_SRC = { pibes: 1, bombo: 1, avalancha: 1, barraAliada: 1 };
 const ALIENTO_KILL = 1.5, AVAL_N = 8;
 const ROJAS_NEED = 50;
@@ -667,6 +695,7 @@ function checkCombos() {
     G.combos[k] = true; nuevos.push(COMBOS[k].name);
   }
   if (!nuevos.length) return;
+  for (const k in G.combos) albumSee('c', k);
   banner('¡Combo activado: ' + nuevos.join(' + ') + '!', true);
   G.rings.push({ x: G.p.x, y: G.p.y, R: 160, life: .6, max: .6, col: '255,182,39' });
   sfx('combo'); cheer = 2.5;
@@ -774,6 +803,14 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.65', date: '30 oct 2026', items: [
+    ['Técnicas', 'El Bombo tiene techo: cada golpe le pega como mucho a los 20 rivales más cercanos (el golpe fuerte del Redoblante, a 30). Con muchos rivales encima ya no escala sin límite.'],
+    ['Físicos', 'Codazo, Aguante y Arranque explosivo rinden 5% más: el codazo pega 12,6 (+6,3 por nivel), Aguante da +21% de barra y 15,75% más de recarga por nivel, y Arranque da +6,3% de velocidad al sprintar y 10,5% menos de gasto por nivel.'],
+    ['Menú', 'Enciclopedia nueva en el menú: rivales, jefes, técnicas, físicos y combos. Lo que todavía no te cruzaste aparece como "???"; las técnicas, los físicos y los combos muestran su nombre y, al descubrirlos, qué hacen y su nivel 6. Los combos muestran desde el principio con qué se arman. Si ya tenías récords, arranca con lo que seguro viste.'],
+    ['Alargue', 'El alargue se pone más pesado a medida que avanza: por cada minuto después del 90\', los rivales que entran pegan 3% más y salen 2% más seguido (en el 120\', 90% más de daño y 60% más de rivales).'],
+    ['Alargue', 'Refuerzos en el 95\', 100\', 110\' y 115\': entran 2 grandotes con borde dorado, 5 veces más vida y 40% más de daño. Cada uno deja una gema celeste grande.'],
+    ['Canchas', 'Se mete un perro en La Cancha del Club: una vez por partido, entre el 28\' y el 36\', un perro entra corriendo y el partido se frena 5 segundos, como en la pausa de hidratación. Los rivales no se mueven ni pegan, y el perro te deja una gema celeste grande que vale 60 de experiencia antes de irse.'],
+  ] },
   { v: '2.64', date: '25 oct 2026', items: [
     ['Jugadores', 'Todos los jugadores arrancan 10% mejor: más vida (143), daño, velocidad, experiencia, distancia para juntar gemas y barra de sprint, y 10% menos de espera en las técnicas. El escudo de El Muro arranca en 66.'],
     ['Vestuario', 'Del nivel 4 en adelante, cada nivel de las mejoras del vestuario rinde 20% menos. Los primeros 3 niveles quedan igual.'],
@@ -1059,10 +1096,10 @@ const CHANGELOG = [
 ];
 const SAVE_KEY = 'picado-eterno-save';
 function loadSave() {
-  const out = { tokens: 0, perm: {}, unlocked: 1, best: {}, last: 0, chars: {}, char: 'diez', rojas: 0, arbWins: {}, sprayAll: false };
+  const out = { tokens: 0, perm: {}, unlocked: 1, best: {}, last: 0, chars: {}, char: 'diez', rojas: 0, arbWins: {}, sprayAll: false, album: null };
   try {
     const s = JSON.parse(localStorage.getItem(SAVE_KEY));
-    if (s && typeof s.tokens === 'number') Object.assign(out, { tokens: s.tokens, perm: s.perm || {}, unlocked: s.unlocked || 1, best: s.best || {}, last: s.last || 0, chars: s.chars || {}, char: s.char || 'diez', rojas: s.rojas || 0, arbWins: s.arbWins || {}, sprayAll: !!s.sprayAll });
+    if (s && typeof s.tokens === 'number') Object.assign(out, { tokens: s.tokens, perm: s.perm || {}, unlocked: s.unlocked || 1, best: s.best || {}, last: s.last || 0, chars: s.chars || {}, char: s.char || 'diez', rojas: s.rojas || 0, arbWins: s.arbWins || {}, sprayAll: !!s.sprayAll, album: s.album || null });
   } catch (e) {}
   // El récord viejo (de antes de las canchas) pasa a El Potrero, que tiene la misma dificultad
   if (!out.best.potrero) {
@@ -1071,6 +1108,17 @@ function loadSave() {
   }
   // Si ya ganaste El Potrero antes de que existiera El Muro, ya lo tenés
   if (out.unlocked >= 2) out.chars.muro = true;
+  // Enciclopedia: lo que ya viste. Si es nueva, se arma con lo que seguro te cruzaste según tus récords
+  if (!out.album) {
+    out.album = { f: {}, b: {}, w: {}, p: {}, c: {} };
+    for (const L of LEVELS) {
+      const b = out.best[L.id]; if (!b) continue;
+      out.album.f.defensor = out.album.f.extremo = 1;
+      if (b.min >= 45) out.album.b[L.bosses[0]] = 1;
+      if (b.min >= 80) out.album.b[L.bosses[1]] = 1;
+    }
+  }
+  for (const k of ['f', 'b', 'w', 'p', 'c']) out.album[k] = out.album[k] || {};
   // Segundo aire ahora tiene un solo nivel: se devuelven las 300 fichas del segundo
   if ((out.perm.suplente || 0) > 1) { out.tokens += 300; out.perm.suplente = 1; }
   return out;
@@ -1100,7 +1148,7 @@ function newGame() {
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '' },   // estadísticas del partido
     weapons: { [CH.start || 'pelota']: 1 }, passives: {}, timers: { [CH.start || 'pelota']: .4 }, sprays: [], rojas: 0, allies: [], bombos: [], rondoAng: 0, rondoBalls: null,
     enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [], fenceGaps: [],
-    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, hitN: 0, runT: 0, garra: 0, garraCd: 0, p5T: 0, panT: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
+    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, dog: null, dogAt: 28 + Math.random() * 8, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, hitN: 0, runT: 0, garra: 0, garraCd: 0, p5T: 0, panT: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
   };
 }
 // Stats de arranque de cualquier personaje, antes del vestuario
@@ -1113,7 +1161,7 @@ function recalc() {
   S.magnet = BASE.magnet * (1 + .35 * l('vision')) * (1 + .12 * pv('lectura'));
   S.regen = .6 * l('hidratacion'); S.area = (1 + .12 * l('fisico')) * CH.area;
   S.armor = 1 - .08 * l('canilleras');          // multiplica todo el daño que recibís
-  S.thorns = l('codazo') ? 6 + 6 * l('codazo') : 0;   // daño de rebote por contacto
+  S.thorns = l('codazo') ? (6 + 6 * l('codazo')) * 1.05 : 0;   // daño de rebote por contacto
   S.xp = BASE.xp * (1 + .06 * pv('inferiores'));
   G.p.maxHp = Math.round(Math.round(BASE.hp * (CH.hp || 1)) + 20 * l('resistencia') + 6 * pv('pretemporada'));
   // Escudo (El Muro)
@@ -1123,10 +1171,10 @@ function recalc() {
   S.whCd = 10;                                    // silbato del árbitro: espera entre pitazos
   S.shDrain = 12;                                 // lo que gasta por segundo mientras está levantado
   // Sprint
-  G.p.stMax = BASE.st * (1 + .2 * l('aguante')) * (1 + .07 * pv('fuelle'));
-  S.stRegen = 16 * (1 + .15 * l('aguante')) * (1 + .08 * pv('fuelle'));
-  S.sprint = 1.4 + .06 * l('arranque') + .03 * pv('zancada');
-  S.stDrain = Math.pow(.9, l('arranque')) * Math.pow(.95, pv('zancada'));
+  G.p.stMax = BASE.st * (1 + .21 * l('aguante')) * (1 + .07 * pv('fuelle'));
+  S.stRegen = 16 * (1 + .1575 * l('aguante')) * (1 + .08 * pv('fuelle'));
+  S.sprint = 1.4 + .063 * l('arranque') + .03 * pv('zancada');
+  S.stDrain = Math.pow(.895, l('arranque')) * Math.pow(.95, pv('zancada'));
 }
 function loadBest() {
   try {
@@ -1198,7 +1246,7 @@ addEventListener('keydown', e => {
   keys[e.code] = true;
   if (e.repeat) return;
   if (e.target.tagName === 'BUTTON' && (e.code === 'Enter' || e.code === 'Space')) return;
-  if ((state === 'changes' || state === 'ranking') && (e.code === 'Escape' || e.code === 'Backspace')) goMenu();
+  if ((state === 'changes' || state === 'ranking' || state === 'album') && (e.code === 'Escape' || e.code === 'Backspace')) goMenu();
   else if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
   else if (state === 'levelup' && /^Digit[123]$/.test(e.code)) pick(+e.code[5] - 1);
   else if (state === 'levelup' && e.code === 'KeyR') reroll();
@@ -1345,6 +1393,69 @@ function openRanking() {
 $('btnRanking').hidden = !online();
 $('btnRanking').addEventListener('click', openRanking);
 $('btnRankBack').addEventListener('click', goMenu);
+// ---------- Enciclopedia ----------
+const ALB_FOES = {
+  defensor:  ['Defensor', 'Todas las canchas', 'El rival de todos los partidos: viene derecho a marcarte.'],
+  extremo:   ['Extremo', 'Todas las canchas', 'Rápido y con poca vida. Llega antes que nadie.'],
+  central:   ['Grandote', 'Todas las canchas', 'Lento y duro. Marca un círculo rojo en el piso y hace un pisotón que pega 30% más que el contacto.'],
+  arbitro:   ['Árbitro', 'Todas las canchas', 'Se queda a distancia y te revolea tarjetas rojas.'],
+  arquero:   ['Arquero', 'Todas las canchas', 'Se te tira a los pies con una palomita. Después de tirarse queda unos segundos en el piso.'],
+  camillero: ['Camilleros', 'La Cancha del Club y El Coloso', 'Dos figuras con una camilla atravesada. Cuando la lona titila se estira para barrer, y la camilla entera pega.'],
+  hincha:    ['Hincha invasor', 'La Cancha del Club', 'Cruza la cancha a toda velocidad por la franja marcada y vuelve por el mismo camino. Si lo eliminás deja una gema celeste grande.'],
+  barra:     ['La barra', 'El Potrero', 'Un grupo de hinchas con gorros que llega corriendo. Son débiles pero muchos, y cada uno deja 3 gemas.'],
+  spidercam: ['Spidercam', 'El Coloso', 'Flota sobre la cancha y baja de golpe donde marca su sombra. Solo la alcanzan los remates.'],
+};
+const ALB_BOSSES = {
+  dueno:    ['El Potrero · entretiempo', 'Patea pelotazos desde media distancia, de a tres cada tanto. Golpeado, siempre de a tres.'],
+  tanque:   ['El Potrero · minuto 80', 'Pisotón gigante si estás cerca y embestida si estás lejos. Golpeado, arranca un pedazo del alambrado y te revolea los escombros.'],
+  capitan:  ['La Cancha del Club · entretiempo', 'Embiste en línea recta. Golpeado, grita "¡Vamos, muchachos!" y llama a 6 compañeros que embisten en fila con él. Si lo encimás, toma carrera.'],
+  tecnico:  ['La Cancha del Club · minuto 80', 'Se queda lejos y hace cambios: mete rivales y acelera a los que tiene cerca. Golpeado, lo echan a la tribuna: ahí no lo podés tocar, pero cada rival suyo que eliminás le baja vida.'],
+  estrella: ['El Coloso · entretiempo', 'Gambetas cortas en diagonal y un abanico de tiros. Golpeada, te tira un caño: te pasa entre las piernas y patea desde atrás tuyo.'],
+  var:      ['El Coloso · minuto 80', 'Marca zonas de revisión alrededor tuyo que después pegan. Golpeado, marca más y retrotrae la jugada: te devuelve adonde estabas 2 s antes.'],
+};
+const ALB_TABS = [['f', 'Rivales'], ['b', 'Jefes'], ['w', 'Técnicas'], ['p', 'Físicos'], ['c', 'Combos']];
+let albTab = 'f';
+function albumSee(cat, k) { const A = SAVE.album[cat]; if (!A[k]) { A[k] = 1; persist(); } }
+function albumSync() {
+  for (const k in G.weapons) albumSee('w', k);
+  for (const k in G.passives) albumSee('p', k);
+  for (const k in G.combos) albumSee('c', k);
+}
+function openAlbum() {
+  state = 'album'; hideAll();
+  const A = SAVE.album[albTab], esc = t => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const card = (on, name, tag, body) => `<article class="${on ? '' : 'off'}"><h4>${esc(name)}</h4>${tag ? `<small>${esc(tag)}</small>` : ''}${body}</article>`;
+  const P = t => `<p>${esc(t)}</p>`, L6 = (n, t) => `<p><b>Nivel 6 · ${esc(n)}:</b> ${esc(t)}</p>`;
+  const only = o => o ? 'Solo ' + CHARS[o].name : '';
+  let items = [];
+  if (albTab === 'f') items = Object.entries(ALB_FOES).map(([k, [n, w, d]]) => card(A[k], A[k] ? n : '???', w, P(A[k] ? d : 'Todavía no te lo cruzaste.')));
+  else if (albTab === 'b') items = Object.entries(ALB_BOSSES).map(([k, [w, d]]) => card(A[k], A[k] ? BOSSES[k].name : '???', w, P(A[k] ? d : 'Todavía no lo enfrentaste.')));
+  else if (albTab === 'w') items = Object.entries(WEAPONS).map(([k, W]) => {
+    // El nivel 6 tiene nombre propio ("Despeje: …") salvo en la Pelota
+    const t = W.desc[5], i = t.indexOf(':'), named = i > 0 && i < 30;
+    const l6 = named ? L6(t.slice(0, i), t.slice(i + 1).trim()) : `<p><b>Nivel 6:</b> ${esc(t)}</p>`;
+    return card(A[k], W.name, only(W.only), A[k] ? P(W.desc[0]) + l6 : P('Todavía no la elegiste.'));
+  });
+  else if (albTab === 'p') items = Object.entries(PASSIVES).map(([k, F]) => card(A[k], F.name, only(F.only), A[k] ? P(F.desc) + (F.l6 ? L6(F.l6[0], F.l6[1]) : '') : P('Todavía no lo elegiste.')));
+  else items = Object.entries(COMBOS).map(([k, C]) => {
+    const need = 'Se arma con ' + C.need.map(([t, n]) => (t === 'w' ? WEAPONS : PASSIVES)[n].name + ' 5').join(' + ');
+    return card(A[k], C.name, need, P(A[k] ? C.desc : 'Todavía no lo activaste.' + (C.desc.startsWith('Solo ') ? ' ' + C.desc.split('.')[0] + '.' : '')));
+  });
+  const all = { f: ALB_FOES, b: ALB_BOSSES, w: WEAPONS, p: PASSIVES, c: COMBOS }[albTab];
+  const tot = Object.keys(all).length, got = Object.keys(all).filter(k => A[k]).length;
+  $('albList').innerHTML = items.join('');
+  $('albCount').textContent = `Descubriste ${got} de ${tot}.`;
+  const tabs = $('albTabs'); tabs.innerHTML = '';
+  for (const [k, n] of ALB_TABS) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'btn ghost small'; b.textContent = n;
+    b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(k === albTab));
+    b.addEventListener('click', () => { albTab = k; openAlbum(); tabs.querySelector('[aria-selected="true"]').focus(); });
+    tabs.appendChild(b);
+  }
+  $('album').hidden = false; $('albList').scrollTop = 0;
+}
+$('btnAlbum').addEventListener('click', openAlbum);
+$('btnAlbBack').addEventListener('click', goMenu);
 function openLog() {
   state = 'changes'; hideAll();
   const esc = t => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -1360,7 +1471,7 @@ $('btnRefund').addEventListener('click', () => {
   $('shopNote').textContent = 'Te devolvimos todas las fichas. Podés repartirlas de nuevo.';
 });
 
-function hideAll() { ['start', 'levelup', 'pause', 'over', 'shop', 'changes', 'etAsk', 'ranking'].forEach(id => $(id).hidden = true); }
+function hideAll() { ['start', 'levelup', 'pause', 'over', 'shop', 'changes', 'etAsk', 'ranking', 'album'].forEach(id => $(id).hidden = true); }
 function askExtra() {
   state = 'etask'; joy = null; G.etAsked = true; sfx('whistle');
   $('etAsk').hidden = false; $('btnEtGo').focus();
@@ -1413,7 +1524,7 @@ function startGame() {
   $('btnSprint').setAttribute('aria-label', CH.sprint ? 'Mantener para sprintar' : CH.whistle ? 'Tocar para pitar con el silbato' : CH.aliento ? 'Tocar para la avalancha cuando el aliento está lleno' : 'Mantener para levantar el escudo');
   bannerQ = []; bannerLock = 0;
   if (SAVE.last !== lvIdx) { SAVE.last = lvIdx; persist(); }
-  updateLoadout(); hud(); sfx('whistle'); banner(LV.start); cheer = 1.5;
+  albumSync(); updateLoadout(); hud(); sfx('whistle'); banner(LV.start); cheer = 1.5;
   last = performance.now();
 }
 function togglePause() {
@@ -1465,6 +1576,8 @@ function update(dt) {
       hideBanner(); sfx('whistle'); cheer = 1.5;   // el aviso lo muestra la pantalla de la pausa
     }
   }
+  // Se metió un perro (solo La Cancha del Club): una vez entre el 28' y el 36', pausa como la de hidratación
+  if (LV.id === 'club' && G.dogAt && !G.hydra && minuteOf(G.t) >= G.dogAt) startDog();
   if (LV.id === 'club' && G.invaders < 2 && minuteOf(G.t) >= 60) {
     if (G.invNext == null) G.invNext = G.t + rnd(2, 10);
     if (G.t >= G.invNext && !G.lane) startInvader();
@@ -1492,7 +1605,8 @@ function update(dt) {
       sfx('dive'); cheer = 2.5;
     }
   }
-  if (G.hydra > 0) G.hydra = Math.max(0, G.hydra - dt);
+  if (G.dog) updateDog(dt);
+  if (G.hydra > 0) { G.hydra = Math.max(0, G.hydra - dt); if (!G.hydra) G.hydraTxt = null; }
   else G.t += dt;
   if (!G.et && G.t >= MATCH) {
     if (etOpen() && !G.etAsked) { G.t = MATCH; askExtra(); } else endScreen(true);
@@ -1508,6 +1622,15 @@ function update(dt) {
       G.etBoss = true;
       for (const b of LV.bosses) { spawn(b); const e = G.enemies[G.enemies.length - 1]; e.hp *= ET_BOSS_HP; e.maxHp *= ET_BOSS_HP; }
       banner("Minuto 105': ¡vuelven los dos jefes, juntos!", true); sfx('boss'); cheer = 3;
+    }
+    const em = minuteOf(G.t);
+    for (const m of ET_ELITE) if (em >= m && !(G.etElite || (G.etElite = {}))[m] && !G.hydra) {
+      G.etElite[m] = true;
+      for (let i = 0; i < ET_ELITE_N; i++) {
+        spawn('central'); const e = G.enemies[G.enemies.length - 1];
+        e.elite = true; e.hp *= ET_ELITE_HP; e.maxHp *= ET_ELITE_HP; e.dmg *= 1.4; e.r *= 1.25;
+      }
+      banner(`Minuto ${m}': ¡entran refuerzos rivales!`); sfx('stomp'); cheer = 2;
     }
     if (G.t >= MATCH + ET_LEN) { endScreen(true); return; }
   }
@@ -1674,12 +1797,13 @@ function spawn(type, x, y, baseHp) {
   if (x == null) [x, y] = ringPos();
   const hp = (baseHp || d.hp) * hpMult() * LV.hp;
   G.enemies.push({
-    type, x, y, r: d.r, hp, maxHp: hp, speed: d.speed * rnd(.9, 1.1), dmg: d.dmg * (1 + ht() / 500) * LV.dmg * MOB_DMG, xp: d.xp,
+    type, x, y, r: d.r, hp, maxHp: hp, speed: d.speed * rnd(.9, 1.1), dmg: d.dmg * (1 + ht() / 500) * LV.dmg * MOB_DMG * (1 + ET_DMG * etMin()), xp: d.xp,
     color: kitFor(type).shirt, num: d.nums.length ? d.nums[Math.random() * d.nums.length | 0] : 0, boss: !!d.boss,
     kx: 0, ky: 0, flash: 0, rcd: 0, cardCd: 1.5 + Math.random(), dead: false,
     skin: SKINS[Math.random() * SKINS.length | 0], hair: HAIRS[Math.random() * HAIRS.length | 0], phase: Math.random() * 6.28,
     mode: 'run', mt: type === 'camillero' ? rnd(2, 3.5) : 0, L: CAM_MIN, ang: Math.atan2(G.p.y - y, G.p.x - x), diveCd: 0, ddx: 1, ddy: 0, acd: 2.5, buff: 0, still: false, aimLine: false, fly: !!d.fly,
   });
+  albumSee(d.boss ? 'b' : 'f', type);
   if (type === 'arquero' && !G.seenGk) { G.seenGk = true; banner('¡Cuidado: el arquero se te tira a los pies!'); }
   if (type === 'spidercam' && !G.seenCamTV) { G.seenCamTV = true; banner('¡Baja la Spidercam: ojo con la sombra!'); }
   if (type === 'camillero' && !G.seenCam) { G.seenCam = true; banner('¡Entran los camilleros: ojo con la camilla!'); }
@@ -1740,9 +1864,62 @@ function startInvader() {
   G.lane = lane;
   banner('¡Un hincha se metió a la cancha!'); sfx('whistle');
 }
+const DOG_S = 5;   // duración de la pausa del perro
+function startDog() {
+  // Entra corriendo desde un costado, se acerca a vos, deja la gema celeste y se va por el otro lado
+  const p = G.p, fromLeft = Math.random() < .5, side = fromLeft ? -1 : 1;
+  const L = -RUN + 10, R = FW + RUN - 10, T = -RUN + 10, B = FH + RUN - 10;
+  const y = clamp(p.y + rnd(-60, 60), T + 30, B - 30);
+  const sx = clamp(p.x + side * 560, L, R), ex = clamp(p.x - side * 600, L, R);
+  const dx = clamp(p.x + side * 150, L + 20, R - 20), dy = clamp(p.y + rnd(-40, 40), T + 20, B - 20);
+  G.dogAt = 0; G.hydra = DOG_S; G.hydraTxt = '¡SE METIÓ UN PERRO A LA CANCHA! · LOS RIVALES NO SE MUEVEN';
+  G.dog = { x: sx, y, pts: [[dx, dy], [ex, y + rnd(-80, 80)]], i: 0, t: 0, dir: -side, dropped: false, sniff: 0 };
+  hideBanner(); sfx('whistle'); cheer = 2;
+}
+function updateDog(dt) {
+  const d = G.dog; d.t += dt;
+  if (d.sniff > 0) {
+    d.sniff -= dt;
+    if (!d.dropped && d.sniff < .35) { d.dropped = true; gem(d.x - d.dir * 14, d.y + 6, HINCHA_GEM, true); for (let i = 0; i < 8; i++) part(d.x, d.y, '#7cc4ff'); }
+    return;
+  }
+  const [tx, ty] = d.pts[d.i], vx = tx - d.x, vy = ty - d.y, l = Math.hypot(vx, vy), sp = 520 * dt;
+  if (Math.abs(vx) > 2) d.dir = Math.sign(vx);
+  if (l <= sp) {
+    d.x = tx; d.y = ty;
+    if (d.i === 0) { d.i = 1; d.sniff = .9; } else G.dog = null;
+  } else { d.x += vx / l * sp; d.y += vy / l * sp; }
+}
+function drawDog(d) {
+  const run = d.sniff > 0 ? 0 : 1, ph = d.t * 22, f = d.dir;
+  ctx.save(); ctx.translate(d.x, d.y); ctx.scale(f * 1.3, 1.3);
+  shadow(0, -6, 13);
+  ctx.strokeStyle = '#5a3a1e'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+  // patas
+  for (const [lx, o] of [[-9, 0], [-5, Math.PI], [7, Math.PI], [11, 0]]) {
+    const sw = run * Math.sin(ph + o) * 5;
+    ctx.beginPath(); ctx.moveTo(lx, -6); ctx.lineTo(lx + sw, 4); ctx.stroke();
+  }
+  // cola que se mueve
+  const tw = Math.sin(d.t * (run ? 14 : 24)) * .6;
+  ctx.beginPath(); ctx.moveTo(-14, -10); ctx.quadraticCurveTo(-20, -14 + tw * 6, -22, -20 + tw * 8); ctx.stroke();
+  // cuerpo
+  ctx.fillStyle = '#a8703d'; ctx.beginPath(); ctx.ellipse(0, -10, 15, 7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#d9b27c'; ctx.beginPath(); ctx.ellipse(2, -7, 8, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+  // cabeza (agachada si olfatea)
+  const hy = d.sniff > 0 ? -8 : -16;
+  ctx.fillStyle = '#a8703d'; ctx.beginPath(); ctx.ellipse(16, hy, 7, 6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(22, hy + 2, 4.5, 3.2, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#5a3a1e'; ctx.beginPath(); ctx.ellipse(13, hy - 3, 3, 6, -.5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#1b1410'; ctx.beginPath(); ctx.arc(26, hy + 1.5, 1.8, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(18, hy - 1.5, 1.2, 0, Math.PI * 2); ctx.fill();
+  // collar celeste
+  ctx.strokeStyle = '#7cc4ff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(11, hy - 3); ctx.lineTo(11, hy + 5); ctx.stroke();
+  ctx.restore();
+}
 function spawnBoss(type) { spawn(type); banner(BOSSES[type].intro); sfx('boss'); cheer = 2; }
 function spawnStep(dt) {
-  G.spawnAcc += (1.3 + ht() * .034) * PACE * LV.rate * MOB_RATE * dt;
+  G.spawnAcc += (1.3 + ht() * .034) * PACE * LV.rate * MOB_RATE * (1 + ET_RATE * etMin()) * dt;
   while (G.spawnAcc >= 1) { G.spawnAcc--; if (G.enemies.length < 420) spawn(pickType(ht())); }
 }
 
@@ -1929,7 +2106,7 @@ function kill(e) {
     banner(BOSSES[e.type].beat); cheer = 3;
     if (e.type === 'var') G.rewind = null;
     if (e.type === 'tecnico') for (const o of G.enemies) if (o.dtTeam) o.buff = 0;
-  } else if (e.type === 'hincha') gem(e.x, e.y, HINCHA_GEM, true);   // gema celeste grande
+  } else if (e.type === 'hincha' || e.elite) gem(e.x, e.y, HINCHA_GEM, true);   // gema celeste grande
   else if (e.type === 'barra') { for (let i = 0; i < 3; i++) gem(e.x + rnd(-14, 14), e.y + rnd(-14, 14), e.xp); }
   else gem(e.x, e.y, e.xp);
   if (e.type === 'hincha') { banner('¡Seguridad se lleva al hincha!'); cheer = 2; }
@@ -1980,11 +2157,16 @@ function updateAllies(dt) {
       b.bt = b.beat; b.hit = .15; b.n++;
       const fuerte = b.roll && b.n % 4 === 0, R = b.R * (fuerte ? 2 : 1), kb = fuerte ? 650 : 240;   // Redoblante
       G.rings.push({ x: b.x, y: b.y, R, life: fuerte ? .45 : .3, max: fuerte ? .45 : .3, col: fuerte ? '255,182,39' : '124,196,255' });
+      // Techo: cada golpe le pega como mucho a los BOMBO_MAX rivales más cercanos (el fuerte, a la mitad más)
+      const hits = [];
       for (const e of G.enemies) {
         if (e.dead || e.fly || e.away) continue;
         const dx = e.x - b.x, dy = e.y - b.y, d = Math.hypot(dx, dy) || 1;
-        if (d < R + e.r) { hitEnemy(e, b.dmg, dx / d * kb, dy / d * kb, 'bombo'); if (b.dizzy && !e.boss && !e.dead) e.dizzy = 1.2; }
+        if (d < R + e.r) hits.push([d, e, dx, dy]);
       }
+      const cap = Math.round(BOMBO_MAX * (fuerte ? 1.5 : 1));
+      if (hits.length > cap) { hits.sort((a, c) => a[0] - c[0]); hits.length = cap; }
+      for (const [d, e, dx, dy] of hits) { hitEnemy(e, b.dmg, dx / d * kb, dy / d * kb, 'bombo'); if (b.dizzy && !e.boss && !e.dead) e.dizzy = 1.2; }
       if (fuerte) { sfx('stomp'); if (!RM) G.shake = Math.max(G.shake, 3); }
       sfx('kick');
     }
@@ -2800,6 +2982,7 @@ function pick(i) {
   if (o.t === 'w') { G.weapons[o.k] = o.l; if (o.l === 1) G.timers[o.k] = .3; }
   else if (o.t === 'p') { G.passives[o.k] = o.l; recalc(); if (o.k === 'resistencia') G.p.hp = Math.min(G.p.maxHp, G.p.hp + 20); if (o.k === 'aguante') G.p.st = Math.min(G.p.stMax, G.p.st + 20); }
   else G.p.hp = Math.min(G.p.maxHp, G.p.hp + 40);
+  albumSync();
   if (G.free > 0) G.free--; else G.pending--;
   checkCombos();
   updateLoadout();
@@ -3562,6 +3745,7 @@ function drawFoe(e) {
   const useDir = e.type === 'hincha' || e.mode === 'cano' || e.mode === 'canoAim' || e.mode === 'dive' || e.mode === 'down' || e.mode === 'charge' || e.mode === 'aimCharge' || (e.mode === 'cast' && e.aimLine);
   const ang = useDir ? Math.atan2(e.ddy, e.ddx) : Math.atan2(G.p.y - e.y, G.p.x - e.x);
   const fl = e.flash > 0, fc = LV.flash;
+  if (e.elite) { ctx.strokeStyle = 'rgba(255,182,39,.95)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 7, 0, Math.PI * 2); ctx.stroke(); }
   if (e.buff > 0) { ctx.strokeStyle = 'rgba(255,211,77,.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 5, 0, Math.PI * 2); ctx.stroke(); }
   drawPerson(e.x, e.y, e.r, ang, still ? 0 : G.t * Math.min(e.speed, 300) * .09 + e.phase, {
     shirt: fl ? fc : K.shirt, sleeve: fl ? fc : (K.sleeve === 'skin' ? e.skin : K.sleeve), stripe: fl ? null : K.stripe, shorts: K.shorts,
@@ -3843,6 +4027,7 @@ function render() {
   if (G.rondoBalls) { const r = 9 * G.stats.area; for (const b of G.rondoBalls) drawBall(b[0], b[1], r, G.rondoAng * 3); }
 
   if (G.allies.length || G.bombos.length) drawAllies(vis);
+  if (G.dog && vis(G.dog.x, G.dog.y, 60)) drawDog(G.dog);
   drawPlayer(p);
   for (const e of G.enemies) if (e.fly && vis(e.x, e.y, 80)) drawFoe(e);
   if (state === 'resume') {

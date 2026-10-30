@@ -2,6 +2,15 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.65 · 30 oct 2026
+
+- **Técnicas:** El Bombo tiene techo: cada golpe le pega como mucho a los 20 rivales más cercanos (el golpe fuerte del Redoblante, a 30). Con muchos rivales encima ya no escala sin límite.
+- **Físicos:** Codazo, Aguante y Arranque explosivo rinden 5% más: el codazo pega 12,6 (+6,3 por nivel), Aguante da +21% de barra y 15,75% más de recarga por nivel, y Arranque da +6,3% de velocidad al sprintar y 10,5% menos de gasto por nivel.
+- **Menú:** Enciclopedia nueva en el menú: rivales, jefes, técnicas, físicos y combos. Lo que todavía no te cruzaste aparece como "???"; las técnicas, los físicos y los combos muestran su nombre y, al descubrirlos, qué hacen y su nivel 6. Los combos muestran desde el principio con qué se arman. Si ya tenías récords, arranca con lo que seguro viste.
+- **Alargue:** El alargue se pone más pesado a medida que avanza: por cada minuto después del 90', los rivales que entran pegan 3% más y salen 2% más seguido (en el 120', 90% más de daño y 60% más de rivales).
+- **Alargue:** Refuerzos en el 95', 100', 110' y 115': entran 2 grandotes con borde dorado, 5 veces más vida y 40% más de daño. Cada uno deja una gema celeste grande.
+- **Canchas:** Se mete un perro en La Cancha del Club: una vez por partido, entre el 28' y el 36', un perro entra corriendo y el partido se frena 5 segundos, como en la pausa de hidratación. Los rivales no se mueven ni pegan, y el perro te deja una gema celeste grande que vale 60 de experiencia antes de irse.
+
 ## 2.64 · 25 oct 2026
 
 - **Jugadores:** Todos los jugadores arrancan 10% mejor: más vida (143), daño, velocidad, experiencia, distancia para juntar gemas y barra de sprint, y 10% menos de espera en las técnicas. El escudo de El Muro arranca en 66.
