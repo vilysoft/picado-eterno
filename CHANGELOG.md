@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.66 · 30 oct 2026
+
+- **Fin del partido:** La planilla del final suma "Cómo fue el partido": un gráfico con los rivales que eliminaste cada 5 minutos y tu nivel a lo largo del partido, cómo terminó tu equipo (técnicas y físicos con su nivel, y combos activados) y los momentos clave con su minuto: jefes eliminados, combos, técnicas o físicos que llegaron a nivel 6, el Segundo aire y si te quedaste con menos del 25% de vida.
+- **Técnicas:** Rondo con carga: cada vuelta completa sin tocar a ningún rival carga una pelota, que se pone dorada. El próximo golpe de una pelota cargada pega 30% más y marea 1,2 s (a los jefes no los marea). Si pasa el tiempo sin tocar a nadie se pueden cargar todas las pelotas del rondo; cualquier toque reinicia la cuenta de la vuelta.
+
 ## 2.65 · 30 oct 2026
 
 - **Técnicas:** El Bombo tiene techo: cada golpe le pega como mucho a los 20 rivales más cercanos (el golpe fuerte del Redoblante, a 30). Con muchos rivales encima ya no escala sin límite.

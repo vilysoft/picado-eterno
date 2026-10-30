@@ -124,6 +124,21 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
 .btn.small{font-size:20px;padding:9px 16px 5px}
 .btn:disabled{opacity:.4;cursor:default;filter:none}
 
+.mchart{display:block;margin:4px 0 10px}
+.mlegend{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.mlegend i{display:inline-block;width:12px;height:8px;margin-left:6px}
+.mlegend .lb{background:rgba(124,196,255,.55)}.mlegend .ll{height:2px;background:#ffb627}
+.mbuild{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.mchip{font-size:13px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:#d5dccf}
+.mchip b{color:var(--led);font-weight:600}
+.mchip.tec{border-color:rgba(124,196,255,.5)}.mchip.fis{border-color:rgba(213,220,207,.35)}
+.mchip.cmb{border-color:rgba(255,182,39,.7);color:var(--led)}
+.mchip.max{background:rgba(255,182,39,.14)}
+.mevents{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.mevents li{display:grid;grid-template-columns:44px 1fr;gap:8px;font-size:15px;color:#d5dccf}
+.mevents li b{font-family:var(--display);font-weight:600;font-size:20px;line-height:1;color:var(--sky)}
+.mevents li.boss span,.mevents li.combo span{color:var(--led)}
+.mevents li.low span{color:#ff8a7a}
 .earn{border:1px solid var(--line);border-radius:4px;padding:12px 14px;margin:0 0 20px}
 .earnhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:6px}
 .earnhead b,.wallet b{font-family:var(--display);font-size:40px;line-height:1;font-weight:600;color:var(--led);font-variant-numeric:tabular-nums}
@@ -346,6 +361,12 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
       <div><dt>Nivel</dt><dd id="oLvl">1</dd></div>
       <div><dt>Rivales</dt><dd id="oKills">0</dd></div>
     </dl>
+    <div class="earn">
+      <div class="earnhead"><span class="lbl">Cómo fue el partido</span><span class="mlegend"><i class="lb"></i>Eliminados cada 5' <i class="ll"></i>Nivel</span></div>
+      <canvas id="mChart" class="mchart" aria-label="Rivales eliminados cada 5 minutos y nivel a lo largo del partido"></canvas>
+      <div id="mBuild" class="mbuild"></div>
+      <ol id="mEvents" class="mevents"></ol>
+    </div>
     <div class="earn">
       <div class="earnhead"><span class="lbl">Daño de tus técnicas</span><b id="dmgTotal">0</b></div>
       <div id="statList"></div>
@@ -580,7 +601,7 @@ const WEAPONS = {
     '+1 rebote por pelota.', '+1 pelota en cada patada.', '+40% de daño.',
     '+1 pelota en cada patada.', '+1 rebote y +40% de daño.'] },
   rondo: { name: 'Rondo', max: 6, desc: [
-    'Tres pelotas giran a tu alrededor y golpean a quien se acerque.',
+    'Tres pelotas giran a tu alrededor y golpean a quien se acerque. Cada vuelta sin tocar a nadie carga una pelota: su próximo golpe pega 30% más y marea.',
     '+1 pelota girando.', '+35% de daño.', '+1 pelota y giran más rápido.', '+1 pelota y +35% de daño.',
     'Despeje: cada pelota del rondo empuja bien lejos a los rivales que toca.'] },
   barrida: { name: 'Barrida', max: 6, desc: [
@@ -696,6 +717,7 @@ function checkCombos() {
   }
   if (!nuevos.length) return;
   for (const k in G.combos) albumSee('c', k);
+  matchEv('Combo: ' + nuevos.join(' + '), 'combo');
   banner('¡Combo activado: ' + nuevos.join(' + ') + '!', true);
   G.rings.push({ x: G.p.x, y: G.p.y, R: 160, life: .6, max: .6, col: '255,182,39' });
   sfx('combo'); cheer = 2.5;
@@ -803,6 +825,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.66', date: '30 oct 2026', items: [
+    ['Fin del partido', 'La planilla del final suma "Cómo fue el partido": un gráfico con los rivales que eliminaste cada 5 minutos y tu nivel a lo largo del partido, cómo terminó tu equipo (técnicas y físicos con su nivel, y combos activados) y los momentos clave con su minuto: jefes eliminados, combos, técnicas o físicos que llegaron a nivel 6, el Segundo aire y si te quedaste con menos del 25% de vida.'],
+    ['Técnicas', 'Rondo con carga: cada vuelta completa sin tocar a ningún rival carga una pelota, que se pone dorada. El próximo golpe de una pelota cargada pega 30% más y marea 1,2 s (a los jefes no los marea). Si pasa el tiempo sin tocar a nadie se pueden cargar todas las pelotas del rondo; cualquier toque reinicia la cuenta de la vuelta.'],
+  ] },
   { v: '2.65', date: '30 oct 2026', items: [
     ['Técnicas', 'El Bombo tiene techo: cada golpe le pega como mucho a los 20 rivales más cercanos (el golpe fuerte del Redoblante, a 30). Con muchos rivales encima ya no escala sin límite.'],
     ['Físicos', 'Codazo, Aguante y Arranque explosivo rinden 5% más: el codazo pega 12,6 (+6,3 por nivel), Aguante da +21% de barra y 15,75% más de recarga por nivel, y Arranque da +6,3% de velocidad al sprintar y 10,5% menos de gasto por nivel.'],
@@ -1145,8 +1171,8 @@ function newGame() {
     p: { x: FW / 2, y: FH / 2, r: CH.r, sh: CH.shield, shMax: CH.shield, shCd: 0, shHit: 0, shOn: false, shBroken: false, hp: 100, maxHp: 100, inv: 0, fx: 1, fy: 0, step: 0, st: 100, stMax: 100, stCd: 0, tired: false, sprinting: false, wh: 0, whPrev: false, al: 0 },
     stats: { armor: 1, thorns: 0, dmg: 1, speed: 1, cd: 1, magnet: 1, regen: 0, area: 1, xp: 1, sprint: 1.4, stRegen: 16, stDrain: 1 },
     bossKills: 0, free: 0, revives: 0, rerolls: 0, combos: {},
-    rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '' },   // estadísticas del partido
-    weapons: { [CH.start || 'pelota']: 1 }, passives: {}, timers: { [CH.start || 'pelota']: .4 }, sprays: [], rojas: 0, allies: [], bombos: [], rondoAng: 0, rondoBalls: null,
+    rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '', tl: [[0, 0, 1, 1]], lastM: 0, ev: [], low: 1, lowM: 0 },   // estadísticas del partido
+    weapons: { [CH.start || 'pelota']: 1 }, passives: {}, timers: { [CH.start || 'pelota']: .4 }, sprays: [], rojas: 0, allies: [], bombos: [], rondoAng: 0, rondoBalls: null, rondoSpin: 0, rondoCh: [],
     enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [], fenceGaps: [],
     spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, dog: null, dogAt: 28 + Math.random() * 8, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, hitN: 0, runT: 0, garra: 0, garraCd: 0, p5T: 0, panT: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
   };
@@ -1608,6 +1634,9 @@ function update(dt) {
   if (G.dog) updateDog(dt);
   if (G.hydra > 0) { G.hydra = Math.max(0, G.hydra - dt); if (!G.hydra) G.hydraTxt = null; }
   else G.t += dt;
+  // Planilla: una foto por minuto de partido (rivales eliminados, nivel y vida)
+  const mNow = minuteOf(G.t);
+  if (mNow !== G.rec.lastM) { G.rec.lastM = mNow; G.rec.tl.push([mNow, G.kills, G.level, Math.max(0, p.hp) / p.maxHp]); }
   if (!G.et && G.t >= MATCH) {
     if (etOpen() && !G.etAsked) { G.t = MATCH; askExtra(); } else endScreen(true);
     return;
@@ -1737,7 +1766,7 @@ function update(dt) {
 
   if (p.hp <= 0) {
     if (G.revives > 0) {
-      G.revives--; p.hp = p.maxHp * .35; p.inv = 2;
+      G.revives--; p.hp = p.maxHp * .35; p.inv = 2; matchEv('Segundo aire: volviste a la cancha');
       G.rings.push({ x: p.x, y: p.y, R: 220, life: .5, max: .5 });
       for (const e of G.enemies) {
         const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1;
@@ -1974,7 +2003,17 @@ function fireWeapons(dt) {
   G.sprays = G.sprays.filter(L => L.life > 0);
   for (const k in G.weapons) {
     const w = wp(k, G.weapons[k]);
-    if (k === 'rondo') { G.rondoAng += w.spin / S.cd * dt; continue; }   // Ritmo de juego: gira más rápido
+    if (k === 'rondo') {
+      const da = w.spin / S.cd * dt;   // Ritmo de juego: gira más rápido
+      G.rondoAng += da;
+      // Carga: cada vuelta completa sin tocar a nadie carga una pelota más, hasta cargarlas todas
+      if (G.rondoCh.filter(Boolean).length < w.count && (G.rondoSpin += da) >= Math.PI * 2) {
+        G.rondoSpin -= Math.PI * 2;
+        const i = Array.from({ length: w.count }, (_, j) => j).find(j => !G.rondoCh[j]);
+        G.rondoCh[i] = true; sfx('gem');
+      }
+      continue;
+    }
     G.timers[k] = (G.timers[k] || 0) - dt;
     if (G.timers[k] > 0) continue;
     if (k === 'pelota') {
@@ -2103,7 +2142,7 @@ function kill(e) {
     for (let i = 0; i < 10; i++) gem(e.x + rnd(-40, 40), e.y + rnd(-40, 40), 5);
     G.p.hp = Math.min(G.p.maxHp, G.p.hp + G.p.maxHp * .4);
     for (const g of G.gems) g.pull = true;
-    banner(BOSSES[e.type].beat); cheer = 3;
+    banner(BOSSES[e.type].beat); cheer = 3; matchEv('Eliminaste a ' + BOSSES[e.type].name, 'boss');
     if (e.type === 'var') G.rewind = null;
     if (e.type === 'tecnico') for (const o of G.enemies) if (o.dtTeam) o.buff = 0;
   } else if (e.type === 'hincha' || e.elite) gem(e.x, e.y, HINCHA_GEM, true);   // gema celeste grande
@@ -2273,7 +2312,8 @@ function hurt(n, heavy) {
   if ((G.passives.resistencia || 0) >= 6 && G.garraCd <= 0 && p.hp - n < p.maxHp * .25 && p.hp - n > 0) {
     G.garra = 5; G.garraCd = 30; G.texts.push({ x: p.x, y: p.y - p.r - 26, txt: '¡GARRA!', life: 1, big: true });
   }
-  p.hp -= n; p.inv = G.ttInv ? 1.05 : .55; G.ttInv = false; G.hurtFlash = .25; sfx('hurt');
+  p.hp -= n; if (p.hp > 0 && p.hp / p.maxHp < G.rec.low) { G.rec.low = p.hp / p.maxHp; G.rec.lowM = minuteOf(G.t); }
+  p.inv = G.ttInv ? 1.05 : .55; G.ttInv = false; G.hurtFlash = .25; sfx('hurt');
   if (!RM) G.shake = 8;
 }
 
@@ -2445,14 +2485,21 @@ function rondoGeom() {
   G.rondoBalls = rb;
   return { rb, rw, rR, rbr };
 }
+const RONDO_CH = 1.3, RONDO_DIZZY = 1.2;   // pelota cargada del rondo: daño extra y segundos de mareo
 function rondoHit(e, dx, dy, d, RG) {
   const { rb, rw, rR, rbr } = RG, S = G.stats;
   if (e.rcd > 0 || Math.abs(d - rR) >= e.r + rbr) return;
-  for (const b of rb) {
-    const bx = e.x - b[0], by = e.y - b[1];
+  for (let i = 0; i < rb.length; i++) {
+    const b = rb[i], bx = e.x - b[0], by = e.y - b[1];
     if (bx * bx + by * by < (e.r + rbr) ** 2) {
+      // Pelota cargada: pega 30% más y marea; cualquier toque reinicia la cuenta de la vuelta
+      const ch = G.rondoCh[i]; G.rondoCh[i] = false; G.rondoSpin = 0;
       // Empuje hacia afuera (desde vos hacia el rival); en nivel 6 lo despeja lejos
-      hitEnemy(e, rw.dmg * S.dmg, -dx / d * rw.push, -dy / d * rw.push, 'rondo'); e.rcd = .45 * S.cd;
+      hitEnemy(e, rw.dmg * S.dmg * (ch ? RONDO_CH : 1), -dx / d * rw.push, -dy / d * rw.push, 'rondo'); e.rcd = .45 * S.cd;
+      if (ch) {
+        if (!e.boss && !e.dead) e.dizzy = Math.max(e.dizzy || 0, RONDO_DIZZY);
+        G.rings.push({ x: b[0], y: b[1], R: 26 * S.area, life: .3, max: .3, col: '255,211,77' });
+      }
       if (rw.push > 200) G.rings.push({ x: b[0], y: b[1], R: 18 * S.area, life: .2, max: .2 });
       break;
     }
@@ -2983,6 +3030,7 @@ function pick(i) {
   else if (o.t === 'p') { G.passives[o.k] = o.l; recalc(); if (o.k === 'resistencia') G.p.hp = Math.min(G.p.maxHp, G.p.hp + 20); if (o.k === 'aguante') G.p.st = Math.min(G.p.stMax, G.p.st + 20); }
   else G.p.hp = Math.min(G.p.maxHp, G.p.hp + 40);
   albumSync();
+  if (o.l === 6) matchEv((o.t === 'w' ? WEAPONS : PASSIVES)[o.k].name + ' llegó a nivel 6', 'l6');
   if (G.free > 0) G.free--; else G.pending--;
   checkCombos();
   updateLoadout();
@@ -3012,6 +3060,46 @@ function hud() {
 }
 const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', onda: 'Onda expansiva', tiroLibre: 'Tiro libre', tresDedos: 'Tres dedos', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta', olimpico: 'Gol olímpico', contragolpe: 'Contragolpe', pique: 'Pique al vacío', barrera: 'Barrera (llamarada)', dtTeam: 'Equipo del DT desarmado', pibes: 'Los pibes', bombo: 'El Bombo', avalancha: 'Avalancha', barraAliada: 'La barra aliada', roja: 'Tarjeta roja', spray: 'Spray de distancia' };
 const nf = n => Math.round(n).toLocaleString('es-AR');
+function matchEv(txt, k) { G.rec.ev.push([minuteOf(G.t), txt, k || '']); }
+// Planilla del final: gráfico del partido, cómo quedó tu equipo y los momentos clave
+function renderMatch() {
+  const R = G.rec, end = minuteOf(G.t);
+  const tl = R.tl.filter(r => r[0] <= end).concat([[end, G.kills, G.level, Math.max(0, G.p.hp) / G.p.maxHp]]);
+  // Gráfico: barras = rivales eliminados cada 5 minutos; línea = nivel
+  const cv = $('mChart'), W = Math.max(200, cv.parentElement.clientWidth - 30), H = 120, dpr = Math.min(2, devicePixelRatio || 1);
+  cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  const c = cv.getContext('2d'); c.scale(dpr, dpr); c.clearRect(0, 0, W, H);
+  const span = Math.max(end, 90), B = 5, nb = Math.ceil(span / B), x0 = 4, x1 = W - 4, y0 = H - 18, y1 = 8;
+  const killsAt = m => { let k = 0; for (const r of tl) if (r[0] <= m) k = r[1]; return k; };
+  const bars = Array.from({ length: nb }, (_, i) => i * B >= end ? null : killsAt(Math.min(end, (i + 1) * B)) - killsAt(i * B));
+  const maxB = Math.max(1, ...bars.filter(v => v != null)), bw = (x1 - x0) / nb;
+  c.fillStyle = 'rgba(124,196,255,.55)';
+  bars.forEach((v, i) => { if (v == null) return; const h = (y0 - y1) * v / maxB; c.fillRect(x0 + i * bw + 1, y0 - h, bw - 2, h); });
+  // Marcas: entretiempo, 90' y alargue
+  c.strokeStyle = 'rgba(255,255,255,.18)'; c.lineWidth = 1; c.fillStyle = 'rgba(213,220,207,.7)'; c.font = '11px system-ui, sans-serif'; c.textAlign = 'center';
+  for (const m of [0, 45, 90, 105, 120]) {
+    if (m > span) continue;
+    const x = x0 + (x1 - x0) * m / span;
+    if (m) { c.beginPath(); c.moveTo(x, y1); c.lineTo(x, y0); c.stroke(); }
+    c.fillText(m + "'", clamp(x, 12, W - 14), H - 4);
+  }
+  const maxL = Math.max(2, ...tl.map(r => r[2]));
+  c.strokeStyle = '#ffb627'; c.lineWidth = 2; c.beginPath();
+  tl.forEach((r, i) => { const x = x0 + (x1 - x0) * r[0] / span, y = y0 - (y0 - y1) * r[2] / maxL; i ? c.lineTo(x, y) : c.moveTo(x, y); });
+  c.stroke();
+  // Equipo final
+  const esc = t => t.replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  const chip = (n, l, cls) => `<span class="mchip ${cls}${l >= 6 ? ' max' : ''}">${esc(n)}${l ? ' <b>' + l + '</b>' : ''}</span>`;
+  const ws = Object.entries(G.weapons).map(([k, l]) => chip(WEAPONS[k].name, l, 'tec'));
+  const ps = Object.entries(G.passives).map(([k, l]) => chip(PASSIVES[k].name, l, 'fis'));
+  const cs = Object.keys(G.combos).map(k => chip(COMBOS[k].name, 0, 'cmb'));
+  $('mBuild').innerHTML = ws.concat(ps, cs).join('');
+  // Momentos
+  const ev = R.ev.slice();
+  if (R.low < .25) ev.push([R.lowM, `Te quedaste con ${Math.max(1, Math.round(R.low * 100))}% de vida`, 'low']);
+  ev.sort((a, b) => a[0] - b[0]);
+  $('mEvents').innerHTML = ev.length ? ev.map(([m, t, k]) => `<li class="${k}"><b>${m}'</b><span>${esc(t)}</span></li>`).join('') : '<li><b></b><span>Un partido tranquilo: sin jefes, combos ni niveles 6.</span></li>';
+}
 function renderStats(el, full) {
   const R = G.rec;
   const rows = Object.keys(R.dmg).map(k => [k, R.dmg[k]]).sort((a, b) => b[1] - a[1]);
@@ -3083,7 +3171,7 @@ function endScreen(won) {
   $('earnList').innerHTML = earn.map(([k, v]) => `<div><dt>${k}</dt><dd>+${v}</dd></div>`).join('');
   sendMatch(won); setupRankBox();
   $('overBest').textContent = (isBest ? `¡Nuevo récord en ${LV.name}!` : `Tu récord acá: minuto ${best.min}' y ${best.kills} rivales.`) + ` Tenés ${SAVE.tokens} fichas.`;
-  hideAll(); $('hud').hidden = true; $('over').hidden = false;
+  hideAll(); $('hud').hidden = true; $('over').hidden = false; renderMatch();
 }
 
 // ---------- Dibujo ----------
@@ -4024,7 +4112,17 @@ function render() {
     }
     drawBall(s.x, s.y, s.r, s.rot, s.tiki ? '#ffb627' : null);
   }
-  if (G.rondoBalls) { const r = 9 * G.stats.area; for (const b of G.rondoBalls) drawBall(b[0], b[1], r, G.rondoAng * 3); }
+  if (G.rondoBalls) {
+    const r = 9 * G.stats.area;
+    G.rondoBalls.forEach((b, i) => {
+      if (G.rondoCh[i]) {
+        // Cargada: dorada con un halo que late
+        ctx.strokeStyle = `rgba(255,211,77,${.45 + .3 * Math.sin(G.rt * 10)})`; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(b[0], b[1], r + 4, 0, Math.PI * 2); ctx.stroke();
+      }
+      drawBall(b[0], b[1], r, G.rondoAng * 3, G.rondoCh[i] ? '#ffd34d' : null);
+    });
+  }
 
   if (G.allies.length || G.bombos.length) drawAllies(vis);
   if (G.dog && vis(G.dog.x, G.dog.y, 60)) drawDog(G.dog);
