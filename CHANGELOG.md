@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.73 · 30 oct 2026
+
+- **Arreglos:** Si subías de nivel justo cuando te pegaban, la pantalla se quedaba vibrando mientras elegías la mejora. Ahora queda quieta (el tinte rojo puede quedar hasta que sigue el partido). Lo mismo en la pausa.
+
 ## 2.72 · 30 oct 2026
 
 - **Día de lluvia:** Parado en un charco hacés 20% más de daño con todo, pero también recibís 20% más. Mientras estás en un charco se ve un anillo celeste a tus pies.
