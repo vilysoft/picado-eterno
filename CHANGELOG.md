@@ -2,6 +2,19 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.70 · 30 oct 2026
+
+- **Día de lluvia:** Modo nuevo que se activa en el menú, abajo de las canchas, y vale para cualquier cancha. Da 40% más de fichas y guarda récord y ranking aparte.
+- **Día de lluvia:** Charcos: al pisarlos resbalás y seguís de largo un rato. A los rivales les pasa lo mismo, así que un rival que te embiste y cae en un charco sigue de largo. Arrancan pocos y van apareciendo más a medida que avanza el partido.
+- **Día de lluvia:** Barro: frena 30% a todos. En El Potrero la tierra se hace barro en varias zonas.
+- **Día de lluvia:** Rayos: marcan un círculo amarillo y caen al segundo. Solo te dañan a vos. Si caen en un charco lo electrifican y te dañan si estás adentro.
+- **Día de lluvia:** Ráfagas de viento: una flecha avisa la dirección y después empujan a todos para ese lado y desvían tus remates (Pelota, Tiro libre y Tres dedos).
+- **Día de lluvia:** Poca visibilidad: cortina de lluvia, pantalla más oscura y el flash de los relámpagos. La tormenta arranca como llovizna y empeora hasta el 90'.
+- **Día de lluvia:** Rival nuevo: el embarrado, un grandote que deja una estela de barro por donde pasa.
+- **Día de lluvia:** Un evento por cancha entre el 50' y el 70': en El Potrero se corta la luz del barrio y por unos segundos solo ves cerca tuyo; en La Cancha del Club sale el utilero con el secador, deja una franja seca donde no caen rayos y te deja una gema celeste; en El Coloso cierran el techo y para la lluvia un rato.
+- **Vestuario:** Tapones largos (3 niveles): resbalás menos en los charcos y el barro te frena menos.
+- **Base de datos:** Hay que correr `supabase/lluvia.sql` una vez para que las partidas y los récords con lluvia se guarden y para el ranking aparte.
+
 ## 2.69 · 30 oct 2026
 
 - **Técnicas:** Rondo mejorado: 20% más de daño de entrada (20,3 por golpe en vez de 16,9), pelotas 15% más grandes, y la ronda ya no es fija: las pelotas se alejan y se acercan a vos mientras giran (hasta 20% más lejos o más cerca), así barren más espacio.

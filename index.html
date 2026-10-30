@@ -183,6 +183,8 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
 .album p{margin:0;font-size:15px;line-height:1.3;color:#d5dccf}
 .album p+p{margin-top:5px}
 .album p b{color:var(--led);font-weight:600}
+.rainrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0 2px;font-size:14px;color:var(--muted)}
+.rainrow button[aria-pressed="true"]{border-color:var(--sky);color:var(--sky);background:rgba(124,196,255,.1)}
 .ranktabs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px}
 .ranktabs button[aria-selected="true"]{border-color:var(--led);color:var(--led)}
 .log h3 span{font-family:var(--body);font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
@@ -255,6 +257,10 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
     <div id="chars" class="levels chars"></div>
     <p class="eyebrow">Elegí la cancha · teclas 1, 2 o 3</p>
     <div id="levels" class="levels"></div>
+    <div class="rainrow">
+      <button id="btnRain" class="btn ghost small" type="button" aria-pressed="false">☔ Día de lluvia: no</button>
+      <span>Charcos que resbalan, barro, rayos, viento y poca visibilidad, en cualquier cancha. 40% más de fichas y récord aparte.</span>
+    </div>
     <p id="etLine" class="best" style="margin:8px 0 14px"></p>
     <dl class="ficha">
       <div><dt>Duración</dt><dd>90' = 8 min reales</dd></div>
@@ -488,6 +494,8 @@ function sfx(n) {
     case 'combo': [392, 523, 659, 784, 1046].forEach((f, i) => tone(f, f * 1.01, .16, 'square', .05, i * .06)); break;
     case 'shield': tone(700, 1100, .1, 'triangle', .05); break;
     case 'zap': tone(1200, 300, .18, 'sawtooth', .05); break;
+    case 'thunder': tone(90, 28, 1.1, 'sawtooth', .13); tone(55, 30, 1.4, 'sine', .25, .05); tone(1800, 200, .12, 'square', .03); break;
+    case 'wind': tone(260, 140, .9, 'triangle', .035); tone(320, 180, .9, 'triangle', .025, .25); break;
     case 'cheer': break;
     case 'level': [523, 659, 784, 1046].forEach((f, i) => tone(f, f, .12, 'triangle', .08, i * .07)); break;
     case 'card': tone(340, 190, .08, 'triangle', .035); break;          // tarjeta: un "fsst" corto y grave
@@ -671,6 +679,7 @@ const BARRA_SRC = { pibes: 1, bombo: 1, avalancha: 1, barraAliada: 1 };
 const ALIENTO_KILL = 1.5, AVAL_N = 8;
 const ROJAS_NEED = 50;
 // El alargue se abre al llegar al 90' en las 3 canchas, con cualquier jugador
+const bestKey = (id, rain) => rain ? 'lluvia_' + id : id;
 const etWon = () => LEVELS.filter(L => SAVE.best[L.id] && SAVE.best[L.id].min >= 90).length;
 const etOpen = () => ALL_OPEN || etWon() >= LEVELS.length;
 // El Spray de distancia se libera para todos al ganar las 3 canchas con El Árbitro
@@ -756,6 +765,7 @@ const FOES = {
   camillero: { r: 32, hp: 60, speed: 62, dmg: 12, xp: 5, color: '#f2f2ec', nums: [] },
   hincha:    { r: 13, hp: 40, speed: 820, dmg: 26, xp: 20, color: '#7b4bc9', nums: [] },
   barra:     { r: 12, hp: 16, speed: 165, dmg: 5, xp: 2, color: '#22262e', nums: [] },
+  embarrado: { r: 19, hp: 55, speed: 56, dmg: 13, xp: 4, color: '#6b4a2b', nums: [] },
   spidercam: { r: 16, hp: 70, speed: 76, dmg: 14, xp: 8, color: '#2b2f36', nums: [], fly: true },
   capitan:  { r: 34, hp: 900, speed: 78, dmg: 22, xp: 50, color: '#5b34a8', nums: [9], boss: true },
   dueno:    { r: 32, hp: 850, speed: 70, dmg: 20, xp: 50, color: '#e8e1cf', nums: [], boss: true },
@@ -777,6 +787,7 @@ const KITS = {
   guardia:   { shirt: '#ffd34d', sleeve: '#ffd34d', shorts: '#1d1f1c' },
   spidercam: { shirt: '#2b2f36', sleeve: '#2b2f36', shorts: '#2b2f36' },
   barra:     { shirt: '#22262e', sleeve: '#22262e', shorts: '#3b5a8a' },
+  embarrado: { shirt: '#6b4a2b', sleeve: '#5a3d22', stripe: '#8a6440', shorts: '#4a3420' },
   capitan:  { shirt: '#5b34a8', sleeve: '#5b34a8', stripe: '#4a2a85', shorts: '#1d1f1c' },
   dueno:    { shirt: '#e8e1cf', sleeve: 'skin', shorts: '#2b4c8c' },
   tanque:   { shirt: '#5b4636', sleeve: '#5b4636', stripe: '#4a3a2c', shorts: '#1d1f1c' },
@@ -821,10 +832,22 @@ const PERMS = {
   zancada:      { name: 'Zancada', max: 6, only: 'diez', desc: '+3% de velocidad al sprintar y gastás 5% menos de barra.', cost: [20, 35, 55, 80, 120, 170] },
   blindaje:     { name: 'Blindaje', max: 6, only: 'muro', desc: '+7 de barra de escudo.', cost: [20, 35, 55, 80, 120, 170] },
   recuperacion: { name: 'Recuperación', max: 6, only: 'muro', desc: 'El escudo se recarga 15% más rápido y empieza 0,2 s antes.', cost: [20, 35, 55, 80, 120, 170] },
+  tapones2:     { name: 'Tapones largos', max: 3, desc: 'Para los días de lluvia: resbalás 25% menos en los charcos y el barro te frena 20% menos.', cost: [40, 80, 140] },
   suplente:     { name: 'Segundo aire', max: 1, desc: 'Una vez por partido: si te quedás sin vida, volvés con el 35%.', cost: [150] },
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.70', date: '30 oct 2026', items: [
+    ['Día de lluvia', 'Modo nuevo que se activa en el menú, abajo de las canchas, y vale para cualquier cancha. Da 40% más de fichas y guarda récord y ranking aparte.'],
+    ['Día de lluvia', 'Charcos: al pisarlos resbalás y seguís de largo un rato. A los rivales les pasa lo mismo, así que un rival que te embiste y cae en un charco sigue de largo. Arrancan pocos y van apareciendo más a medida que avanza el partido.'],
+    ['Día de lluvia', 'Barro: frena 30% a todos. En El Potrero la tierra se hace barro en varias zonas.'],
+    ['Día de lluvia', 'Rayos: marcan un círculo amarillo y caen al segundo. Solo te dañan a vos. Si caen en un charco lo electrifican y te dañan si estás adentro.'],
+    ['Día de lluvia', 'Ráfagas de viento: una flecha avisa la dirección y después empujan a todos para ese lado y desvían tus remates (Pelota, Tiro libre y Tres dedos).'],
+    ['Día de lluvia', 'Poca visibilidad: cortina de lluvia, pantalla más oscura y el flash de los relámpagos. La tormenta arranca como llovizna y empeora hasta el 90\'.'],
+    ['Día de lluvia', 'Rival nuevo: el embarrado, un grandote que deja una estela de barro por donde pasa.'],
+    ['Día de lluvia', 'Un evento por cancha entre el 50\' y el 70\': en El Potrero se corta la luz del barrio y por unos segundos solo ves cerca tuyo; en La Cancha del Club sale el utilero con el secador, deja una franja seca donde no caen rayos y te deja una gema celeste; en El Coloso cierran el techo y para la lluvia un rato.'],
+    ['Vestuario', 'Tapones largos (3 niveles): resbalás menos en los charcos y el barro te frena menos.'],
+  ] },
   { v: '2.69', date: '30 oct 2026', items: [
     ['Técnicas', 'Rondo mejorado: 20% más de daño de entrada (20,3 por golpe en vez de 16,9), pelotas 15% más grandes, y la ronda ya no es fija: las pelotas se alejan y se acercan a vos mientras giran (hasta 20% más lejos o más cerca), así barren más espacio.'],
   ] },
@@ -1177,13 +1200,13 @@ const HYDRA_S = 6;          // duración de la pausa de hidratación   // pausa 
 function newGame() {
   return {
     t: 0, kills: 0, level: 1, xp: 0, xpNext: xpFor(1), pending: 0,
-    p: { x: FW / 2, y: FH / 2, r: CH.r, sh: CH.shield, shMax: CH.shield, shCd: 0, shHit: 0, shOn: false, shBroken: false, hp: 100, maxHp: 100, inv: 0, fx: 1, fy: 0, step: 0, st: 100, stMax: 100, stCd: 0, tired: false, sprinting: false, wh: 0, whPrev: false, al: 0 },
+    p: { x: FW / 2, y: FH / 2, r: CH.r, sh: CH.shield, shMax: CH.shield, shCd: 0, shHit: 0, shOn: false, shBroken: false, hp: 100, maxHp: 100, inv: 0, fx: 1, fy: 0, step: 0, st: 100, stMax: 100, stCd: 0, tired: false, sprinting: false, wh: 0, whPrev: false, al: 0, vx: 0, vy: 0 },
     stats: { armor: 1, thorns: 0, dmg: 1, speed: 1, cd: 1, magnet: 1, regen: 0, area: 1, xp: 1, sprint: 1.4, stRegen: 16, stDrain: 1 },
     bossKills: 0, free: 0, revives: 0, rerolls: 0, combos: {},
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '', tl: [[0, 0, 1, 1]], lastM: 0, ev: [], low: 1, lowM: 0 },   // estadísticas del partido
     weapons: { [CH.start || 'pelota']: 1 }, passives: {}, timers: { [CH.start || 'pelota']: .4 }, sprays: [], rojas: 0, allies: [], bombos: [], rondoAng: 0, rondoBalls: null, rondoSpin: 0, rondoCh: [],
     enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [], fenceGaps: [],
-    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, dog: null, dogAt: 28 + Math.random() * 8, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, hitN: 0, runT: 0, garra: 0, garraCd: 0, p5T: 0, panT: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
+    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, dog: null, dogAt: 28 + Math.random() * 8, rain: RAIN, puddles: [], muds: [], bolts: [], wind: null, windCd: 14, boltCd: 7, rainEvAt: 50 + Math.random() * 20, dark: 0, roof: 0, dry: null, utilero: null, flash: 0, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, hitN: 0, runT: 0, garra: 0, garraCd: 0, p5T: 0, panT: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
   };
 }
 // Stats de arranque de cualquier personaje, antes del vestuario
@@ -1225,14 +1248,22 @@ function showBestLine() {
   $('etLine').textContent = etOpen() ? 'Alargue desbloqueado: al llegar al 90\' podés seguir hasta el 120\'.'
     : `Alargue: ganá las 3 canchas para desbloquearlo (${etWon()}/3).`;
 }
+function renderRain() {
+  const b = $('btnRain'); b.setAttribute('aria-pressed', String(RAIN)); b.textContent = '☔ Día de lluvia: ' + (RAIN ? 'sí' : 'no');
+}
+$('btnRain').addEventListener('click', () => {
+  RAIN = !RAIN; try { localStorage.setItem('picado-eterno-lluvia', RAIN ? '1' : '0'); } catch (e) {}
+  renderRain(); renderLevels();
+});
 function renderLevels() {
+  renderRain();
   const box = $('levels'); box.innerHTML = '';
   LEVELS.forEach((L, i) => {
-    const open = isOpen(i), b = SAVE.best[L.id];
+    const open = isOpen(i), b = SAVE.best[bestKey(L.id, RAIN)];
     const btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'lvl'; btn.disabled = !open;
     btn.setAttribute('aria-pressed', String(i === lvIdx));
-    const meta = !open ? `Ganá en ${LEVELS[i - 1].name} para abrirla` : b ? `Récord: minuto ${b.min}' · ${b.kills} rivales` : 'Sin jugar todavía';
+    const meta = !open ? `Ganá en ${LEVELS[i - 1].name} para abrirla` : b ? `Récord${RAIN ? ' con lluvia' : ''}: minuto ${b.min}' · ${b.kills} rivales` : RAIN ? 'Sin jugar con lluvia todavía' : 'Sin jugar todavía';
     btn.innerHTML = `<span class="sw" style="background:${L.swatch}"></span>`
       + `<span class="num"><span>Nivel ${i + 1}</span><span class="diff" aria-label="Dificultad ${L.stars} de 3">${'●'.repeat(L.stars)}${'○'.repeat(3 - L.stars)}</span></span>`
       + `<span class="name">${L.name}</span><span class="desc">${L.desc}</span><span class="meta">${meta}</span>`;
@@ -1376,16 +1407,17 @@ function sendMatch(won) {
     dano_recibido: Math.round(G.rec.taken), duracion_s: Math.round(G.rt), celular: TOUCH,
     tecnicas: G.weapons, fisicos: G.passives, combos: Object.keys(G.combos), dano: round(G.rec.dmg),
   };
+  if (G.rain) row.lluvia = true;   // la columna existe desde la migración del día de lluvia
   sbReq('partidas', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(row), keepalive: true }).catch(() => {});
 }
 const escHtml = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-async function loadRanking(cancha, list, msg, me) {
+async function loadRanking(cancha, list, msg, me, rain) {
   list.innerHTML = ''; msg.textContent = 'Cargando…';
   try {
-    const res = await sbReq(`ranking?cancha=eq.${cancha}&select=apodo,personaje,minuto,eliminados&order=minuto.desc,eliminados.desc,creado.asc&limit=10`);
+    const res = await sbReq(`${rain ? 'ranking_lluvia' : 'ranking'}?cancha=eq.${cancha}&select=apodo,personaje,minuto,eliminados&order=minuto.desc,eliminados.desc,creado.asc&limit=10`);
     if (!res.ok) throw new Error(res.status);
     const rows = await res.json();
-    msg.textContent = rows.length ? '' : 'Todavía no hay marcas en esta cancha. ¡Sé el primero!';
+    msg.textContent = rows.length ? '' : `Todavía no hay marcas en esta cancha${rain ? ' con lluvia' : ''}. ¡Sé el primero!`;
     list.innerHTML = rows.map(r => `<li class="${me && r.apodo.toLowerCase() === me.toLowerCase() ? 'me' : ''}"><span>${escHtml(r.apodo)} <span class="rk-sub">${escHtml((CHARS[r.personaje] || {}).name || '')}</span></span>`
       + `<span class="rk-sub">${r.eliminados} elim.</span><span class="rk-min">${r.minuto}'</span></li>`).join('');
   } catch (e) { msg.textContent = 'No se pudo cargar el ranking. Revisá la conexión.'; }
@@ -1405,13 +1437,14 @@ $('btnRank').addEventListener('click', async () => {
   $('btnRank').disabled = true; $('rankMsg').textContent = 'Subiendo…';
   try {
     const res = await sbReq('records', { method: 'POST', headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify({ apodo: nick, cancha: LV.id, personaje: charId(), minuto: minuteOf(G.t), eliminados: G.kills, nivel: G.level, version: CHANGELOG[0].v }) });
+      body: JSON.stringify({ apodo: nick, cancha: LV.id, personaje: charId(), minuto: minuteOf(G.t), eliminados: G.kills, nivel: G.level, version: CHANGELOG[0].v, ...(G.rain ? { lluvia: true } : {}) }) });
     if (!res.ok) throw new Error(res.status);
-    G.rankSent = true; $('rankMsg').textContent = `¡Marca subida! Los 10 mejores de ${LV.name}:`;
-    loadRanking(LV.id, $('rankTop'), $('rankMsg'), nick).then(() => { if (!$('rankMsg').textContent) $('rankMsg').textContent = `¡Marca subida! Los 10 mejores de ${LV.name}:`; });
+    const where = LV.name + (G.rain ? ' con lluvia' : '');
+    G.rankSent = true; $('rankMsg').textContent = `¡Marca subida! Los 10 mejores de ${where}:`;
+    loadRanking(LV.id, $('rankTop'), $('rankMsg'), nick, G.rain).then(() => { if (!$('rankMsg').textContent) $('rankMsg').textContent = `¡Marca subida! Los 10 mejores de ${where}:`; });
   } catch (e) { $('btnRank').disabled = false; $('rankMsg').textContent = 'No se pudo subir. Probá de nuevo.'; }
 });
-let rankTab = 'potrero';
+let rankTab = 'potrero', rankRain = false;
 function openRanking() {
   state = 'ranking'; hideAll();
   let me = ''; try { me = localStorage.getItem('picado-eterno-nick') || ''; } catch (e) {}
@@ -1422,8 +1455,12 @@ function openRanking() {
     b.addEventListener('click', () => { rankTab = L.id; openRanking(); });
     tabs.appendChild(b);
   }
+  const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'btn ghost small'; rb.textContent = '☔ Con lluvia';
+  rb.setAttribute('aria-pressed', String(rankRain)); if (rankRain) rb.style.cssText = 'border-color:var(--sky);color:var(--sky)';
+  rb.addEventListener('click', () => { rankRain = !rankRain; openRanking(); });
+  tabs.appendChild(rb);
   $('ranking').hidden = false;
-  loadRanking(rankTab, $('rankList'), $('rankListMsg'), me);
+  loadRanking(rankTab, $('rankList'), $('rankListMsg'), me, rankRain);
 }
 $('btnRanking').hidden = !online();
 $('btnRanking').addEventListener('click', openRanking);
@@ -1438,6 +1475,7 @@ const ALB_FOES = {
   camillero: ['Camilleros', 'La Cancha del Club y El Coloso', 'Dos figuras con una camilla atravesada. Cuando la lona titila se estira para barrer, y la camilla entera pega.'],
   hincha:    ['Hincha invasor', 'La Cancha del Club', 'Cruza la cancha a toda velocidad por la franja marcada y vuelve por el mismo camino. Si lo eliminás deja una gema celeste grande.'],
   barra:     ['La barra', 'El Potrero', 'Un grupo de hinchas con gorros que llega corriendo. Son débiles pero muchos, y cada uno deja 3 gemas.'],
+  embarrado: ['Embarrado', 'Día de lluvia', 'Un grandote cubierto de barro que deja una estela por donde pasa. El barro te frena.'],
   spidercam: ['Spidercam', 'El Coloso', 'Flota sobre la cancha y baja de golpe donde marca su sombra. Solo la alcanzan los remates.'],
 };
 const ALB_BOSSES = {
@@ -1553,6 +1591,7 @@ function startGame() {
   if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
   if (AC && AC.state === 'suspended') AC.resume();
   G = newGame(); recalc(); hudCache = {}; joy = null;
+  if (G.rain) rainSetup();
   G.p.hp = G.p.maxHp; G.p.st = G.p.stMax; G.p.sh = G.p.shMax; G.p.wh = G.stats.whCd || 10; G.free = pl('calor'); G.revives = pl('suplente'); G.rerolls = pl('pizarron');
   state = 'play'; hideAll(); $('hud').hidden = false;
   $('btnSprint').textContent = CH.sprint ? '»' : CH.whistle ? '◎' : CH.aliento ? '★' : '◈';
@@ -1646,6 +1685,7 @@ function update(dt) {
   // Planilla: una foto por minuto de partido (rivales eliminados, nivel y vida)
   const mNow = minuteOf(G.t);
   if (mNow !== G.rec.lastM) { G.rec.lastM = mNow; G.rec.tl.push([mNow, G.kills, G.level, Math.max(0, p.hp) / p.maxHp]); }
+  if (G.rain) updateRain(dt);
   if (!G.et && G.t >= MATCH) {
     if (etOpen() && !G.etAsked) { G.t = MATCH; askExtra(); } else endScreen(true);
     return;
@@ -1738,8 +1778,20 @@ function update(dt) {
   G.runT = mag > 0 ? G.runT + dt : 0;
   const oro = (G.passives.botines || 0) >= 6 && G.runT > 2 ? 1.15 : 1;   // Botines de oro
   const spd = 175 * S.speed * mag * boost * oro;
-  p.x = clamp(p.x + mx * spd * dt, -RUN + p.r, FW + RUN - p.r);
-  p.y = clamp(p.y + my * spd * dt, -RUN + p.r, FH + RUN - p.r);
+  let pvx = mx * spd, pvy = my * spd;
+  if (G.rain) {
+    // Día de lluvia: el barro frena, en los charcos resbalás (seguís de largo) y el viento te empuja
+    const gr = groundAt(p.x, p.y), tl = pv('tapones2');
+    if (gr.mud) { const k = 1 - MUD_SLOW * (1 - .2 * tl); pvx *= k; pvy *= k; }
+    if (gr.wet) {
+      const k = Math.min(1, dt * SLIDE_GRIP * (1 + .33 * tl));
+      p.vx += (pvx - p.vx) * k; p.vy += (pvy - p.vy) * k; pvx = p.vx; pvy = p.vy;
+      if (!RM && Math.hypot(pvx, pvy) > 60 && Math.random() < dt * 18) part(p.x, p.y + p.r * .6, '#bfe3ff');
+    } else { p.vx = pvx; p.vy = pvy; }
+    if (G.wind && G.wind.on) { pvx += G.wind.dx * WIND_PUSH; pvy += G.wind.dy * WIND_PUSH; }
+  }
+  p.x = clamp(p.x + pvx * dt, -RUN + p.r, FW + RUN - p.r);
+  p.y = clamp(p.y + pvy * dt, -RUN + p.r, FH + RUN - p.r);
   // Historial de posiciones (últimos 3 s) para que el VAR pueda retrotraer la jugada
   G.rt += dt;
   if (!G.hist.length || G.rt - G.hist[G.hist.length - 1].t >= .05) G.hist.push({ t: G.rt, x: p.x, y: p.y });
@@ -1808,6 +1860,8 @@ function pickType(t) {
   // En El Potrero los especiales (árbitros, arqueros y grandotes) salen un 25% menos seguido
   const f = (LV.id === 'potrero' ? .75 : 1) * (G.et ? 1.4 : 1);
   if (after(240) && r < .07 * f) return 'arbitro';
+  // Día de lluvia: el embarrado (como mucho 8 a la vez)
+  if (G.rain && after(90) && r < .1 && G.enemies.reduce((n, e) => n + (e.type === 'embarrado'), 0) < 8) return 'embarrado';
   // Arqueros: en esas canchas ya salían desde el arranque, así que tardan un 25% más que en El Potrero (36 s → 45 s)
   // En El Potrero el orden va al revés: primero los grandotes (minuto 7) y después los arqueros (minuto 22)
   if ((LV.id === 'potrero' ? t > 150 : G.t > 1.25 * 45 / PACE) && r > 1 - .1 * f) return 'arquero';
@@ -1842,6 +1896,7 @@ function spawn(type, x, y, baseHp) {
     mode: 'run', mt: type === 'camillero' ? rnd(2, 3.5) : 0, L: CAM_MIN, ang: Math.atan2(G.p.y - y, G.p.x - x), diveCd: 0, ddx: 1, ddy: 0, acd: 2.5, buff: 0, still: false, aimLine: false, fly: !!d.fly,
   });
   albumSee(d.boss ? 'b' : 'f', type);
+  if (type === 'embarrado' && !G.seenMud) { G.seenMud = true; banner('¡Llega el embarrado: deja barro por donde pasa!'); }
   if (type === 'arquero' && !G.seenGk) { G.seenGk = true; banner('¡Cuidado: el arquero se te tira a los pies!'); }
   if (type === 'spidercam' && !G.seenCamTV) { G.seenCamTV = true; banner('¡Baja la Spidercam: ojo con la sombra!'); }
   if (type === 'camillero' && !G.seenCam) { G.seenCam = true; banner('¡Entran los camilleros: ojo con la camilla!'); }
@@ -1901,6 +1956,211 @@ function startInvader() {
   lane.t = lane.max = 1.3;
   G.lane = lane;
   banner('¡Un hincha se metió a la cancha!'); sfx('whistle');
+}
+// ---------- Día de lluvia ----------
+// Modo opcional para cualquier cancha: charcos que resbalan (cada vez más), barro, rayos, viento,
+// poca visibilidad, el embarrado y un evento propio de cada cancha. Da 40% más de fichas.
+let RAIN = false; try { RAIN = localStorage.getItem('picado-eterno-lluvia') === '1'; } catch (e) {}
+const RAIN_TOKENS = 1.4, PUD_MIN = 4, PUD_MAX = 20, SLIDE_GRIP = 2.2, MUD_SLOW = .3, MUD_TRAIL_S = 7;
+const BOLT_WARN = 1, BOLT_R = 70, BOLT_DMG = 22, ZAP_S = .6;
+const WIND_PUSH = 70, WIND_SHOT = 150, WIND_WARN = 1.5, WIND_S = 3.2, WIND_SHOTS = { pelota: 1, tiro: 1, tres: 1 };
+const DARK_S = 7, ROOF_S = 25, DRY_S = 25, DRY_H = 85;
+// La tormenta crece: arranca en llovizna y en el 90' (y en el alargue) está al máximo. Con el techo cerrado no llueve
+const rainI = () => !G.rain || G.roof > 0 ? 0 : G.et ? 1 : .35 + .65 * Math.min(1, G.t / MATCH);
+function zone(x, y, rx, ry, life) {
+  const a = Math.random() * Math.PI;
+  return { x, y, rx, ry, c: Math.cos(a), s: Math.sin(a), k: 0, life };
+}
+function inZone(u, x, y) {
+  const dx = x - u.x, dy = y - u.y, rx = u.rx * u.k, ry = u.ry * u.k;
+  if (rx <= 0 || Math.abs(dx) > u.rx || Math.abs(dy) > u.rx) return false;
+  const lx = dx * u.c + dy * u.s, ly = -dx * u.s + dy * u.c;
+  return (lx / rx) ** 2 + (ly / ry) ** 2 < 1;
+}
+function groundAt(x, y) {
+  let wet = false, mud = false;
+  for (const u of G.puddles) if (inZone(u, x, y)) { wet = true; break; }
+  for (const u of G.muds) if (inZone(u, x, y)) { mud = true; break; }
+  return { wet, mud };
+}
+function addMud(x, y, R, life) {
+  if (G.muds.length > 160) G.muds.shift();
+  const u = zone(x + rnd(-6, 6), y + rnd(-6, 6), R * rnd(.9, 1.2), R * rnd(.7, .9), life); u.k = 1; G.muds.push(u);
+}
+function addPuddle() {
+  const p = G.p, I = rainI();
+  for (let n = 0; n < 8; n++) {
+    const x = rnd(80, FW - 80), y = rnd(80, FH - 80);
+    if (Math.hypot(x - p.x, y - p.y) < 160) continue;
+    if (G.dry && Math.abs(y - G.dry.y) < G.dry.h + 60) continue;   // la franja que secó el utilero
+    const rx = rnd(60, 125) * (.8 + .4 * I);
+    G.puddles.push(zone(x, y, rx, rx * rnd(.5, .75), Infinity));
+    return;
+  }
+}
+function rainSetup() {
+  // En El Potrero, además, la tierra se hace barro
+  if (LV.id === 'potrero') for (let i = 0; i < 8; i++) { const u = zone(rnd(150, FW - 150), rnd(150, FH - 150), rnd(90, 150), 0, Infinity); u.ry = u.rx * rnd(.55, .8); u.k = 1; G.muds.push(u); }
+  for (let i = 0; i < PUD_MIN; i++) { addPuddle(); G.puddles[G.puddles.length - 1].k = 1; }
+  G.boltCd = rnd(8, 12);
+}
+function updateRain(dt) {
+  const p = G.p, I = rainI(), frozen = G.hydra > 0 || !!G.rewind;
+  G.flash = Math.max(0, G.flash - dt * 2.2);
+  // Charcos: crecen de a poco hasta su tamaño; con el techo cerrado se secan despacio
+  for (const u of G.puddles) {
+    if (G.roof > 0) u.k -= dt / 15; else if (u.k < 1) u.k = Math.min(1, u.k + dt / 3);
+    if (u.zap > 0) u.zap -= dt;
+  }
+  G.puddles = G.puddles.filter(u => u.k > 0);
+  const want = Math.round(PUD_MIN + (PUD_MAX - PUD_MIN) * I);
+  if (G.roof <= 0 && G.puddles.length < want && Math.random() < dt * 1.2) addPuddle();
+  for (const u of G.muds) if (u.life !== Infinity) u.life -= dt;
+  G.muds = G.muds.filter(u => u.life > 0);
+  if (G.dry && (G.dry.t -= dt) <= 0) G.dry = null;
+  // Evento de la cancha, una vez por partido entre el 50' y el 70'
+  if (G.rainEvAt && !frozen && minuteOf(G.t) >= G.rainEvAt) rainEvent();
+  if (G.dark > 0) G.dark = Math.max(0, G.dark - dt);
+  if (G.roof > 0) { G.roof -= dt; if (G.roof <= 0) { banner('¡Abren el techo: vuelve la lluvia!'); sfx('thunder'); } }
+  if (G.utilero) {
+    const U = G.utilero; U.x += 300 * dt;
+    // Seca la franja a medida que pasa y, al cruzarse con vos, te deja una gema celeste
+    for (const u of G.puddles) if (Math.abs(u.y - U.y) < DRY_H + u.ry * .5 && u.x < U.x + 20) u.k = Math.max(0, u.k - dt * 3);
+    if (!U.gem && U.x >= p.x - 40) { U.gem = true; gem(U.x + 170, U.y + rnd(-30, 30), HINCHA_GEM, true); }
+    if (!RM && Math.random() < dt * 30) part(U.x + 20, U.y + rnd(-DRY_H, DRY_H), '#bfe3ff');
+    if (U.x > FW + RUN + 40) G.utilero = null;
+  }
+  if (frozen) return;
+  // Rayos: avisan con un círculo y caen al segundo. Si caen en un charco, lo electrifican: te daña si estás adentro
+  G.boltCd -= dt;
+  if (I > 0 && G.boltCd <= 0) {
+    G.boltCd = rnd(5, 9) / (.5 + I);
+    let x = p.x + rnd(-230, 230), y = p.y + rnd(-170, 170);
+    const near = G.puddles.filter(u => u.k > .6 && Math.hypot(u.x - p.x, u.y - p.y) < 380);
+    if (near.length && Math.random() < .45) { const u = near[Math.random() * near.length | 0]; x = u.x; y = u.y; }
+    if (!(G.dry && Math.abs(y - G.dry.y) < G.dry.h)) G.bolts.push({ x, y, t: BOLT_WARN, max: BOLT_WARN, hit: 0 });
+  }
+  for (const b of G.bolts) {
+    if (b.hit) { b.hit -= dt; continue; }
+    b.t -= dt;
+    if (b.t > 0) continue;
+    b.hit = .3; b.seed = Math.random() * 1000;
+    G.flash = .6; sfx('thunder'); if (!RM) G.shake = Math.max(G.shake, 7);
+    const dmg = BOLT_DMG * LV.dmg * (1 + ht() / 500) * MOB_DMG;
+    let got = false;
+    if (Math.hypot(p.x - b.x, p.y - b.y) < BOLT_R + p.r && p.inv <= 0) { hurt(dmg, true); got = true; }
+    const u = G.puddles.find(u => inZone(u, b.x, b.y));
+    if (u) { u.zap = ZAP_S; if (!got && inZone(u, p.x, p.y) && p.inv <= 0) { hurt(dmg * .7, true); G.texts.push({ x: p.x, y: p.y - p.r - 26, txt: '¡ELECTRIFICADO!', life: .9, big: true }); } }
+    for (let i = 0; i < 14; i++) part(b.x, b.y, i % 2 ? '#fff6c2' : '#bfe3ff');
+  }
+  G.bolts = G.bolts.filter(b => b.t > 0 || b.hit > 0);
+  // Viento: avisa con una flecha y después empuja todo (a vos, a los rivales y a tus remates) para un lado
+  if (!G.wind) {
+    G.windCd -= dt;
+    if (I > 0 && G.windCd <= 0) { const a = Math.random() * Math.PI * 2; G.wind = { dx: Math.cos(a), dy: Math.sin(a), warn: WIND_WARN, t: WIND_S, on: false }; }
+  } else if (G.wind.warn > 0) { G.wind.warn -= dt; if (G.wind.warn <= 0) { G.wind.on = true; sfx('wind'); } }
+  else if ((G.wind.t -= dt) <= 0) { G.wind = null; G.windCd = rnd(16, 26) / (.6 + .4 * I); }
+}
+function rainEvent() {
+  G.rainEvAt = 0;
+  if (LV.id === 'potrero') { G.dark = DARK_S; banner('¡Se cortó la luz del barrio!', true); sfx('zap'); }
+  else if (LV.id === 'club') {
+    G.utilero = { x: -RUN - 30, y: clamp(G.p.y, 40, FH - 40), gem: false };
+    G.dry = { y: G.utilero.y, h: DRY_H, t: DRY_S };
+    banner('¡Sale el utilero a secar la cancha!', true); sfx('whistle');
+  } else { G.roof = ROOF_S; G.wind = null; G.bolts = []; banner('¡Cierran el techo del Coloso!', true); sfx('stomp'); }
+}
+// Dibujo: charcos y barro en el piso
+function drawWet(cx, cy) {
+  const vis = (x, y, m) => x > cx - m && x < cx + viewW + m && y > cy - m && y < cy + viewH + m, tnow = performance.now() / 1000;
+  const mudCol = LV.id === 'potrero' ? 'rgba(84,56,30,' : 'rgba(92,66,40,';
+  for (const u of G.muds) {
+    if (!vis(u.x, u.y, u.rx)) continue;
+    const a = u.life === Infinity ? .62 : Math.min(.55, u.life / 1.5 * .55);
+    ctx.fillStyle = mudCol + a + ')';
+    ctx.beginPath(); ctx.ellipse(u.x, u.y, u.rx * u.k, u.ry * u.k, Math.atan2(u.s, u.c), 0, Math.PI * 2); ctx.fill();
+  }
+  if (G.dry) { ctx.fillStyle = `rgba(255,255,240,${.05 * Math.min(1, G.dry.t / 2)})`; ctx.fillRect(-RUN, G.dry.y - G.dry.h, FW + 2 * RUN, G.dry.h * 2); }
+  for (const u of G.puddles) {
+    if (!vis(u.x, u.y, u.rx) || u.k <= 0) continue;
+    const ang = Math.atan2(u.s, u.c);
+    ctx.fillStyle = LV.id === 'potrero' ? 'rgba(120,140,150,.55)' : 'rgba(110,150,195,.42)';
+    ctx.beginPath(); ctx.ellipse(u.x, u.y, u.rx * u.k, u.ry * u.k, ang, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(210,232,255,.35)'; ctx.lineWidth = 2; ctx.stroke();
+    // reflejo y gotas que caen
+    ctx.fillStyle = 'rgba(235,245,255,.18)'; ctx.beginPath(); ctx.ellipse(u.x - u.rx * .25 * u.k, u.y - u.ry * .3 * u.k, u.rx * .35 * u.k, u.ry * .18 * u.k, ang, 0, Math.PI * 2); ctx.fill();
+    if (!RM && rainI() > 0) {
+      ctx.strokeStyle = 'rgba(225,240,255,.4)'; ctx.lineWidth = 1;
+      for (let i = 0; i < 3; i++) {
+        const ph = (tnow * .9 + hash2(u.x | 0, i) * 7) % 1, h = hash2(i, u.y | 0);
+        const rx = (h - .5) * u.rx * .9 * u.k, ry = (hash2(i * 7, u.x | 0) - .5) * u.ry * .9 * u.k;
+        ctx.beginPath(); ctx.ellipse(u.x + rx, u.y + ry, 2 + ph * 10, 1 + ph * 5, 0, 0, Math.PI * 2); ctx.globalAlpha = 1 - ph; ctx.stroke(); ctx.globalAlpha = 1;
+      }
+    }
+    if (u.zap > 0) {
+      ctx.fillStyle = `rgba(255,244,150,${.5 * u.zap / ZAP_S})`; ctx.beginPath(); ctx.ellipse(u.x, u.y, u.rx * u.k, u.ry * u.k, ang, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // Aviso de rayo: círculo que se llena
+  for (const b of G.bolts) {
+    if (b.hit || !vis(b.x, b.y, BOLT_R)) continue;
+    const k = 1 - b.t / b.max;
+    ctx.fillStyle = 'rgba(255,240,140,.12)'; ctx.strokeStyle = 'rgba(255,240,140,.85)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(b.x, b.y, BOLT_R, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,240,140,.3)'; ctx.beginPath(); ctx.arc(b.x, b.y, BOLT_R * k, 0, Math.PI * 2); ctx.fill();
+  }
+}
+// Dibujo: el rayo que cae y el utilero (arriba de todo lo del piso)
+function drawStorm(cx, cy) {
+  for (const b of G.bolts) {
+    if (!b.hit) continue;
+    ctx.strokeStyle = `rgba(255,252,225,${b.hit / .3})`; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.beginPath();
+    let x = b.x + (hash2(b.seed | 0, 1) - .5) * 160, y = cy - 40; ctx.moveTo(x, y);
+    for (let i = 1; i <= 8; i++) { const t = i / 8; x = b.x + (x - b.x) * (1 - t) + (hash2(b.seed | 0, i + 2) - .5) * 50 * (1 - t); y = cy - 40 + (b.y - cy + 40) * t; ctx.lineTo(x, y); }
+    ctx.stroke(); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(190,220,255,.9)'; ctx.stroke();
+  }
+  if (G.utilero) {
+    const U = G.utilero, K = { shirt: '#2b4c8c', sleeve: '#2b4c8c', shorts: '#1d1f1c' };
+    shadow(U.x, U.y, 14);
+    drawPerson(U.x, U.y, 14, 0, G.rt * 30, { ...K, skin: '#c98e62', hair: '#3a2a1c' });
+    // el secador: un palo con una goma ancha adelante
+    ctx.strokeStyle = '#d5dccf'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(U.x + 6, U.y); ctx.lineTo(U.x + 30, U.y); ctx.stroke();
+    ctx.fillStyle = '#1d1f1c'; ctx.fillRect(U.x + 28, U.y - 22, 6, 44);
+  }
+}
+// Capa de pantalla: oscuridad, lluvia, relámpago, viento y apagón
+function drawRainScreen(px, py) {
+  const I = rainI(), tnow = performance.now() / 1000;
+  ctx.fillStyle = `rgba(8,14,28,${G.roof > 0 ? .1 : .1 + .16 * I})`; ctx.fillRect(0, 0, VW, VH);
+  if (I > 0 && !RM) {
+    const n = Math.round(60 + 170 * I), wx = G.wind && G.wind.on ? G.wind.dx * 10 : 0;
+    ctx.strokeStyle = 'rgba(200,220,245,.35)'; ctx.lineWidth = 1; ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const sp = 700 + hash2(i, 3) * 500, x = (hash2(i, 1) * (VW + 200) + tnow * wx * 30) % (VW + 200) - 100, y = (hash2(i, 2) * VH + tnow * sp) % (VH + 20) - 10;
+      ctx.moveTo(x, y); ctx.lineTo(x - 3 - wx, y + 14);
+    }
+    ctx.stroke();
+  }
+  if (G.flash > 0) { ctx.fillStyle = `rgba(240,246,255,${G.flash * .55})`; ctx.fillRect(0, 0, VW, VH); }
+  if (G.dark > 0) {
+    // Apagón: solo ves cerca tuyo; entra y sale en medio segundo
+    const a = .9 * Math.min(1, G.dark / .5, (DARK_S - G.dark) / .5), R = 170 * ZOOM;
+    const gr = ctx.createRadialGradient(px, py, R * .55, px, py, R);
+    gr.addColorStop(0, 'rgba(4,6,10,0)'); gr.addColorStop(1, `rgba(4,6,10,${a})`);
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH);
+  }
+  if (G.wind) {
+    // Flecha del viento arriba, titila mientras avisa
+    const W = G.wind, on = W.on || Math.floor(tnow * 6) % 2 === 0, a = Math.atan2(W.dy, W.dx);
+    if (on) {
+      ctx.save(); ctx.translate(VW / 2, 176); ctx.rotate(a);
+      ctx.fillStyle = W.on ? 'rgba(220,236,255,.9)' : 'rgba(255,211,77,.9)';
+      ctx.beginPath(); ctx.moveTo(34, 0); ctx.lineTo(4, -16); ctx.lineTo(4, -6); ctx.lineTo(-30, -6); ctx.lineTo(-30, 6); ctx.lineTo(4, 6); ctx.lineTo(4, 16); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '600 14px "Barlow Condensed", "Arial Narrow", sans-serif';
+      ctx.fillStyle = 'rgba(230,246,255,.9)'; ctx.fillText(W.on ? 'VIENTO' : 'SE VIENE UNA RÁFAGA', VW / 2, 210);
+    }
+  }
 }
 const DOG_S = 5;   // duración de la pausa del perro
 function startDog() {
@@ -2330,6 +2590,7 @@ function updateShots(dt) {
   const p = G.p;
   for (const s of G.shots) {
     s.life -= dt; s.rot += dt * 15;
+    if (G.wind && G.wind.on && WIND_SHOTS[s.k]) { s.x += G.wind.dx * WIND_SHOT * dt; s.y += G.wind.dy * WIND_SHOT * dt; }   // el viento desvía los remates
     if (s.k === 'tiro' && s.rico && !s.bounced) {
       // Palo y adentro: rebota en el borde o al final del recorrido y vuelve por todos
       const bx = s.x < -RUN + 12 || s.x > FW + RUN - 12, by = s.y < -RUN + 12 || s.y > FH + RUN - 12;
@@ -2642,12 +2903,24 @@ function updateEnemies(dt) {
         }
       }
     }
+    if (e.type === 'embarrado' && !stn && (e.trail = (e.trail || 0) - dt) <= 0) { e.trail = .3; addMud(e.x, e.y, 24, MUD_TRAIL_S); }   // deja barro
     if (e.boss) [ux, uy, sp] = bossAI(e, d, ux, uy, sp, dt);
     if (stn) sp = 0;
     if (e.buff > 0) { e.buff -= dt; sp *= 1.35; }
     e.still = sp === 0;
     const ox = e.x, oy = e.y;
-    e.x += (ux * sp + e.kx) * dt; e.y += (uy * sp + e.ky) * dt;
+    let evx = ux * sp, evy = uy * sp;
+    if (G.rain && !e.fly && e.type !== 'hincha') {
+      // A los rivales también: el barro los frena, en el charco siguen de largo y el viento los empuja
+      const gr = groundAt(e.x, e.y);
+      if (gr.mud) { evx *= 1 - MUD_SLOW; evy *= 1 - MUD_SLOW; }
+      if (gr.wet && !stn) {
+        const k = Math.min(1, dt * SLIDE_GRIP * .8);
+        e.vx = (e.vx ?? evx) + (evx - (e.vx ?? evx)) * k; e.vy = (e.vy ?? evy) + (evy - (e.vy ?? evy)) * k; evx = e.vx; evy = e.vy;
+      } else { e.vx = evx; e.vy = evy; }
+      if (G.wind && G.wind.on && !stn) { evx += G.wind.dx * WIND_PUSH; evy += G.wind.dy * WIND_PUSH; }
+    }
+    e.x += (evx + e.kx) * dt; e.y += (evy + e.ky) * dt;
     if (G.combos.barrera && G.sprays.length && !e.boss && !e.fly && e.type !== 'hincha') barrierBlock(e, ox, oy);
     e.kx *= decay; e.ky *= decay;
     e.flash -= dt; e.rcd -= dt; e.tcd = (e.tcd || 0) - dt; e.pushCd = (e.pushCd || 0) - dt;
@@ -3145,10 +3418,10 @@ function endScreen(won) {
   if (won && !G.et) G.t = MATCH;
   if (fullET) G.t = MATCH + ET_LEN;
   sfx('whistle');
-  const best = SAVE.best[LV.id];
+  const BK = bestKey(LV.id, G.rain), best = SAVE.best[BK];   // con lluvia, récord aparte
   const curMin = minuteOf(G.t);
   const isBest = !best || curMin > best.min || (curMin === best.min && G.kills > best.kills);
-  if (isBest) SAVE.best[LV.id] = { min: curMin, kills: G.kills };
+  if (isBest) SAVE.best[BK] = { min: curMin, kills: G.kills };
   const next = LEVELS[lvIdx + 1];
   let opened = false;
   if (won && next && SAVE.unlocked < lvIdx + 2) { SAVE.unlocked = lvIdx + 2; opened = true; }
@@ -3177,12 +3450,13 @@ function endScreen(won) {
   if (fullET) earn.push(["Aguantaste hasta el 120'", 60]);
   const sub = earn.reduce((a, r) => a + r[1], 0);
   if (LV.reward > 1) earn.push([`Bonus ${LV.name} ×${String(LV.reward).replace('.', ',')}`, Math.round(sub * (LV.reward - 1))]);
+  if (G.rain) { const sub2 = earn.reduce((a, r) => a + r[1], 0); earn.push(['Bonus día de lluvia ×1,4', Math.round(sub2 * (RAIN_TOKENS - 1))]); }
   const total = earn.reduce((a, r) => a + r[1], 0);
   SAVE.tokens += total; persist();
   $('earnTotal').textContent = '+' + total;
   $('earnList').innerHTML = earn.map(([k, v]) => `<div><dt>${k}</dt><dd>+${v}</dd></div>`).join('');
   sendMatch(won); setupRankBox();
-  $('overBest').textContent = (isBest ? `¡Nuevo récord en ${LV.name}!` : `Tu récord acá: minuto ${best.min}' y ${best.kills} rivales.`) + ` Tenés ${SAVE.tokens} fichas.`;
+  $('overBest').textContent = (isBest ? `¡Nuevo récord en ${LV.name}${G.rain ? ' con lluvia' : ''}!` : `Tu récord acá${G.rain ? ' con lluvia' : ''}: minuto ${best.min}' y ${best.kills} rivales.`) + ` Tenés ${SAVE.tokens} fichas.`;
   hideAll(); $('hud').hidden = true; $('over').hidden = false; renderMatch();
 }
 
@@ -4036,6 +4310,7 @@ function render() {
   const cx = p.x - viewW / 2 + sx, cy = p.y - viewH / 2 + sy, k = DPR * ZOOM;
   ctx.setTransform(k, 0, 0, k, -cx * k, -cy * k);
   drawPitch(cx, cy);
+  if (G.rain) drawWet(cx, cy);
   const vis = (x, y, m) => x > cx - m && x < cx + viewW + m && y > cy - m && y < cy + viewH + m;
 
   for (const e of G.enemies) {
@@ -4144,6 +4419,7 @@ function render() {
 
   if (G.allies.length || G.bombos.length) drawAllies(vis);
   if (G.dog && vis(G.dog.x, G.dog.y, 60)) drawDog(G.dog);
+  if (G.rain) drawStorm(cx, cy);
   drawPlayer(p);
   for (const e of G.enemies) if (e.fly && vis(e.x, e.y, 80)) drawFoe(e);
   if (state === 'resume') {
@@ -4210,6 +4486,7 @@ function render() {
     ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.7)';
     ctx.strokeText('◀◀ RETROTRAE LA JUGADA', VW / 2, VH * .7); ctx.fillStyle = '#39ff9a'; ctx.fillText('◀◀ RETROTRAE LA JUGADA', VW / 2, VH * .7);
   }
+  if (G.rain) drawRainScreen((p.x - cx) * ZOOM, (p.y - cy) * ZOOM);
   if (G.hurtFlash > 0) { ctx.fillStyle = `rgba(217,74,61,${G.hurtFlash})`; ctx.fillRect(0, 0, VW, VH); }
   if (joy && state === 'play') {
     const dx = joy.x - joy.ox, dy = joy.y - joy.oy, d = Math.hypot(dx, dy), m = Math.min(d, 55) / (d || 1);
