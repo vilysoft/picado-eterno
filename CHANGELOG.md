@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.68 · 30 oct 2026
+
+- **Canchas:** En La Cancha del Club y El Coloso, el público de las tribunas de los costados (izquierda y derecha) ahora mira hacia la cancha y no hacia arriba.
+
 ## 2.67 · 30 oct 2026
 
 - **Técnicas:** El nivel 6 del Tiro libre ahora se llama "Palo y adentro" (antes "Al ángulo"). Funciona igual.
