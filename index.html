@@ -494,7 +494,7 @@ function sfx(n) {
     case 'combo': [392, 523, 659, 784, 1046].forEach((f, i) => tone(f, f * 1.01, .16, 'square', .05, i * .06)); break;
     case 'shield': tone(700, 1100, .1, 'triangle', .05); break;
     case 'zap': tone(1200, 300, .18, 'sawtooth', .05); break;
-    case 'thunder': tone(90, 28, 1.1, 'sawtooth', .13); tone(55, 30, 1.4, 'sine', .25, .05); tone(1800, 200, .12, 'square', .03); break;
+    case 'thunder': tone(90, 28, 1.1, 'sawtooth', .091); tone(55, 30, 1.4, 'sine', .175, .05); tone(1800, 200, .12, 'square', .021); break;   // 30% más bajo
     case 'wind': tone(260, 140, .9, 'triangle', .035); tone(320, 180, .9, 'triangle', .025, .25); break;
     case 'cheer': break;
     case 'level': [523, 659, 784, 1046].forEach((f, i) => tone(f, f, .12, 'triangle', .08, i * .07)); break;
@@ -837,6 +837,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.71', date: '30 oct 2026', items: [
+    ['Sonido', 'El trueno del rayo en el Día de lluvia suena 30% más bajo.'],
+  ] },
   { v: '2.70', date: '30 oct 2026', items: [
     ['Día de lluvia', 'Modo nuevo que se activa en el menú, abajo de las canchas, y vale para cualquier cancha. Da 40% más de fichas y guarda récord y ranking aparte.'],
     ['Día de lluvia', 'Charcos: al pisarlos resbalás y seguís de largo un rato. A los rivales les pasa lo mismo, así que un rival que te embiste y cae en un charco sigue de largo. Arrancan pocos y van apareciendo más a medida que avanza el partido.'],

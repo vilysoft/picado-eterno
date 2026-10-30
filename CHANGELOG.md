@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.71 · 30 oct 2026
+
+- **Sonido:** El trueno del rayo en el Día de lluvia suena 30% más bajo.
+
 ## 2.70 · 30 oct 2026
 
 - **Día de lluvia:** Modo nuevo que se activa en el menú, abajo de las canchas, y vale para cualquier cancha. Da 40% más de fichas y guarda récord y ranking aparte.
