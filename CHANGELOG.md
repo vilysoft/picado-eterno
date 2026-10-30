@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.72 · 30 oct 2026
+
+- **Día de lluvia:** Parado en un charco hacés 20% más de daño con todo, pero también recibís 20% más. Mientras estás en un charco se ve un anillo celeste a tus pies.
+
 ## 2.71 · 30 oct 2026
 
 - **Sonido:** El trueno del rayo en el Día de lluvia suena 30% más bajo.

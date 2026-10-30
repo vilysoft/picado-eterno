@@ -837,6 +837,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.72', date: '30 oct 2026', items: [
+    ['Día de lluvia', 'Parado en un charco hacés 20% más de daño con todo, pero también recibís 20% más. Mientras estás en un charco se ve un anillo celeste a tus pies.'],
+  ] },
   { v: '2.71', date: '30 oct 2026', items: [
     ['Sonido', 'El trueno del rayo en el Día de lluvia suena 30% más bajo.'],
   ] },
@@ -1785,6 +1788,7 @@ function update(dt) {
   if (G.rain) {
     // Día de lluvia: el barro frena, en los charcos resbalás (seguís de largo) y el viento te empuja
     const gr = groundAt(p.x, p.y), tl = pv('tapones2');
+    G.pWet = gr.wet;
     if (gr.mud) { const k = 1 - MUD_SLOW * (1 - .2 * tl); pvx *= k; pvy *= k; }
     if (gr.wet) {
       const k = Math.min(1, dt * SLIDE_GRIP * (1 + .33 * tl));
@@ -1964,6 +1968,7 @@ function startInvader() {
 // Modo opcional para cualquier cancha: charcos que resbalan (cada vez más), barro, rayos, viento,
 // poca visibilidad, el embarrado y un evento propio de cada cancha. Da 40% más de fichas.
 let RAIN = false; try { RAIN = localStorage.getItem('picado-eterno-lluvia') === '1'; } catch (e) {}
+const WET_MULT = 1.2;   // en un charco hacés y recibís 20% más de daño
 const RAIN_TOKENS = 1.4, PUD_MIN = 4, PUD_MAX = 20, SLIDE_GRIP = 2.2, MUD_SLOW = .3, MUD_TRAIL_S = 7;
 const BOLT_WARN = 1, BOLT_R = 70, BOLT_DMG = 22, ZAP_S = .6;
 const WIND_PUSH = 70, WIND_SHOT = 150, WIND_WARN = 1.5, WIND_S = 3.2, WIND_SHOTS = { pelota: 1, tiro: 1, tres: 1 };
@@ -2379,6 +2384,7 @@ const GROUND = { barrida: 1, onda: 1, rondo: 1, codazo: 1 };   // técnicas a ra
 function hitEnemy(e, dmg, kx, ky, src, exact) {
   if (e.dead || e.away || (e.fly && GROUND[src])) return;
   if (e.yellow > 0) dmg *= 1.25;
+  if (G.pWet) dmg *= WET_MULT;   // parado en un charco: pegás 20% más
   if (CH.aliento && !BARRA_SRC[src]) dmg *= .75;   // El Barra: lo que no es de su gente pega menos
   let bomb = false;
   if (!exact && (G.passives.potencia || 0) >= 6 && ++G.hitN % 10 === 0) { dmg *= 2; bomb = true; }   // Bombazo
@@ -2565,6 +2571,7 @@ function hurt(n, heavy) {
     G.texts.push({ x: p.x, y: p.y - p.r - 26, txt: '¡PARED!', life: .9, big: true }); sfx('shield');
     return;
   }
+  if (G.pWet) n *= WET_MULT;   // parado en un charco: recibís 20% más
   const raw = n;
   n *= G.stats.armor ?? 1;
   if (heavy && (G.passives.canilleras || 0) >= 6) n *= .75;   // Tobilleras
@@ -4177,6 +4184,11 @@ function drawFoe(e) {
   }
 }
 function drawPlayer(p) {
+  if (G.pWet) {
+    // En un charco: anillo celeste que avisa que pegás y recibís más
+    ctx.strokeStyle = `rgba(124,196,255,${.55 + .25 * Math.sin(G.rt * 8)})`; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.ellipse(p.x, p.y + p.r * .7, p.r + 9, (p.r + 9) * .45, 0, 0, Math.PI * 2); ctx.stroke();
+  }
   shadow(p.x, p.y, p.r);
   if (G.paredOn) {
     ctx.strokeStyle = 'rgba(255,211,77,.9)'; ctx.lineWidth = 3; ctx.beginPath();
