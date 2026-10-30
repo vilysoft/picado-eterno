@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.69 · 30 oct 2026
+
+- **Técnicas:** Rondo mejorado: 20% más de daño de entrada (20,3 por golpe en vez de 16,9), pelotas 15% más grandes, y la ronda ya no es fija: las pelotas se alejan y se acercan a vos mientras giran (hasta 20% más lejos o más cerca), así barren más espacio.
+
 ## 2.68 · 30 oct 2026
 
 - **Canchas:** En La Cancha del Club y El Coloso, el público de las tribunas de los costados (izquierda y derecha) ahora mira hacia la cancha y no hacia arriba.

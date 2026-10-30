@@ -794,7 +794,7 @@ const HAIRS = ['#1b1410', '#3b2416', '#6b4423', '#c99a4c', '#111111'];
 function wp(k, l) {
   switch (k) {
     case 'pelota': return { count: 1 + (l >= 3) + (l >= 5), bounces: 2 + (l >= 2) + (l >= 6 ? 1 : 0), dmg: 10.8 * (l >= 4 ? 1.4 : 1) * (l >= 6 ? 1.4 : 1), cd: 1.15, speed: 470 };
-    case 'rondo': return { count: 3 + (l >= 2) + (l >= 4) + (l >= 5), dmg: 16.9 * (l >= 3 ? 1.35 : 1) * (l >= 5 ? 1.35 : 1), spin: 3.3 + (l >= 4 ? 1.3 : 0), R: 78, push: l >= 6 ? 1150 : 200 };
+    case 'rondo': return { count: 3 + (l >= 2) + (l >= 4) + (l >= 5), dmg: 20.3 * (l >= 3 ? 1.35 : 1) * (l >= 5 ? 1.35 : 1), spin: 3.3 + (l >= 4 ? 1.3 : 0), R: 78, push: l >= 6 ? 1150 : 200 };
     case 'barrida': return { R: 137 * (l >= 2 ? 1.3 : 1) * (l >= 5 ? 1.3 : 1), dmg: 24.75 * (l >= 3 ? 1.4 : 1) * (l >= 5 ? 1.4 : 1), cd: 2.56 * (l >= 4 ? .75 : 1), shock: l >= 6 };
     case 'tresDedos': return { dmg: 20 * (l >= 2 ? 1.4 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 3 ? 2 : 1, cd: 1.9 * (l >= 4 ? .75 : 1), speed: 620, straight: 190, life: l >= 6 ? 2.1 : l >= 5 ? 1.6 : 1.25, s2: l >= 6 };
     case 'roja': return { dmg: 12 * (l >= 3 ? 1.4 : 1), n: 1 + (l >= 2) + (l >= 5), cd: 1.7 * (l >= 4 ? .75 : 1), exp: l >= 5 ? 3 : 2, speed: 560, chain: l >= 6 ? 3 : 0 };
@@ -825,6 +825,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.69', date: '30 oct 2026', items: [
+    ['Técnicas', 'Rondo mejorado: 20% más de daño de entrada (20,3 por golpe en vez de 16,9), pelotas 15% más grandes, y la ronda ya no es fija: las pelotas se alejan y se acercan a vos mientras giran (hasta 20% más lejos o más cerca), así barren más espacio.'],
+  ] },
   { v: '2.68', date: '30 oct 2026', items: [
     ['Canchas', 'En La Cancha del Club y El Coloso, el público de las tribunas de los costados (izquierda y derecha) ahora mira hacia la cancha y no hacia arriba.'],
   ] },
@@ -2480,10 +2483,13 @@ function sprayFlare(x, y, dmg) {
     return;
   }
 }
+const RONDO_BALL = 10.35, RONDO_PULSE = .2;   // tamaño de las pelotas del rondo (15% más grandes que las otras) y cuánto entran y salen
 // Posición de las pelotas del rondo alrededor tuyo (se calcula siempre, aunque los rivales estén quietos)
 function rondoGeom() {
   if (!G.weapons.rondo) { G.rondoBalls = null; return null; }
-  const p = G.p, S = G.stats, rw = wp('rondo', G.weapons.rondo), rR = rw.R * S.area, rbr = 9 * S.area, rb = [];
+  const p = G.p, S = G.stats, rw = wp('rondo', G.weapons.rondo), rbr = RONDO_BALL * S.area, rb = [];
+  // Las pelotas se alejan y se acercan: el radio del rondo late ±RONDO_PULSE
+  const rR = rw.R * S.area * (1 + RONDO_PULSE * Math.sin(G.rondoAng * .6));
   for (let i = 0; i < rw.count; i++) {
     const a = G.rondoAng + i * Math.PI * 2 / rw.count;
     rb.push([p.x + Math.cos(a) * rR, p.y + Math.sin(a) * rR]);
@@ -4125,7 +4131,7 @@ function render() {
     drawBall(s.x, s.y, s.r, s.rot, s.tiki ? '#ffb627' : null);
   }
   if (G.rondoBalls) {
-    const r = 9 * G.stats.area;
+    const r = RONDO_BALL * G.stats.area;
     G.rondoBalls.forEach((b, i) => {
       if (G.rondoCh[i]) {
         // Cargada: dorada con un halo que late
