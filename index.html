@@ -611,7 +611,7 @@ const WEAPONS = {
   tiroLibre: { name: 'Tiro libre', max: 6, desc: [
     'Rematás al rival más cercano: la pelota le pega y sigue derecho atravesando a todos.',
     '+50% de daño.', 'Rematás 2 pelotas en abanico.', '25% menos de espera entre remates.', 'Rematás 3 pelotas y +50% de daño.',
-    'Al ángulo: al final del recorrido (o si toca el borde) la pelota rebota y vuelve atravesando a todos otra vez.'] },
+    'Palo y adentro: al final del recorrido (o si toca el borde) la pelota rebota y vuelve atravesando a todos otra vez.'] },
   roja: { name: 'Tarjeta roja', max: 6, only: 'arbitro', desc: [
     'Le sacás una roja al rival más cercano: le pega y, si le queda menos vida que el doble del daño, lo expulsa.',
     '+1 tarjeta en cada tiro.', '+40% de daño.', '25% menos de espera entre tarjetas.', '+1 tarjeta y expulsa si le queda menos vida que el triple del daño.',
@@ -825,6 +825,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.67', date: '30 oct 2026', items: [
+    ['Técnicas', 'El nivel 6 del Tiro libre ahora se llama "Palo y adentro" (antes "Al ángulo"). Funciona igual.'],
+  ] },
   { v: '2.66', date: '30 oct 2026', items: [
     ['Fin del partido', 'La planilla del final suma "Cómo fue el partido": un gráfico con los rivales que eliminaste cada 5 minutos y tu nivel a lo largo del partido, cómo terminó tu equipo (técnicas y físicos con su nivel, y combos activados) y los momentos clave con su minuto: jefes eliminados, combos, técnicas o físicos que llegaron a nivel 6, el Segundo aire y si te quedaste con menos del 25% de vida.'],
     ['Técnicas', 'Rondo con carga: cada vuelta completa sin tocar a ningún rival carga una pelota, que se pone dorada. El próximo golpe de una pelota cargada pega 30% más y marea 1,2 s (a los jefes no los marea). Si pasa el tiempo sin tocar a nadie se pueden cargar todas las pelotas del rondo; cualquier toque reinicia la cuenta de la vuelta.'],
@@ -2322,7 +2325,7 @@ function updateShots(dt) {
   for (const s of G.shots) {
     s.life -= dt; s.rot += dt * 15;
     if (s.k === 'tiro' && s.rico && !s.bounced) {
-      // Al ángulo: rebota en el borde o al final del recorrido y vuelve por todos
+      // Palo y adentro: rebota en el borde o al final del recorrido y vuelve por todos
       const bx = s.x < -RUN + 12 || s.x > FW + RUN - 12, by = s.y < -RUN + 12 || s.y > FH + RUN - 12;
       if (bx || by || s.life <= 0) {
         if (bx) s.vx = -s.vx; if (by) s.vy = -s.vy; if (!bx && !by) { s.vx = -s.vx; s.vy = -s.vy; }

@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.67 · 30 oct 2026
+
+- **Técnicas:** El nivel 6 del Tiro libre ahora se llama "Palo y adentro" (antes "Al ángulo"). Funciona igual.
+
 ## 2.66 · 30 oct 2026
 
 - **Fin del partido:** La planilla del final suma "Cómo fue el partido": un gráfico con los rivales que eliminaste cada 5 minutos y tu nivel a lo largo del partido, cómo terminó tu equipo (técnicas y físicos con su nivel, y combos activados) y los momentos clave con su minuto: jefes eliminados, combos, técnicas o físicos que llegaron a nivel 6, el Segundo aire y si te quedaste con menos del 25% de vida.
