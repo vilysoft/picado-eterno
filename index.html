@@ -761,7 +761,7 @@ const FOES = {
   extremo:  { r: 11, hp: 9, speed: 128, dmg: 6, xp: 1, color: '#f07b3f', nums: [7, 11] },
   central:  { r: 20, hp: 65, speed: 50, dmg: 14, xp: 4, color: '#8e2b2b', nums: [5, 13] },
   arbitro:  { r: 13, hp: 32, speed: 68, dmg: 8, xp: 3, color: '#1d1f1c', nums: [] },
-  arquero:  { r: 15, hp: 26, speed: 95, dmg: 12, xp: 3, color: '#c8f03c', nums: [1] },
+  arquero:  { r: 15, hp: 23.4, speed: 95, dmg: 12, xp: 3, color: '#c8f03c', nums: [1] },
   camillero: { r: 32, hp: 60, speed: 62, dmg: 12, xp: 5, color: '#f2f2ec', nums: [] },
   hincha:    { r: 13, hp: 40, speed: 820, dmg: 26, xp: 20, color: '#7b4bc9', nums: [] },
   barra:     { r: 12, hp: 16, speed: 165, dmg: 5, xp: 2, color: '#22262e', nums: [] },
@@ -837,6 +837,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.74', date: '31 oct 2026', items: [
+    ['Rivales', 'Los arqueros arrancan con 10% menos de vida en todas las canchas (23,4 en vez de 26), y en La Cancha del Club aparecen 5% menos seguido.'],
+    ['Arreglos', 'El jefe del minuto 80 de El Potrero tiraba escombros al terminar cada pisotón, aunque todavía no hubiera arrancado el alambrado. Ahora el pisotón solo pega en su círculo, y los escombros salen únicamente cuando lanza el pedazo de alambrado que arrancó.'],
+  ] },
   { v: '2.73', date: '30 oct 2026', items: [
     ['Arreglos', 'Si subías de nivel justo cuando te pegaban, la pantalla se quedaba vibrando mientras elegías la mejora. Ahora queda quieta (el tinte rojo puede quedar hasta que sigue el partido). Lo mismo en la pausa.'],
   ] },
@@ -1874,7 +1878,8 @@ function pickType(t) {
   if (G.rain && after(90) && r < .1 && G.enemies.reduce((n, e) => n + (e.type === 'embarrado'), 0) < 8) return 'embarrado';
   // Arqueros: en esas canchas ya salían desde el arranque, así que tardan un 25% más que en El Potrero (36 s → 45 s)
   // En El Potrero el orden va al revés: primero los grandotes (minuto 7) y después los arqueros (minuto 22)
-  if ((LV.id === 'potrero' ? t > 150 : G.t > 1.25 * 45 / PACE) && r > 1 - .1 * f) return 'arquero';
+  // En La Cancha del Club salen 5% menos
+  if ((LV.id === 'potrero' ? t > 150 : G.t > 1.25 * 45 / PACE) && r > 1 - .1 * f * (LV.id === 'club' ? .95 : 1)) return 'arquero';
   if (LV.id !== 'potrero' && after(110) && r > .84 && G.enemies.reduce((n, e) => n + (e.type === 'camillero'), 0) < 6) return 'camillero';
   // Spidercam: solo en El Coloso, como mucho 2 a la vez
   if (LV.id === 'lujo' && after(220) && r > .808 && r <= .84 && G.enemies.reduce((n, e) => n + (e.type === 'spidercam'), 0) < 2) return 'spidercam';
@@ -3028,7 +3033,7 @@ function bossAI(e, d, ux, uy, sp, dt) {
       }
       if (enr) sp *= 1.2;
       if (e.ripped && e.throwNext && e.acd <= 0 && d > 230 && d < 700 && onScreen(e.x, e.y)) {
-        e.mode = 'cast'; e.mt = .85; e.aimLine = true; e.acd = 1.8; e.throwNext = false; break;
+        e.mode = 'cast'; e.mt = .85; e.aimLine = true; e.acd = 1.8; e.throwNext = false; e.throwing = true; break;
       }
       if (e.acd <= 0 && d < 230) {
         e.mode = 'cast'; e.mt = 1.05; e.aimLine = false; e.acd = 2.4;
@@ -3175,7 +3180,9 @@ function bossCast(e, enr) {
     for (let i = 0; i < n; i++) foeShot(e.x, e.y, a + (i - (n - 1) / 2) * .17, 470, 9, e.dmg * .7);
     sfx('kick');
   } else if (e.type === 'tanque') {
-    // Revolea pedazos de alambrado en abanico
+    // Revolea pedazos de alambrado en abanico, solo en el lanzamiento (el pisotón también pasa por acá y no tira nada)
+    if (!e.throwing) return;
+    e.throwing = false;
     for (let i = 0; i < 5; i++) foeShot(e.x, e.y, a + (i - 2) * .22, 430, 12, e.dmg * .4, 'scrap');
     sfx('stomp');
   } else if (e.type === 'tecnico') {

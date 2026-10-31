@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.74 · 31 oct 2026
+
+- **Rivales:** Los arqueros arrancan con 10% menos de vida en todas las canchas (23,4 en vez de 26), y en La Cancha del Club aparecen 5% menos seguido.
+- **Arreglos:** El jefe del minuto 80 de El Potrero tiraba escombros al terminar cada pisotón, aunque todavía no hubiera arrancado el alambrado. Ahora el pisotón solo pega en su círculo, y los escombros salen únicamente cuando lanza el pedazo de alambrado que arrancó.
+
 ## 2.73 · 30 oct 2026
 
 - **Arreglos:** Si subías de nivel justo cuando te pegaban, la pantalla se quedaba vibrando mientras elegías la mejora. Ahora queda quieta (el tinte rojo puede quedar hasta que sigue el partido). Lo mismo en la pausa.
