@@ -893,6 +893,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.83', date: '31 oct 2026', items: [
+    ['Técnicas', 'Rondo con pique: cada pelota que da 2 vueltas sin tocar a ningún rival se cae sobre el rival más cercano y explota en área, con 60% más de daño que un golpe normal (si estaba cargada, además pega 30% más y marea). Al ratito, 1,2 s, la pelota vuelve a la ronda.'],
+  ] },
   { v: '2.82', date: '31 oct 2026', items: [
     ['Sonido', 'Ambiente de estadio en La Cancha del Club y El Coloso, solo durante el partido: un murmullo de tribuna que aparece a ratos, con silencios al azar, y una ovación de la hinchada en los momentos clave (jefe vencido, combo, avalancha, hincha invasor eliminado), como mucho una cada 20 s. Suena bajo y se apaga en la pausa.'],
     ['Opciones', 'Control nuevo "Ambiente" en Opciones (menú y pausa) para subir o bajar ese sonido por separado.'],
@@ -1304,7 +1307,7 @@ function newGame() {
     stats: { armor: 1, thorns: 0, dmg: 1, speed: 1, cd: 1, magnet: 1, regen: 0, area: 1, xp: 1, sprint: 1.4, stRegen: 16, stDrain: 1 },
     bossKills: 0, free: 0, revives: 0, rerolls: 0, combos: {},
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '', tl: [[0, 0, 1, 1]], lastM: 0, ev: [], low: 1, lowM: 0 },   // estadísticas del partido
-    weapons: { [CH.start || 'pelota']: 1 }, passives: {}, timers: { [CH.start || 'pelota']: .4 }, sprays: [], rojas: 0, allies: [], bombos: [], rondoAng: 0, rondoBalls: null, rondoSpin: 0, rondoCh: [],
+    weapons: { [CH.start || 'pelota']: 1 }, passives: {}, timers: { [CH.start || 'pelota']: .4 }, sprays: [], rojas: 0, allies: [], bombos: [], rondoAng: 0, rondoBalls: null, rondoSpin: 0, rondoCh: [], rondoIdle: [], rondoOut: [],
     enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [], fenceGaps: [],
     spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invKilled: 0, mamaIn: 0, bigKills: 0, vecinoIn: 0, presiIn: 0, presiCheck: false, bills: [], goldTok: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, dog: null, dogAt: 28 + Math.random() * 8, rain: RAIN, puddles: [], muds: [], bolts: [], wind: null, windCd: 14, boltCd: 7, rainEvAt: 50 + Math.random() * 20, dark: 0, roof: 0, drys: [], utileros: [], flash: 0, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, hitN: 0, runT: 0, garra: 0, garraCd: 0, p5T: 0, panT: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
   };
@@ -2432,6 +2435,35 @@ function fireWeapons(dt) {
         const i = Array.from({ length: w.count }, (_, j) => j).find(j => !G.rondoCh[j]);
         G.rondoCh[i] = true; sfx('gem');
       }
+      // Pique: la pelota que da 2 vueltas sin tocar a nadie se cae sobre el rival más cercano y explota;
+      // al ratito vuelve a la ronda
+      for (let i = 0; i < w.count; i++) {
+        const o = G.rondoOut[i];
+        if (!o) {
+          if ((G.rondoIdle[i] = (G.rondoIdle[i] || 0) + da) < Math.PI * 4 || !G.rondoBalls || !G.rondoBalls[i]) continue;
+          const [bx, by] = G.rondoBalls[i], t = nearestEnemy(bx, by, null, RONDO_DROP_R), fly = t && !t.fly;
+          G.rondoOut[i] = { ph: 'fly', t: 0, x0: bx, y0: by, tx: fly ? t.x : bx, ty: fly ? t.y : by, ch: !!G.rondoCh[i] };
+          G.rondoCh[i] = false; G.rondoIdle[i] = 0;
+          continue;
+        }
+        o.t += dt;
+        if (o.ph === 'fly' && o.t >= RONDO_FLY) {
+          // Explosión en área
+          const R = RONDO_BOOM_R * S.area, dmg = w.dmg * S.dmg * RONDO_BOOM * (o.ch ? RONDO_CH : 1);
+          for (const e of G.enemies) {
+            if (e.dead) continue;
+            const dx = e.x - o.tx, dy = e.y - o.ty, d = Math.hypot(dx, dy) || 1;
+            if (d < R + e.r) { hitEnemy(e, dmg, dx / d * 260, dy / d * 260, 'rondo'); if (o.ch && !e.boss && !e.dead) e.dizzy = Math.max(e.dizzy || 0, RONDO_DIZZY); }
+          }
+          G.rings.push({ x: o.tx, y: o.ty, R, life: .4, max: .4, col: o.ch ? '255,211,77' : '255,182,39' });
+          for (let k2 = 0; k2 < 12; k2++) part(o.tx + rnd(-R, R) * .4, o.ty + rnd(-R, R) * .4, k2 % 2 ? '#ffb627' : '#fbfbf7');
+          if (!RM) G.shake = Math.max(G.shake, 3); sfx('kick');
+          o.ph = 'back'; o.t = 0;
+        } else if (o.ph === 'back' && o.t >= RONDO_BACK) {
+          G.rondoOut[i] = null; G.rondoIdle[i] = 0;
+          if (G.rondoBalls && G.rondoBalls[i]) G.rings.push({ x: G.rondoBalls[i][0], y: G.rondoBalls[i][1], R: 16 * S.area, life: .25, max: .25 });
+        }
+      }
       continue;
     }
     G.timers[k] = (G.timers[k] || 0) - dt;
@@ -2927,13 +2959,17 @@ function rondoGeom() {
   G.rondoBalls = rb;
   return { rb, rw, rR, rbr };
 }
-const RONDO_CH = 1.3, RONDO_DIZZY = 1.2;   // pelota cargada del rondo: daño extra y segundos de mareo
+const RONDO_CH = 1.3, RONDO_DIZZY = 1.2;
+// Pique del rondo: busca rivales a esta distancia, vuela RONDO_FLY s, explota en RONDO_BOOM_R con RONDO_BOOM veces el daño y vuelve a la ronda a los RONDO_BACK s
+const RONDO_DROP_R = 280, RONDO_FLY = .35, RONDO_BOOM_R = 75, RONDO_BOOM = 1.6, RONDO_BACK = 1.2;   // pelota cargada del rondo: daño extra y segundos de mareo
 function rondoHit(e, dx, dy, d, RG) {
   const { rb, rw, rR, rbr } = RG, S = G.stats;
   if (e.rcd > 0 || Math.abs(d - rR) >= e.r + rbr) return;
   for (let i = 0; i < rb.length; i++) {
+    if (G.rondoOut[i]) continue;   // esa pelota está afuera (picando)
     const b = rb[i], bx = e.x - b[0], by = e.y - b[1];
     if (bx * bx + by * by < (e.r + rbr) ** 2) {
+      G.rondoIdle[i] = 0;
       // Pelota cargada: pega 30% más y marea; cualquier toque reinicia la cuenta de la vuelta
       const ch = G.rondoCh[i]; G.rondoCh[i] = false; G.rondoSpin = 0;
       // Empuje hacia afuera (desde vos hacia el rival); en nivel 6 lo despeja lejos
@@ -4677,6 +4713,16 @@ function render() {
   if (G.rondoBalls) {
     const r = RONDO_BALL * G.stats.area;
     G.rondoBalls.forEach((b, i) => {
+      const o = G.rondoOut[i];
+      if (o) {
+        // Picando: vuela en parábola hasta el rival y explota; después falta un ratito de la ronda
+        if (o.ph === 'fly') {
+          const k = Math.min(1, o.t / RONDO_FLY), x = o.x0 + (o.tx - o.x0) * k, y = o.y0 + (o.ty - o.y0) * k - Math.sin(k * Math.PI) * 60;
+          ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(o.x0 + (o.tx - o.x0) * k, o.y0 + (o.ty - o.y0) * k, r, r * .5, 0, 0, Math.PI * 2); ctx.fill();
+          drawBall(x, y, r * (1 + .3 * Math.sin(k * Math.PI)), G.rondoAng * 6, o.ch ? '#ffd34d' : null);
+        }
+        return;
+      }
       if (G.rondoCh[i]) {
         // Cargada: dorada con un halo que late
         ctx.strokeStyle = `rgba(255,211,77,${.45 + .3 * Math.sin(G.rt * 10)})`; ctx.lineWidth = 3;

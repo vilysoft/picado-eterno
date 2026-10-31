@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.83 · 31 oct 2026
+
+- **Técnicas:** Rondo con pique: cada pelota que da 2 vueltas sin tocar a ningún rival se cae sobre el rival más cercano y explota en área, con 60% más de daño que un golpe normal (si estaba cargada, además pega 30% más y marea). Al ratito, 1,2 s, la pelota vuelve a la ronda.
+
 ## 2.82 · 31 oct 2026
 
 - **Sonido:** Ambiente de estadio en La Cancha del Club y El Coloso, solo durante el partido: un murmullo de tribuna que aparece a ratos, con silencios al azar, y una ovación de la hinchada en los momentos clave (jefe vencido, combo, avalancha, hincha invasor eliminado), como mucho una cada 20 s. Suena bajo y se apaga en la pausa.
