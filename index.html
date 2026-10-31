@@ -854,6 +854,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.81', date: '31 oct 2026', items: [
+    ['Rivales', 'La sorpresa de El Coloso ya no deja fichas: en su lugar deja 5 gemas celestes de experiencia más (8 en total).'],
+  ] },
   { v: '2.80', date: '31 oct 2026', items: [
     ['Rivales', 'La sorpresa de La Cancha del Club ya no llega enseguida: aparece en un momento al azar, entre 3 y 8 minutos de partido después.'],
     ['Día de lluvia', 'En La Cancha del Club salen 4 utileros en vez de uno, cada uno por una franja distinta de la cancha y algunos desde cada lado. Cada uno seca su franja (ahí no caen rayos un rato). El que pasa por tu franja te deja la gema celeste.'],
@@ -1541,7 +1544,7 @@ const ALB_BOSSES = {
   tecnico:  ['La Cancha del Club · minuto 80', 'Se queda lejos y hace cambios: mete rivales y acelera a los que tiene cerca. Golpeado, lo echan a la tribuna: ahí no lo podés tocar, pero cada rival suyo que eliminás le baja vida.'],
   estrella: ['El Coloso · entretiempo', 'Gambetas cortas en diagonal y un abanico de tiros. Golpeada, te tira un caño: te pasa entre las piernas y patea desde atrás tuyo.'],
   vecino:   ['El Potrero · si eliminás 10 grandotes antes del 60\'', 'Sale enojado porque le rompieron un vidrio: te revolea macetas que marcan un círculo y caen. Golpeado, suelta al perro. Si le ganás deja una lluvia de gemas.'],
-  presi:    ['El Coloso · si llegás a la segunda pausa de hidratación con 85% de vida o más', 'Baja del palco con dos custodios que lo cubren. Tira billetes que parecen un regalo pero explotan si los agarrás. Golpeado, compra al árbitro: los rivales cercanos pegan más fuerte un rato. Deja gemas doradas que dan fichas.'],
+  presi:    ['El Coloso · si llegás a la segunda pausa de hidratación con 85% de vida o más', 'Baja del palco con dos custodios que lo cubren. Tira billetes que parecen un regalo pero explotan si los agarrás. Golpeado, compra al árbitro: los rivales cercanos pegan más fuerte un rato. Si le ganás deja una lluvia de gemas y 8 celestes.'],
   mama:     ['La Cancha del Club · si eliminás a los dos hinchas invasores', 'Viene a vengar a su hijo: te persigue revoleando chancletas y cada tanto sale corriendo hacia vos. Golpeada, tira de a tres y corre más. Si le ganás deja una lluvia de gemas.'],
   var:      ['El Coloso · minuto 80', 'Marca zonas de revisión alrededor tuyo que después pegan. Golpeado, marca más y retrotrae la jugada: te devuelve adonde estabas 2 s antes.'],
 };
@@ -2531,7 +2534,7 @@ function kill(e) {
   if (e.type === 'vecino' || e.type === 'presi') {
     for (let i = 0; i < MAMA_GEMS; i++) gem(e.x + rnd(-90, 90), e.y + rnd(-90, 90), 5);
     for (let i = 0; i < 3; i++) gem(e.x + rnd(-50, 50), e.y + rnd(-50, 50), HINCHA_GEM, true);
-    if (e.type === 'presi') { for (let i = 0; i < 5; i++) { gem(e.x + rnd(-60, 60), e.y + rnd(-60, 60), 5, true); G.gems[G.gems.length - 1].gold = true; } G.bills = []; }
+    if (e.type === 'presi') { for (let i = 0; i < 5; i++) gem(e.x + rnd(-60, 60), e.y + rnd(-60, 60), HINCHA_GEM, true); G.bills = []; }   // 5 celestes más
   }
   if (e.type === 'vecino' || e.type === 'presi' || e.type === 'mama') setTimeout(() => { if (G) for (const g of G.gems) g.pull = true; }, 0);   // la recompensa va sola hacia vos
   if (e.type === 'mama') {

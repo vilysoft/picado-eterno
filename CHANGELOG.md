@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.81 · 31 oct 2026
+
+- **Rivales:** La sorpresa de El Coloso ya no deja fichas: en su lugar deja 5 gemas celestes de experiencia más (8 en total).
+
 ## 2.80 · 31 oct 2026
 
 - **Rivales:** La sorpresa de La Cancha del Club ya no llega enseguida: aparece en un momento al azar, entre 3 y 8 minutos de partido después.
