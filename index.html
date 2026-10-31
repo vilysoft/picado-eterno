@@ -854,6 +854,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.80', date: '31 oct 2026', items: [
+    ['Rivales', 'La sorpresa de La Cancha del Club ya no llega enseguida: aparece en un momento al azar, entre 3 y 8 minutos de partido después.'],
+    ['Día de lluvia', 'En La Cancha del Club salen 4 utileros en vez de uno, cada uno por una franja distinta de la cancha y algunos desde cada lado. Cada uno seca su franja (ahí no caen rayos un rato). El que pasa por tu franja te deja la gema celeste.'],
+  ] },
   { v: '2.79', date: '31 oct 2026', items: [
     ['Día de lluvia', 'En El Coloso, cuando vuelve la lluvia después del techo cerrado, el cartel ahora dice "¡Se rompió el techo otra vez!".'],
     ['Rivales', 'Dos sorpresas más, una en El Potrero y otra en El Coloso: si cumplís cierta condición durante el partido, aparece un mini jefe nuevo. Las pistas: en El Potrero, cuidado con eliminar demasiados grandotes en la primera hora; en El Coloso, llegá muy entero a la segunda pausa de hidratación. Los dos dejan una lluvia de gemas, y uno de ellos además deja fichas.'],
@@ -1256,7 +1260,7 @@ function newGame() {
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '', tl: [[0, 0, 1, 1]], lastM: 0, ev: [], low: 1, lowM: 0 },   // estadísticas del partido
     weapons: { [CH.start || 'pelota']: 1 }, passives: {}, timers: { [CH.start || 'pelota']: .4 }, sprays: [], rojas: 0, allies: [], bombos: [], rondoAng: 0, rondoBalls: null, rondoSpin: 0, rondoCh: [],
     enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [], fenceGaps: [],
-    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invKilled: 0, mamaIn: 0, bigKills: 0, vecinoIn: 0, presiIn: 0, presiCheck: false, bills: [], goldTok: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, dog: null, dogAt: 28 + Math.random() * 8, rain: RAIN, puddles: [], muds: [], bolts: [], wind: null, windCd: 14, boltCd: 7, rainEvAt: 50 + Math.random() * 20, dark: 0, roof: 0, dry: null, utilero: null, flash: 0, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, hitN: 0, runT: 0, garra: 0, garraCd: 0, p5T: 0, panT: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
+    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invKilled: 0, mamaIn: 0, bigKills: 0, vecinoIn: 0, presiIn: 0, presiCheck: false, bills: [], goldTok: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, dog: null, dogAt: 28 + Math.random() * 8, rain: RAIN, puddles: [], muds: [], bolts: [], wind: null, windCd: 14, boltCd: 7, rainEvAt: 50 + Math.random() * 20, dark: 0, roof: 0, drys: [], utileros: [], flash: 0, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, hitN: 0, runT: 0, garra: 0, garraCd: 0, p5T: 0, panT: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
   };
 }
 // Stats de arranque de cualquier personaje, antes del vestuario
@@ -2048,7 +2052,8 @@ const WET_MULT = 1.2;   // en un charco hacés y recibís 20% más de daño
 const RAIN_TOKENS = 1.4, PUD_MIN = 4, PUD_MAX = 20, SLIDE_GRIP = 2.2, MUD_SLOW = .3, MUD_TRAIL_S = 7;
 const BOLT_WARN = 1, BOLT_R = 70, BOLT_DMG = 22, ZAP_S = 1.5;   // ZAP_S: cuánto queda electrificado el charco entero
 const WIND_PUSH = 70, WIND_SHOT = 150, WIND_WARN = 1.5, WIND_S = 3.2, WIND_SHOTS = { pelota: 1, tiro: 1, tres: 1 };
-const DARK_S = 7, ROOF_S = 25, DRY_S = 25, DRY_H = 85;
+const DARK_S = 7, ROOF_S = 25, DRY_S = 25, DRY_H = 85, UTILEROS = 4;
+const inDry = (y, pad) => G.drys.some(D => Math.abs(y - D.y) < D.h + pad);
 // La tormenta crece: arranca en llovizna y en el 90' (y en el alargue) está al máximo. Con el techo cerrado no llueve
 const rainI = () => !G.rain || G.roof > 0 ? 0 : G.et ? 1 : .35 + .65 * Math.min(1, G.t / MATCH);
 function zone(x, y, rx, ry, life) {
@@ -2076,7 +2081,7 @@ function addPuddle() {
   for (let n = 0; n < 8; n++) {
     const x = rnd(80, FW - 80), y = rnd(80, FH - 80);
     if (Math.hypot(x - p.x, y - p.y) < 160) continue;
-    if (G.dry && Math.abs(y - G.dry.y) < G.dry.h + 60) continue;   // la franja que secó el utilero
+    if (inDry(y, 60)) continue;   // las franjas que secaron los utileros
     const rx = rnd(60, 125) * (.8 + .4 * I);
     G.puddles.push(zone(x, y, rx, rx * rnd(.5, .75), Infinity));
     return;
@@ -2106,19 +2111,23 @@ function updateRain(dt) {
   if (G.roof <= 0 && G.puddles.length < want && Math.random() < dt * 1.2) addPuddle();
   for (const u of G.muds) if (u.life !== Infinity) u.life -= dt;
   G.muds = G.muds.filter(u => u.life > 0);
-  if (G.dry && (G.dry.t -= dt) <= 0) G.dry = null;
+  for (const D of G.drys) D.t -= dt;
+  G.drys = G.drys.filter(D => D.t > 0);
   // Evento de la cancha, una vez por partido entre el 50' y el 70'
   if (G.rainEvAt && !frozen && minuteOf(G.t) >= G.rainEvAt) rainEvent();
   if (G.dark > 0) G.dark = Math.max(0, G.dark - dt);
   if (G.roof > 0) { G.roof -= dt; if (G.roof <= 0) { banner('¡Se rompió el techo otra vez!'); sfx('thunder'); } }
-  if (G.utilero) {
-    const U = G.utilero; U.x += 300 * dt;
-    // Seca la franja a medida que pasa y, al cruzarse con vos, te deja una gema celeste
-    for (const u of G.puddles) if (Math.abs(u.y - U.y) < DRY_H + u.ry * .5 && u.x < U.x + 20) u.k = Math.max(0, u.k - dt * 3);
-    if (!U.gem && U.x >= p.x - 40) { U.gem = true; gem(U.x + 170, U.y + rnd(-30, 30), HINCHA_GEM, true); }
-    if (!RM && Math.random() < dt * 30) part(U.x + 20, U.y + rnd(-DRY_H, DRY_H), '#bfe3ff');
-    if (U.x > FW + RUN + 40) G.utilero = null;
+  for (const U of G.utileros) {
+    if (U.wait > 0) { U.wait -= dt; continue; }
+    U.x += 300 * U.dir * dt;
+    if (!U.dry) { U.dry = true; G.drys.push({ y: U.y, h: DRY_H, t: DRY_S }); }
+    // Seca su franja a medida que pasa; el de tu franja, al cruzarse con vos, te deja una gema celeste
+    for (const u of G.puddles) if (Math.abs(u.y - U.y) < DRY_H + u.ry * .5 && (u.x - U.x) * U.dir < 20) u.k = Math.max(0, u.k - dt * 3);
+    if (U.gem && (U.x - p.x) * U.dir >= -40) { U.gem = false; gem(U.x + 170 * U.dir, U.y + rnd(-30, 30), HINCHA_GEM, true); }
+    if (!RM && Math.random() < dt * 30) part(U.x + 20 * U.dir, U.y + rnd(-DRY_H, DRY_H), '#bfe3ff');
+    if (U.x > FW + RUN + 60 || U.x < -RUN - 60) U.done = true;
   }
+  G.utileros = G.utileros.filter(U => !U.done);
   if (frozen) return;
   // Rayos: avisan con un círculo y caen al segundo. Si caen en un charco, lo electrifican: te daña si estás adentro
   G.boltCd -= dt;
@@ -2127,7 +2136,7 @@ function updateRain(dt) {
     let x = p.x + rnd(-230, 230), y = p.y + rnd(-170, 170);
     const near = G.puddles.filter(u => u.k > .6 && Math.hypot(u.x - p.x, u.y - p.y) < 380);
     if (near.length && Math.random() < .45) { const u = near[Math.random() * near.length | 0]; x = u.x; y = u.y; }
-    if (!(G.dry && Math.abs(y - G.dry.y) < G.dry.h)) G.bolts.push({ x, y, t: BOLT_WARN, max: BOLT_WARN, hit: 0 });
+    if (!inDry(y, 0)) G.bolts.push({ x, y, t: BOLT_WARN, max: BOLT_WARN, hit: 0 });
   }
   for (const b of G.bolts) {
     if (b.hit) { b.hit -= dt; continue; }
@@ -2158,9 +2167,11 @@ function rainEvent() {
   G.rainEvAt = 0;
   if (LV.id === 'potrero') { G.dark = DARK_S; banner('¡Se cortó la luz del barrio!', true); sfx('zap'); }
   else if (LV.id === 'club') {
-    G.utilero = { x: -RUN - 30, y: clamp(G.p.y, 40, FH - 40), gem: false };
-    G.dry = { y: G.utilero.y, h: DRY_H, t: DRY_S };
-    banner('¡Sale el utilero a secar la cancha!', true); sfx('whistle');
+    // Varios utileros, cada uno por su franja: uno por la tuya (te deja la gema) y los demás repartidos por la cancha
+    const ys = [clamp(G.p.y, 40, FH - 40)];
+    for (let n = 0; ys.length < UTILEROS && n < 60; n++) { const y = rnd(80, FH - 80); if (ys.every(o => Math.abs(o - y) > DRY_H * 2 + 40)) ys.push(y); }
+    G.utileros = ys.map((y, i) => { const dir = i % 2 ? -1 : 1; return { x: dir > 0 ? -RUN - 30 : FW + RUN + 30, y, dir, gem: i === 0, wait: i * .5 }; });
+    banner('¡Salen los utileros a secar la cancha!', true); sfx('whistle');
   } else { G.roof = ROOF_S; G.wind = null; G.bolts = []; banner('¡Cierran el techo del Coloso!', true); sfx('stomp'); }
 }
 // Dibujo: charcos y barro en el piso
@@ -2173,7 +2184,7 @@ function drawWet(cx, cy) {
     ctx.fillStyle = mudCol + a + ')';
     ctx.beginPath(); ctx.ellipse(u.x, u.y, u.rx * u.k, u.ry * u.k, Math.atan2(u.s, u.c), 0, Math.PI * 2); ctx.fill();
   }
-  if (G.dry) { ctx.fillStyle = `rgba(255,255,240,${.05 * Math.min(1, G.dry.t / 2)})`; ctx.fillRect(-RUN, G.dry.y - G.dry.h, FW + 2 * RUN, G.dry.h * 2); }
+  for (const D of G.drys) { ctx.fillStyle = `rgba(255,255,240,${.05 * Math.min(1, D.t / 2)})`; ctx.fillRect(-RUN, D.y - D.h, FW + 2 * RUN, D.h * 2); }
   for (const u of G.puddles) {
     if (!vis(u.x, u.y, u.rx) || u.k <= 0) continue;
     const ang = Math.atan2(u.s, u.c);
@@ -2212,13 +2223,14 @@ function drawStorm(cx, cy) {
     for (let i = 1; i <= 8; i++) { const t = i / 8; x = b.x + (x - b.x) * (1 - t) + (hash2(b.seed | 0, i + 2) - .5) * 50 * (1 - t); y = cy - 40 + (b.y - cy + 40) * t; ctx.lineTo(x, y); }
     ctx.stroke(); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(190,220,255,.9)'; ctx.stroke();
   }
-  if (G.utilero) {
-    const U = G.utilero, K = { shirt: '#2b4c8c', sleeve: '#2b4c8c', shorts: '#1d1f1c' };
+  for (const U of G.utileros) {
+    if (U.wait > 0) continue;
+    const K = { shirt: '#2b4c8c', sleeve: '#2b4c8c', shorts: '#1d1f1c' }, d = U.dir;
     shadow(U.x, U.y, 14);
-    drawPerson(U.x, U.y, 14, 0, G.rt * 30, { ...K, skin: '#c98e62', hair: '#3a2a1c' });
+    drawPerson(U.x, U.y, 14, d > 0 ? 0 : Math.PI, G.rt * 30, { ...K, skin: '#c98e62', hair: '#3a2a1c' });
     // el secador: un palo con una goma ancha adelante
-    ctx.strokeStyle = '#d5dccf'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(U.x + 6, U.y); ctx.lineTo(U.x + 30, U.y); ctx.stroke();
-    ctx.fillStyle = '#1d1f1c'; ctx.fillRect(U.x + 28, U.y - 22, 6, 44);
+    ctx.strokeStyle = '#d5dccf'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(U.x + 6 * d, U.y); ctx.lineTo(U.x + 30 * d, U.y); ctx.stroke();
+    ctx.fillStyle = '#1d1f1c'; ctx.fillRect(U.x + 28 * d - 3, U.y - 22, 6, 44);
   }
 }
 // Capa de pantalla: oscuridad, lluvia, relámpago, viento y apagón
@@ -2513,7 +2525,7 @@ function kill(e) {
   else gem(e.x, e.y, e.xp);
   if (e.type === 'hincha') {
     banner('¡Seguridad se lleva al hincha!'); cheer = 2;
-    if (++G.invKilled === 2) G.mamaIn = 3;   // eliminaste a los dos: viene la mamá a buscarlo
+    if (++G.invKilled === 2) G.mamaIn = rnd(3, 8) * MATCH / 90;   // eliminaste a los dos: entre 3 y 8 minutos de partido después viene la mamá a vengarse
   }
   if (e.type === 'central' && !e.elite && LV.id === 'potrero' && minuteOf(G.t) < 60 && ++G.bigKills === VECINO_BIG) G.vecinoIn = 2.5;
   if (e.type === 'vecino' || e.type === 'presi') {

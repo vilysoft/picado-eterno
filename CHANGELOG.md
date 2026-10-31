@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.80 · 31 oct 2026
+
+- **Rivales:** La sorpresa de La Cancha del Club ya no llega enseguida: aparece en un momento al azar, entre 3 y 8 minutos de partido después.
+- **Día de lluvia:** En La Cancha del Club salen 4 utileros en vez de uno, cada uno por una franja distinta de la cancha y algunos desde cada lado. Cada uno seca su franja (ahí no caen rayos un rato). El que pasa por tu franja te deja la gema celeste.
+
 ## 2.79 · 31 oct 2026
 
 - **Día de lluvia:** En El Coloso, cuando vuelve la lluvia después del techo cerrado, el cartel ahora dice "¡Se rompió el techo otra vez!".
