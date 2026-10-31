@@ -2,6 +2,15 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.78 · 31 oct 2026
+
+- **Día de lluvia:** Cuando un rayo toca un charco (aunque sea en el borde), el charco entero queda electrificado 1,5 s y chispea. Si estás en cualquier parte de ese charco, o entrás mientras chispea, te daña.
+
+## 2.77 · 31 oct 2026
+
+- **Técnicas:** Rondo: el empuje de las pelotas baja mucho (de 200 a 40) en los niveles 1 a 5, así los rivales se quedan cerca y reciben varios golpes seguidos. Para que también les pegue a los que tenés pegados, al acercarse las pelotas ahora entran hasta casi tocarte (antes entraban solo 20%). El nivel 6 (Despeje) sigue empujando lejos.
+- **Rivales:** La mamá del invasor ahora llega a vengarse.
+
 ## 2.76 · 31 oct 2026
 
 - **Técnicas:** Rondo: las pelotas arrancan otro 15% más grandes y, cuando se alejan, llegan 30% más lejos que antes (hasta 56% más afuera de la ronda normal). Al acercarse siguen entrando hasta 20%.

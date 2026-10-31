@@ -754,7 +754,7 @@ const BOSSES = {
   capitan:  { name: 'El Capitán', intro: 'Entretiempo: ¡entra el capitán rival!', beat: '¡Le ganaste al capitán!' },
   tecnico:  { name: 'El DT rival', intro: 'Minuto 80: ¡el DT rival se mete a la cancha!', beat: '¡Echaste al DT rival!' },
   estrella: { name: 'La Estrella', intro: 'Entretiempo: ¡sale a la cancha La Estrella!', beat: '¡Le ganaste a La Estrella!' },
-  mama:     { name: 'La mamá del invasor', intro: '¡Llegó la mamá del invasor y viene a buscarlo!', beat: '¡Le ganaste a la mamá del invasor!' },
+  mama:     { name: 'La mamá del invasor', intro: '¡Llegó la mamá del invasor y viene a vengarse!', beat: '¡Le ganaste a la mamá del invasor!' },
   var:      { name: 'El VAR', intro: 'Minuto 80: ¡llamaron al VAR!', beat: '¡Apagaste el VAR!' },
 };
 const FOES = {
@@ -808,7 +808,7 @@ const HAIRS = ['#1b1410', '#3b2416', '#6b4423', '#c99a4c', '#111111'];
 function wp(k, l) {
   switch (k) {
     case 'pelota': return { count: 1 + (l >= 3) + (l >= 5), bounces: 2 + (l >= 2) + (l >= 6 ? 1 : 0), dmg: 10.8 * (l >= 4 ? 1.4 : 1) * (l >= 6 ? 1.4 : 1), cd: 1.15, speed: 470 };
-    case 'rondo': return { count: 3 + (l >= 2) + (l >= 4) + (l >= 5), dmg: 20.3 * (l >= 3 ? 1.35 : 1) * (l >= 5 ? 1.35 : 1), spin: 3.3 + (l >= 4 ? 1.3 : 0), R: 78, push: l >= 6 ? 1150 : 200 };
+    case 'rondo': return { count: 3 + (l >= 2) + (l >= 4) + (l >= 5), dmg: 20.3 * (l >= 3 ? 1.35 : 1) * (l >= 5 ? 1.35 : 1), spin: 3.3 + (l >= 4 ? 1.3 : 0), R: 78, push: l >= 6 ? 1150 : 40 };   // empuje bajo: el rival queda en la ronda y recibe varios golpes
     case 'barrida': return { R: 137 * (l >= 2 ? 1.3 : 1) * (l >= 5 ? 1.3 : 1), dmg: 24.75 * (l >= 3 ? 1.4 : 1) * (l >= 5 ? 1.4 : 1), cd: 2.56 * (l >= 4 ? .75 : 1), shock: l >= 6 };
     case 'tresDedos': return { dmg: 20 * (l >= 2 ? 1.4 : 1) * (l >= 5 ? 1.5 : 1), n: l >= 3 ? 2 : 1, cd: 1.9 * (l >= 4 ? .75 : 1), speed: 620, straight: 190, life: l >= 6 ? 2.1 : l >= 5 ? 1.6 : 1.25, s2: l >= 6 };
     case 'roja': return { dmg: 12 * (l >= 3 ? 1.4 : 1), n: 1 + (l >= 2) + (l >= 5), cd: 1.7 * (l >= 4 ? .75 : 1), exp: l >= 5 ? 3 : 2, speed: 560, chain: l >= 6 ? 3 : 0 };
@@ -844,6 +844,13 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.78', date: '31 oct 2026', items: [
+    ['Día de lluvia', 'Cuando un rayo toca un charco (aunque sea en el borde), el charco entero queda electrificado 1,5 s y chispea. Si estás en cualquier parte de ese charco, o entrás mientras chispea, te daña.'],
+  ] },
+  { v: '2.77', date: '31 oct 2026', items: [
+    ['Técnicas', 'Rondo: el empuje de las pelotas baja mucho (de 200 a 40) en los niveles 1 a 5, así los rivales se quedan cerca y reciben varios golpes seguidos. Para que también les pegue a los que tenés pegados, al acercarse las pelotas ahora entran hasta casi tocarte (antes entraban solo 20%). El nivel 6 (Despeje) sigue empujando lejos.'],
+    ['Rivales', 'La mamá del invasor ahora llega a vengarse.'],
+  ] },
   { v: '2.76', date: '31 oct 2026', items: [
     ['Técnicas', 'Rondo: las pelotas arrancan otro 15% más grandes y, cuando se alejan, llegan 30% más lejos que antes (hasta 56% más afuera de la ronda normal). Al acercarse siguen entrando hasta 20%.'],
     ['Rivales', 'Sorpresa en La Cancha del Club: si eliminás a los dos hinchas invasores del partido, alguien viene a buscarlos. Es un mini jefe; si le ganás deja una lluvia de gemas.'],
@@ -1513,7 +1520,7 @@ const ALB_BOSSES = {
   capitan:  ['La Cancha del Club · entretiempo', 'Embiste en línea recta. Golpeado, grita "¡Vamos, muchachos!" y llama a 6 compañeros que embisten en fila con él. Si lo encimás, toma carrera.'],
   tecnico:  ['La Cancha del Club · minuto 80', 'Se queda lejos y hace cambios: mete rivales y acelera a los que tiene cerca. Golpeado, lo echan a la tribuna: ahí no lo podés tocar, pero cada rival suyo que eliminás le baja vida.'],
   estrella: ['El Coloso · entretiempo', 'Gambetas cortas en diagonal y un abanico de tiros. Golpeada, te tira un caño: te pasa entre las piernas y patea desde atrás tuyo.'],
-  mama:     ['La Cancha del Club · si eliminás a los dos hinchas invasores', 'Viene a buscar a su hijo: te persigue revoleando chancletas y cada tanto sale corriendo hacia vos. Golpeada, tira de a tres y corre más. Si le ganás deja una lluvia de gemas.'],
+  mama:     ['La Cancha del Club · si eliminás a los dos hinchas invasores', 'Viene a vengar a su hijo: te persigue revoleando chancletas y cada tanto sale corriendo hacia vos. Golpeada, tira de a tres y corre más. Si le ganás deja una lluvia de gemas.'],
   var:      ['El Coloso · minuto 80', 'Marca zonas de revisión alrededor tuyo que después pegan. Golpeado, marca más y retrotrae la jugada: te devuelve adonde estabas 2 s antes.'],
 };
 const ALB_TABS = [['f', 'Rivales'], ['b', 'Jefes'], ['w', 'Técnicas'], ['p', 'Físicos'], ['c', 'Combos']];
@@ -1998,7 +2005,7 @@ function startInvader() {
 let RAIN = false; try { RAIN = localStorage.getItem('picado-eterno-lluvia') === '1'; } catch (e) {}
 const WET_MULT = 1.2;   // en un charco hacés y recibís 20% más de daño
 const RAIN_TOKENS = 1.4, PUD_MIN = 4, PUD_MAX = 20, SLIDE_GRIP = 2.2, MUD_SLOW = .3, MUD_TRAIL_S = 7;
-const BOLT_WARN = 1, BOLT_R = 70, BOLT_DMG = 22, ZAP_S = .6;
+const BOLT_WARN = 1, BOLT_R = 70, BOLT_DMG = 22, ZAP_S = 1.5;   // ZAP_S: cuánto queda electrificado el charco entero
 const WIND_PUSH = 70, WIND_SHOT = 150, WIND_WARN = 1.5, WIND_S = 3.2, WIND_SHOTS = { pelota: 1, tiro: 1, tres: 1 };
 const DARK_S = 7, ROOF_S = 25, DRY_S = 25, DRY_H = 85;
 // La tormenta crece: arranca en llovizna y en el 90' (y en el alargue) está al máximo. Con el techo cerrado no llueve
@@ -2046,7 +2053,12 @@ function updateRain(dt) {
   // Charcos: crecen de a poco hasta su tamaño; con el techo cerrado se secan despacio
   for (const u of G.puddles) {
     if (G.roof > 0) u.k -= dt / 15; else if (u.k < 1) u.k = Math.min(1, u.k + dt / 3);
-    if (u.zap > 0) u.zap -= dt;
+    if (u.zap > 0) {
+      u.zap -= dt;
+      // Si estás adentro mientras está electrificado, te pega (una vez por rayo)
+      if (!u.zapHit && p.inv <= 0 && inZone(u, p.x, p.y)) { u.zapHit = true; hurt(u.zapDmg, true); G.texts.push({ x: p.x, y: p.y - p.r - 26, txt: '¡ELECTRIFICADO!', life: .9, big: true }); sfx('zap'); }
+      if (!RM && Math.random() < dt * 40) { const a = Math.random() * 6.28, r = Math.sqrt(Math.random()); part(u.x + Math.cos(a) * u.rx * u.k * r * .9, u.y + Math.sin(a) * u.ry * u.k * r * .9, Math.random() < .5 ? '#fff6c2' : '#bfe3ff'); }
+    }
   }
   G.puddles = G.puddles.filter(u => u.k > 0);
   const want = Math.round(PUD_MIN + (PUD_MAX - PUD_MIN) * I);
@@ -2085,8 +2097,12 @@ function updateRain(dt) {
     const dmg = BOLT_DMG * LV.dmg * (1 + ht() / 500) * MOB_DMG;
     let got = false;
     if (Math.hypot(p.x - b.x, p.y - b.y) < BOLT_R + p.r && p.inv <= 0) { hurt(dmg, true); got = true; }
-    const u = G.puddles.find(u => inZone(u, b.x, b.y));
-    if (u) { u.zap = ZAP_S; if (!got && inZone(u, p.x, p.y) && p.inv <= 0) { hurt(dmg * .7, true); G.texts.push({ x: p.x, y: p.y - p.r - 26, txt: '¡ELECTRIFICADO!', life: .9, big: true }); } }
+    // Cualquier charco que toque el rayo queda electrificado entero un rato
+    for (const u of G.puddles) {
+      let touch = inZone(u, b.x, b.y);
+      for (let i = 0; i < 8 && !touch; i++) touch = inZone(u, b.x + Math.cos(i * .785) * BOLT_R * .85, b.y + Math.sin(i * .785) * BOLT_R * .85);
+      if (touch) { u.zap = ZAP_S; u.zapDmg = dmg * .7; u.zapHit = got; }
+    }
     for (let i = 0; i < 14; i++) part(b.x, b.y, i % 2 ? '#fff6c2' : '#bfe3ff');
   }
   G.bolts = G.bolts.filter(b => b.t > 0 || b.hit > 0);
@@ -2134,7 +2150,7 @@ function drawWet(cx, cy) {
       }
     }
     if (u.zap > 0) {
-      ctx.fillStyle = `rgba(255,244,150,${.5 * u.zap / ZAP_S})`; ctx.beginPath(); ctx.ellipse(u.x, u.y, u.rx * u.k, u.ry * u.k, ang, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(255,244,150,${(.25 + .25 * Math.abs(Math.sin(tnow * 30))) * Math.min(1, u.zap / .4)})`; ctx.beginPath(); ctx.ellipse(u.x, u.y, u.rx * u.k, u.ry * u.k, ang, 0, Math.PI * 2); ctx.fill();
     }
   }
   // Aviso de rayo: círculo que se llena
@@ -2791,7 +2807,7 @@ function sprayFlare(x, y, dmg) {
     return;
   }
 }
-const RONDO_BALL = 11.9, RONDO_PULSE = .2, RONDO_OUT = .56;   // tamaño de las pelotas, cuánto entran (20%) y cuánto salen (56%: 30% más lejos que antes)   // tamaño de las pelotas del rondo (15% más grandes que las otras) y cuánto entran y salen
+const RONDO_BALL = 11.9, RONDO_PULSE = .65, RONDO_OUT = .56;   // tamaño de las pelotas, cuánto entran (65%: barren a los que tenés pegados) y cuánto salen (56%)   // tamaño de las pelotas del rondo (15% más grandes que las otras) y cuánto entran y salen
 // Posición de las pelotas del rondo alrededor tuyo (se calcula siempre, aunque los rivales estén quietos)
 function rondoGeom() {
   if (!G.weapons.rondo) { G.rondoBalls = null; return null; }
@@ -2820,7 +2836,7 @@ function rondoHit(e, dx, dy, d, RG) {
         if (!e.boss && !e.dead) e.dizzy = Math.max(e.dizzy || 0, RONDO_DIZZY);
         G.rings.push({ x: b[0], y: b[1], R: 26 * S.area, life: .3, max: .3, col: '255,211,77' });
       }
-      if (rw.push > 200) G.rings.push({ x: b[0], y: b[1], R: 18 * S.area, life: .2, max: .2 });
+      if (rw.push > 300) G.rings.push({ x: b[0], y: b[1], R: 18 * S.area, life: .2, max: .2 });
       break;
     }
   }
