@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.82 · 31 oct 2026
+
+- **Sonido:** Ambiente de estadio en La Cancha del Club y El Coloso, solo durante el partido: un murmullo de tribuna que aparece a ratos, con silencios al azar, y una ovación de la hinchada en los momentos clave (jefe vencido, combo, avalancha, hincha invasor eliminado), como mucho una cada 20 s. Suena bajo y se apaga en la pausa.
+- **Opciones:** Control nuevo "Ambiente" en Opciones (menú y pausa) para subir o bajar ese sonido por separado.
+
 ## 2.81 · 31 oct 2026
 
 - **Rivales:** La sorpresa de El Coloso ya no deja fichas: en su lugar deja 5 gemas celestes de experiencia más (8 en total).

@@ -280,6 +280,7 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
     <details class="vols"><summary>Opciones</summary>
       <label><span>Música</span><input type="range" min="0" max="100" step="5" data-vol="music" id="mVolMusic"></label>
       <label><span>Efectos</span><input type="range" min="0" max="100" step="5" data-vol="sfx" id="mVolSfx"></label>
+      <label><span>Ambiente</span><input type="range" min="0" max="100" step="5" data-vol="amb" id="mVolAmb"></label>
       <label class="touchonly"><span>Botón habilidad especial</span><button type="button" class="btn ghost small sideBtn" data-side>A la derecha</button></label>
     </details>
     </div>
@@ -339,6 +340,7 @@ h2{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,56px);lin
     <details class="vols"><summary>Opciones</summary>
       <label><span>Música</span><input type="range" min="0" max="100" step="5" data-vol="music" id="pVolMusic"></label>
       <label><span>Efectos</span><input type="range" min="0" max="100" step="5" data-vol="sfx" id="pVolSfx"></label>
+      <label><span>Ambiente</span><input type="range" min="0" max="100" step="5" data-vol="amb" id="pVolAmb"></label>
       <label class="touchonly"><span>Botón habilidad especial</span><button type="button" class="btn ghost small sideBtn" data-side>A la derecha</button></label>
     </details>
     </div>
@@ -466,7 +468,7 @@ addEventListener('resize', resize); resize();
 // ---------- Sonido ----------
 let AC = null, muted = false;
 // Volúmenes (0 a 1) que se eligen en el menú o en la pausa; se guardan en el navegador
-const VOL = { music: 1, sfx: 1 };
+const VOL = { music: 1, sfx: 1, amb: 1 };
 const lastS = {};
 function tone(f1, f2, dur, type, vol, delay = 0) {
   const t0 = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
@@ -579,6 +581,43 @@ function musicStep(i, t) {
   if (s === 4 || s === 12) drum(t, 's', B.master, B.noise);
   if (pass && bar === 3 && s >= 13) drum(t, 's', B.master, B.noise);   // redoble antes de volver
   if (s % 2 === 0) drum(t, s % 4 ? 'h' : 'H', B.master, B.noise);
+}
+// ---------- Ambiente de estadio (La Cancha del Club y El Coloso) ----------
+// Grabaciones en audio/: murmullo a ratos (con silencios al azar) y una ovación en los momentos clave.
+// Suena solo durante el partido; en pausa, el menú o el final se apaga despacio.
+const AMB = { bufs: null, loading: false, bus: null, next: 4, src: null, cheerAt: -99, on: false };
+const AMB_FILES = ['audio/murmullo1.mp3', 'audio/murmullo2.mp3', 'audio/murmullo3.mp3', 'audio/murmullo4.mp3'], AMB_CHEER = 'audio/ovacion.mp3';
+const ambCancha = () => LV.id === 'club' || LV.id === 'lujo';
+function ambLoad() {
+  if (AMB.bufs || AMB.loading || !AC) return;
+  AMB.loading = true;
+  const get = u => fetch(u).then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); }).then(b => new Promise((ok, no) => AC.decodeAudioData(b, ok, no)));
+  Promise.all([...AMB_FILES, AMB_CHEER].map(get)).then(all => { AMB.bufs = { mur: all.slice(0, 4), cheer: all[4] }; }).catch(() => {});   // sin archivos: el juego sigue sin ambiente
+}
+function ambPlay(buf, gain) {
+  if (!AMB.bus) { AMB.bus = AC.createGain(); AMB.bus.gain.value = 0; AMB.bus.connect(AC.destination); }
+  const src = AC.createBufferSource(), g = AC.createGain();
+  src.buffer = buf; g.gain.value = gain; src.connect(g).connect(AMB.bus); src.start();
+  return src;
+}
+function ambTick(dt) {
+  if (!AC || !G) return;
+  const want = !muted && VOL.amb > 0 && ambCancha() && (state === 'play' || state === 'levelup' || state === 'resume');
+  if (want && !AMB.bufs) ambLoad();
+  if (AMB.bus && want !== AMB.on) { AMB.on = want; AMB.bus.gain.setTargetAtTime(want ? VOL.amb : 0, AC.currentTime, want ? .4 : .25); }
+  else if (AMB.bus && want && Math.abs(AMB.bus.gain.value - VOL.amb) > .01) AMB.bus.gain.setTargetAtTime(VOL.amb, AC.currentTime, .1);
+  if (!want || !AMB.bufs) return;
+  // Murmullo a ratos: un tramo de 10-12 s y después un silencio al azar
+  if ((AMB.next -= dt) <= 0) {
+    const b = AMB.bufs.mur[Math.random() * 4 | 0];
+    AMB.src = ambPlay(b, 1);
+    AMB.next = b.duration + rnd(6, 16);
+  }
+}
+function ambCheer() {
+  // Ovación en los momentos clave, como mucho una cada 20 s
+  if (!AC || !AMB.bufs || !AMB.on || !ambCancha() || G.rt - AMB.cheerAt < 20) return;
+  AMB.cheerAt = G.rt; ambPlay(AMB.bufs.cheer, 1);
 }
 function musicWanted() { return MUS.on && !muted && VOL.music > 0 && (state === 'menu' || state === 'shop' || state === 'changes' || state === 'album'); }
 function musicTick() {
@@ -727,7 +766,7 @@ function checkCombos() {
   if (!nuevos.length) return;
   for (const k in G.combos) albumSee('c', k);
   matchEv('Combo: ' + nuevos.join(' + '), 'combo');
-  banner('¡Combo activado: ' + nuevos.join(' + ') + '!', true);
+  banner('¡Combo activado: ' + nuevos.join(' + ') + '!', true); ambCheer();
   G.rings.push({ x: G.p.x, y: G.p.y, R: 160, life: .6, max: .6, col: '255,182,39' });
   sfx('combo'); cheer = 2.5;
 }
@@ -854,6 +893,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.82', date: '31 oct 2026', items: [
+    ['Sonido', 'Ambiente de estadio en La Cancha del Club y El Coloso, solo durante el partido: un murmullo de tribuna que aparece a ratos, con silencios al azar, y una ovación de la hinchada en los momentos clave (jefe vencido, combo, avalancha, hincha invasor eliminado), como mucho una cada 20 s. Suena bajo y se apaga en la pausa.'],
+    ['Opciones', 'Control nuevo "Ambiente" en Opciones (menú y pausa) para subir o bajar ese sonido por separado.'],
+  ] },
   { v: '2.81', date: '31 oct 2026', items: [
     ['Rivales', 'La sorpresa de El Coloso ya no deja fichas: en su lugar deja 5 gemas celestes de experiencia más (8 en total).'],
   ] },
@@ -2520,14 +2563,14 @@ function kill(e) {
     for (let i = 0; i < 10; i++) gem(e.x + rnd(-40, 40), e.y + rnd(-40, 40), 5);
     G.p.hp = Math.min(G.p.maxHp, G.p.hp + G.p.maxHp * .4);
     for (const g of G.gems) g.pull = true;
-    banner(BOSSES[e.type].beat); cheer = 3; matchEv('Eliminaste a ' + BOSSES[e.type].name, 'boss');
+    banner(BOSSES[e.type].beat); cheer = 3; ambCheer(); matchEv('Eliminaste a ' + BOSSES[e.type].name, 'boss');
     if (e.type === 'var') G.rewind = null;
     if (e.type === 'tecnico') for (const o of G.enemies) if (o.dtTeam) o.buff = 0;
   } else if (e.type === 'hincha' || e.elite) gem(e.x, e.y, HINCHA_GEM, true);   // gema celeste grande
   else if (e.type === 'barra') { for (let i = 0; i < 3; i++) gem(e.x + rnd(-14, 14), e.y + rnd(-14, 14), e.xp); }
   else gem(e.x, e.y, e.xp);
   if (e.type === 'hincha') {
-    banner('¡Seguridad se lleva al hincha!'); cheer = 2;
+    banner('¡Seguridad se lleva al hincha!'); cheer = 2; ambCheer();
     if (++G.invKilled === 2) G.mamaIn = rnd(3, 8) * MATCH / 90;   // eliminaste a los dos: entre 3 y 8 minutos de partido después viene la mamá a vengarse
   }
   if (e.type === 'central' && !e.elite && LV.id === 'potrero' && minuteOf(G.t) < 60 && ++G.bigKills === VECINO_BIG) G.vecinoIn = 2.5;
@@ -2579,7 +2622,7 @@ function avalancha() {
     addAlly('aval', p.x - fx * 260 + nx * off, p.y - fy * 260 + ny * off, 1.7, dmg, 'avalancha');
     const a = G.allies[G.allies.length - 1]; a.fx = fx; a.fy = fy; a.hitSet = hitSet;
   }
-  banner('¡Avalancha!', true); sfx('stomp'); cheer = 3; if (!RM) G.shake = 6;
+  banner('¡Avalancha!', true); sfx('stomp'); cheer = 3; ambCheer(); if (!RM) G.shake = 6;
 }
 function updateAllies(dt) {
   const S = G.stats;
@@ -4729,6 +4772,7 @@ function frame(now) {
   const dt = clamp((now - last) / 1000, 0, .05); last = now;   // el reloj del cuadro puede venir un poco antes que el del toque
   if (state === 'resume' && now >= resumeAt) state = 'play';
   if (state === 'play') update(dt);
+  ambTick(dt);
   render();
   requestAnimationFrame(frame);
 }

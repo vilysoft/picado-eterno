@@ -24,4 +24,9 @@ Fútbol de supervivencia para un jugador, en el navegador. Sos el 10 y te viene 
 
 El progreso se guarda en el navegador de cada dispositivo.
 
-Todo el juego es un solo archivo, [`index.html`](index.html), sin dependencias. Los cambios de cada versión están en el [changelog](CHANGELOG.md).
+Todo el juego es un solo archivo, [`index.html`](index.html), sin dependencias, más los sonidos de ambiente de la carpeta [`audio/`](audio). Los cambios de cada versión están en el [changelog](CHANGELOG.md).
+
+
+## Sonidos
+
+El ambiente de estadio sale de dos grabaciones de la comunidad, recortadas y niveladas: "Soccer Stadium" (freesound_community) y "Live Football Match Stadium Crowd Cheering" (arunangshubanerjee).
