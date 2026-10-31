@@ -2,6 +2,12 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.75 · 31 oct 2026
+
+- **Vestuario:** Mejoras nuevas para El Árbitro: Silbato nuevo (7% menos de espera entre pitazos por nivel) y Autoridad (el pitazo llega 8% más lejos y congela 0,15 s más por nivel).
+- **Vestuario:** Mejoras nuevas para El Barra: Cancionero (cada rival eliminado carga 8% más de aliento por nivel) y Trapos (la avalancha pega 8% más fuerte por nivel y cada 2 niveles suma un barra más a la fila).
+- **Jugadores:** El aliento de El Barra se carga 20% más lento: 1,2 por rival eliminado (antes 1,5) y 16 por jefe (antes 20).
+
 ## 2.74 · 31 oct 2026
 
 - **Rivales:** Los arqueros arrancan con 10% menos de vida en todas las canchas (23,4 en vez de 26), y en La Cancha del Club aparecen 5% menos seguido.

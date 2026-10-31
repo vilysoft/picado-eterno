@@ -676,7 +676,7 @@ CHARS.barra = { name: 'El Barra', desc: 'Nunca pelea solo: llama a su gente para
 // Daño de las técnicas propias de El Barra (las demás le pegan 25% menos)
 const BOMBO_MAX = 20;   // rivales que puede golpear cada golpe del bombo
 const BARRA_SRC = { pibes: 1, bombo: 1, avalancha: 1, barraAliada: 1 };
-const ALIENTO_KILL = 1.5, AVAL_N = 8;
+const ALIENTO_KILL = 1.2, ALIENTO_BOSS = 16, AVAL_N = 8;   // aliento por rival y por jefe (20% más lento que antes)
 const ROJAS_NEED = 50;
 // El alargue se abre al llegar al 90' en las 3 canchas, con cualquier jugador
 const bestKey = (id, rain) => rain ? 'lluvia_' + id : id;
@@ -833,10 +833,19 @@ const PERMS = {
   blindaje:     { name: 'Blindaje', max: 6, only: 'muro', desc: '+7 de barra de escudo.', cost: [20, 35, 55, 80, 120, 170] },
   recuperacion: { name: 'Recuperación', max: 6, only: 'muro', desc: 'El escudo se recarga 15% más rápido y empieza 0,2 s antes.', cost: [20, 35, 55, 80, 120, 170] },
   tapones2:     { name: 'Tapones largos', max: 3, desc: 'Para los días de lluvia: resbalás 25% menos en los charcos y el barro te frena 20% menos.', cost: [40, 80, 140] },
+  pito:         { name: 'Silbato nuevo', max: 6, only: 'arbitro', desc: '7% menos de espera entre pitazos.', cost: [20, 35, 55, 80, 120, 170] },
+  autoridad:    { name: 'Autoridad', max: 6, only: 'arbitro', desc: 'El pitazo llega 8% más lejos y congela 0,15 s más.', cost: [20, 35, 55, 80, 120, 170] },
+  cancionero:   { name: 'Cancionero', max: 6, only: 'barra', desc: 'Cada rival eliminado te carga 8% más de aliento.', cost: [20, 35, 55, 80, 120, 170] },
+  trapos:       { name: 'Trapos', max: 6, only: 'barra', desc: 'La avalancha pega 8% más fuerte, y cada 2 niveles suma un barra más a la fila.', cost: [20, 35, 55, 80, 120, 170] },
   suplente:     { name: 'Segundo aire', max: 1, desc: 'Una vez por partido: si te quedás sin vida, volvés con el 35%.', cost: [150] },
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.75', date: '31 oct 2026', items: [
+    ['Vestuario', 'Mejoras nuevas para El Árbitro: Silbato nuevo (7% menos de espera entre pitazos por nivel) y Autoridad (el pitazo llega 8% más lejos y congela 0,15 s más por nivel).'],
+    ['Vestuario', 'Mejoras nuevas para El Barra: Cancionero (cada rival eliminado carga 8% más de aliento por nivel) y Trapos (la avalancha pega 8% más fuerte por nivel y cada 2 niveles suma un barra más a la fila).'],
+    ['Jugadores', 'El aliento de El Barra se carga 20% más lento: 1,2 por rival eliminado (antes 1,5) y 16 por jefe (antes 20).'],
+  ] },
   { v: '2.74', date: '31 oct 2026', items: [
     ['Rivales', 'Los arqueros arrancan con 10% menos de vida en todas las canchas (23,4 en vez de 26), y en La Cancha del Club aparecen 5% menos seguido.'],
     ['Arreglos', 'El jefe del minuto 80 de El Potrero tiraba escombros al terminar cada pisotón, aunque todavía no hubiera arrancado el alambrado. Ahora el pisotón solo pega en su círculo, y los escombros salen únicamente cuando lanza el pedazo de alambrado que arrancó.'],
@@ -1239,7 +1248,7 @@ function recalc() {
   G.p.shMax = CH.shield ? Math.round(CH.shield + 7 * pv('blindaje')) : 0;
   S.shRegen = 14 * (1 + .15 * pv('recuperacion'));
   S.shDelay = 1.5 - .2 * pv('recuperacion');   // espera tras soltarlo antes de recargar
-  S.whCd = 10;                                    // silbato del árbitro: espera entre pitazos
+  S.whCd = 10 * (1 - .07 * pv('pito'));                                             // silbato del árbitro: espera entre pitazos
   S.shDrain = 12;                                 // lo que gasta por segundo mientras está levantado
   // Sprint
   G.p.stMax = BASE.st * (1 + .21 * l('aguante')) * (1 + .07 * pv('fuelle'));
@@ -2412,7 +2421,7 @@ const DT_DRAIN = .02;   // cada rival que mandó el DT expulsado le saca 2% de s
 const HINCHA_GEM = 60;   // experiencia de la gema celeste del hincha invasor   // cada rival que mandó el DT expulsado le saca 2,5% de su vida total
 function kill(e) {
   e.dead = true; G.kills++;
-  if (CH.aliento && G.p.al < 100) { G.p.al = Math.min(100, G.p.al + (e.boss ? 20 : ALIENTO_KILL)); if (G.p.al >= 100) sfx('combo'); }
+  if (CH.aliento && G.p.al < 100) { G.p.al = Math.min(100, G.p.al + (e.boss ? ALIENTO_BOSS : ALIENTO_KILL) * (1 + .08 * pv('cancionero'))); if (G.p.al >= 100) sfx('combo'); }
   if (e.dtTeam) {
     const dt = G.enemies.find(o => o.type === 'tecnico' && o.away && !o.dead);
     if (dt) {
@@ -2466,9 +2475,10 @@ function avalancha() {
   // Una fila de barras cruza corriendo hacia donde vas, pisoteando a todos (cada rival recibe un golpe)
   const p = G.p, fx = p.fx, fy = p.fy, nx = -fy, ny = fx, hitSet = new Set();
   p.al = 0;
-  for (let i = 0; i < AVAL_N; i++) {
-    const off = (i - (AVAL_N - 1) / 2) * 34;
-    addAlly('aval', p.x - fx * 260 + nx * off, p.y - fy * 260 + ny * off, 1.7, 60 * G.stats.dmg, 'avalancha');
+  const N = AVAL_N + Math.floor(pl('trapos') / 2), dmg = 60 * G.stats.dmg * (1 + .08 * pv('trapos'));   // Trapos
+  for (let i = 0; i < N; i++) {
+    const off = (i - (N - 1) / 2) * 34;
+    addAlly('aval', p.x - fx * 260 + nx * off, p.y - fy * 260 + ny * off, 1.7, dmg, 'avalancha');
     const a = G.allies[G.allies.length - 1]; a.fx = fx; a.fy = fy; a.hitSet = hitSet;
   }
   banner('¡Avalancha!', true); sfx('stomp'); cheer = 3; if (!RM) G.shake = 6;
@@ -2557,14 +2567,14 @@ function drawAllies(vis) {
   ctx.globalAlpha = 1;
 }
 function whistle() {
-  const p = G.p, R = 230 * G.stats.area;
+  const p = G.p, R = 230 * G.stats.area * (1 + .08 * pv('autoridad')), stun = 1.5 + .15 * pv('autoridad');
   p.wh = 0;
   G.rings.push({ x: p.x, y: p.y, R, life: .5, max: .5, col: '255,211,77' });
   G.rings.push({ x: p.x, y: p.y, R: R * .6, life: .35, max: .35, col: '255,255,255' });
   let n = 0;
   for (const e of G.enemies) {
     if (e.dead || e.boss || e.type === 'hincha') continue;
-    if ((e.x - p.x) ** 2 + (e.y - p.y) ** 2 < (R + e.r) ** 2) { e.stun = 1.5; n++; }
+    if ((e.x - p.x) ** 2 + (e.y - p.y) ** 2 < (R + e.r) ** 2) { e.stun = stun; n++; }
   }
   if (n && G.texts.length < 70) G.texts.push({ x: p.x, y: p.y - p.r - 26, txt: '¡PRRRT!', life: .9, big: true });
   sfx('whistle');
