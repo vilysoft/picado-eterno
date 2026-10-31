@@ -754,6 +754,7 @@ const BOSSES = {
   capitan:  { name: 'El Capitán', intro: 'Entretiempo: ¡entra el capitán rival!', beat: '¡Le ganaste al capitán!' },
   tecnico:  { name: 'El DT rival', intro: 'Minuto 80: ¡el DT rival se mete a la cancha!', beat: '¡Echaste al DT rival!' },
   estrella: { name: 'La Estrella', intro: 'Entretiempo: ¡sale a la cancha La Estrella!', beat: '¡Le ganaste a La Estrella!' },
+  mama:     { name: 'La mamá del invasor', intro: '¡Llegó la mamá del invasor y viene a buscarlo!', beat: '¡Le ganaste a la mamá del invasor!' },
   var:      { name: 'El VAR', intro: 'Minuto 80: ¡llamaron al VAR!', beat: '¡Apagaste el VAR!' },
 };
 const FOES = {
@@ -772,6 +773,7 @@ const FOES = {
   tanque:   { r: 40, hp: 1500, speed: 60, dmg: 26, xp: 60, color: '#5b4636', nums: [], boss: true },
   tecnico:  { r: 28, hp: 1300, speed: 62, dmg: 18, xp: 60, color: '#2a2e36', nums: [], boss: true },
   estrella: { r: 30, hp: 950, speed: 118, dmg: 20, xp: 55, color: '#d4af37', nums: [10], boss: true },
+  mama:     { r: 26, hp: 520, speed: 92, dmg: 16, xp: 40, color: '#c2477a', nums: [], boss: true, mini: true },
   var:      { r: 30, hp: 1500, speed: 58, dmg: 18, xp: 65, color: '#39ff9a', nums: [], boss: true },
 };
 // Equipos vistos desde arriba: camiseta, mangas, rayas, pantalón y guantes
@@ -794,6 +796,7 @@ const KITS = {
   tecnico:  { shirt: '#2a2e36', sleeve: '#2a2e36', shorts: '#2a2e36' },
   estrella: { shirt: '#f4f1e6', sleeve: '#f4f1e6', stripe: '#d4af37', shorts: '#d4af37', boots: '#d4af37' },
   var:      { shirt: '#111418', sleeve: '#39ff9a', shorts: '#111418' },
+  mama:     { shirt: '#c2477a', sleeve: 'skin', stripe: '#f4f1e6', shorts: '#3b3f52' },
 };
 // Los rivales comunes se visten con los colores del equipo de cada cancha
 function kitFor(type) {
@@ -841,6 +844,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.76', date: '31 oct 2026', items: [
+    ['Técnicas', 'Rondo: las pelotas arrancan otro 15% más grandes y, cuando se alejan, llegan 30% más lejos que antes (hasta 56% más afuera de la ronda normal). Al acercarse siguen entrando hasta 20%.'],
+    ['Rivales', 'Sorpresa en La Cancha del Club: si eliminás a los dos hinchas invasores del partido, alguien viene a buscarlos. Es un mini jefe; si le ganás deja una lluvia de gemas.'],
+  ] },
   { v: '2.75', date: '31 oct 2026', items: [
     ['Vestuario', 'Mejoras nuevas para El Árbitro: Silbato nuevo (7% menos de espera entre pitazos por nivel) y Autoridad (el pitazo llega 8% más lejos y congela 0,15 s más por nivel).'],
     ['Vestuario', 'Mejoras nuevas para El Barra: Cancionero (cada rival eliminado carga 8% más de aliento por nivel) y Trapos (la avalancha pega 8% más fuerte por nivel y cada 2 niveles suma un barra más a la fila).'],
@@ -1228,7 +1235,7 @@ function newGame() {
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '', tl: [[0, 0, 1, 1]], lastM: 0, ev: [], low: 1, lowM: 0 },   // estadísticas del partido
     weapons: { [CH.start || 'pelota']: 1 }, passives: {}, timers: { [CH.start || 'pelota']: .4 }, sprays: [], rojas: 0, allies: [], bombos: [], rondoAng: 0, rondoBalls: null, rondoSpin: 0, rondoCh: [],
     enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [], fenceGaps: [],
-    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, dog: null, dogAt: 28 + Math.random() * 8, rain: RAIN, puddles: [], muds: [], bolts: [], wind: null, windCd: 14, boltCd: 7, rainEvAt: 50 + Math.random() * 20, dark: 0, roof: 0, dry: null, utilero: null, flash: 0, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, hitN: 0, runT: 0, garra: 0, garraCd: 0, p5T: 0, panT: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
+    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invKilled: 0, mamaIn: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, dog: null, dogAt: 28 + Math.random() * 8, rain: RAIN, puddles: [], muds: [], bolts: [], wind: null, windCd: 14, boltCd: 7, rainEvAt: 50 + Math.random() * 20, dark: 0, roof: 0, dry: null, utilero: null, flash: 0, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, hitN: 0, runT: 0, garra: 0, garraCd: 0, p5T: 0, panT: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
   };
 }
 // Stats de arranque de cualquier personaje, antes del vestuario
@@ -1506,6 +1513,7 @@ const ALB_BOSSES = {
   capitan:  ['La Cancha del Club · entretiempo', 'Embiste en línea recta. Golpeado, grita "¡Vamos, muchachos!" y llama a 6 compañeros que embisten en fila con él. Si lo encimás, toma carrera.'],
   tecnico:  ['La Cancha del Club · minuto 80', 'Se queda lejos y hace cambios: mete rivales y acelera a los que tiene cerca. Golpeado, lo echan a la tribuna: ahí no lo podés tocar, pero cada rival suyo que eliminás le baja vida.'],
   estrella: ['El Coloso · entretiempo', 'Gambetas cortas en diagonal y un abanico de tiros. Golpeada, te tira un caño: te pasa entre las piernas y patea desde atrás tuyo.'],
+  mama:     ['La Cancha del Club · si eliminás a los dos hinchas invasores', 'Viene a buscar a su hijo: te persigue revoleando chancletas y cada tanto sale corriendo hacia vos. Golpeada, tira de a tres y corre más. Si le ganás deja una lluvia de gemas.'],
   var:      ['El Coloso · minuto 80', 'Marca zonas de revisión alrededor tuyo que después pegan. Golpeado, marca más y retrotrae la jugada: te devuelve adonde estabas 2 s antes.'],
 };
 const ALB_TABS = [['f', 'Rivales'], ['b', 'Jefes'], ['w', 'Técnicas'], ['p', 'Físicos'], ['c', 'Combos']];
@@ -1674,6 +1682,9 @@ function update(dt) {
   }
   // Se metió un perro (solo La Cancha del Club): una vez entre el 28' y el 36', pausa como la de hidratación
   if (LV.id === 'club' && G.dogAt && !G.hydra && minuteOf(G.t) >= G.dogAt) startDog();
+  if (G.mamaIn > 0 && !G.hydra && (G.mamaIn -= dt) <= 0) {
+    spawnBoss('mama'); const m = G.enemies[G.enemies.length - 1]; m.hair = '#cfc8bb';
+  }
   if (LV.id === 'club' && G.invaders < 2 && minuteOf(G.t) >= 60) {
     if (G.invNext == null) G.invNext = G.t + rnd(2, 10);
     if (G.t >= G.invNext && !G.lane) startInvader();
@@ -2418,7 +2429,7 @@ function hitEnemy(e, dmg, kx, ky, src, exact) {
   if (e.hp <= 0) { R.kills[src] = (R.kills[src] || 0) + 1; kill(e); }
 }
 const DT_DRAIN = .02;   // cada rival que mandó el DT expulsado le saca 2% de su vida total
-const HINCHA_GEM = 60;   // experiencia de la gema celeste del hincha invasor   // cada rival que mandó el DT expulsado le saca 2,5% de su vida total
+const HINCHA_GEM = 60, MAMA_GEMS = 30;   // MAMA_GEMS: gemas extra de la mamá del invasor (más 3 celestes)   // experiencia de la gema celeste del hincha invasor   // cada rival que mandó el DT expulsado le saca 2,5% de su vida total
 function kill(e) {
   e.dead = true; G.kills++;
   if (CH.aliento && G.p.al < 100) { G.p.al = Math.min(100, G.p.al + (e.boss ? ALIENTO_BOSS : ALIENTO_KILL) * (1 + .08 * pv('cancionero'))); if (G.p.al >= 100) sfx('combo'); }
@@ -2443,7 +2454,15 @@ function kill(e) {
   } else if (e.type === 'hincha' || e.elite) gem(e.x, e.y, HINCHA_GEM, true);   // gema celeste grande
   else if (e.type === 'barra') { for (let i = 0; i < 3; i++) gem(e.x + rnd(-14, 14), e.y + rnd(-14, 14), e.xp); }
   else gem(e.x, e.y, e.xp);
-  if (e.type === 'hincha') { banner('¡Seguridad se lleva al hincha!'); cheer = 2; }
+  if (e.type === 'hincha') {
+    banner('¡Seguridad se lleva al hincha!'); cheer = 2;
+    if (++G.invKilled === 2) G.mamaIn = 3;   // eliminaste a los dos: viene la mamá a buscarlo
+  }
+  if (e.type === 'mama') {
+    // Recompensa: lluvia de gemas
+    for (let i = 0; i < MAMA_GEMS; i++) gem(e.x + rnd(-90, 90), e.y + rnd(-90, 90), 5);
+    for (let i = 0; i < 3; i++) gem(e.x + rnd(-50, 50), e.y + rnd(-50, 50), HINCHA_GEM, true);
+  }
 }
 function codazo(e, ux, uy) {
   // ux, uy: del rival hacia vos. El codazo lo manda para el otro lado.
@@ -2772,13 +2791,13 @@ function sprayFlare(x, y, dmg) {
     return;
   }
 }
-const RONDO_BALL = 10.35, RONDO_PULSE = .2;   // tamaño de las pelotas del rondo (15% más grandes que las otras) y cuánto entran y salen
+const RONDO_BALL = 11.9, RONDO_PULSE = .2, RONDO_OUT = .56;   // tamaño de las pelotas, cuánto entran (20%) y cuánto salen (56%: 30% más lejos que antes)   // tamaño de las pelotas del rondo (15% más grandes que las otras) y cuánto entran y salen
 // Posición de las pelotas del rondo alrededor tuyo (se calcula siempre, aunque los rivales estén quietos)
 function rondoGeom() {
   if (!G.weapons.rondo) { G.rondoBalls = null; return null; }
   const p = G.p, S = G.stats, rw = wp('rondo', G.weapons.rondo), rbr = RONDO_BALL * S.area, rb = [];
   // Las pelotas se alejan y se acercan: el radio del rondo late ±RONDO_PULSE
-  const rR = rw.R * S.area * (1 + RONDO_PULSE * Math.sin(G.rondoAng * .6));
+  const ps = Math.sin(G.rondoAng * .6), rR = rw.R * S.area * (1 + (ps > 0 ? RONDO_OUT : RONDO_PULSE) * ps);
   for (let i = 0; i < rw.count; i++) {
     const a = G.rondoAng + i * Math.PI * 2 / rw.count;
     rb.push([p.x + Math.cos(a) * rR, p.y + Math.sin(a) * rR]);
@@ -3124,6 +3143,17 @@ function bossAI(e, d, ux, uy, sp, dt) {
         else e.acd = .25;
       }
       break;
+    case 'mama':    // te persigue revoleando chancletas; cada tercer ataque sale corriendo hacia vos. Golpeada: de a tres y más rápida
+      if (enr) sp *= 1.2;
+      if (d < 140) sp *= .6;
+      if (e.acd <= 0 && d < 620 && onScreen(e.x, e.y)) {
+        e.combo = (e.combo || 0) + 1;
+        if (e.combo % 3 === 0 && d > 200 && d < 520) {
+          startCharge(e, .55, .55, 640, enr ? .9 : 1.3, 0);
+          G.texts.push({ x: e.x, y: e.y - e.r - 34, txt: '¡VENÍ PARA ACÁ!', life: 1.1, big: true });
+        } else { e.mode = 'cast'; e.mt = .5; e.aimLine = true; e.acd = enr ? 1.5 : 2.1; }
+      }
+      break;
     case 'var':     // marca zonas de revisión alrededor tuyo; golpeado, marca más y saca rojas
       const kv = reach(470);
       if (d < 330 * kv) { ux = -ux; uy = -uy; sp *= .8; } else if (d < 470 * kv) { const tx = uy; uy = -ux; ux = tx; sp *= .6; }
@@ -3189,6 +3219,9 @@ function bossCast(e, enr) {
     const n = enr ? 7 : 5;
     for (let i = 0; i < n; i++) foeShot(e.x, e.y, a + (i - (n - 1) / 2) * .17, 470, 9, e.dmg * .7);
     sfx('kick');
+  } else if (e.type === 'mama') {
+    for (const s of enr ? [-.28, 0, .28] : [0]) foeShot(e.x, e.y, a + s, 520, 10, e.dmg * .8, 'chancla');
+    sfx('card');
   } else if (e.type === 'tanque') {
     // Revolea pedazos de alambrado en abanico, solo en el lanzamiento (el pisotón también pasa por acá y no tira nada)
     if (!e.throwing) return;
@@ -4412,6 +4445,15 @@ function render() {
 
   for (const s of G.foeShots) {
     if (s.k === 'scrap') { drawScrap(s); continue; }
+    if (s.k === 'chancla') {
+      // Chancleta que gira en el aire
+      ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.rot);
+      ctx.fillStyle = '#2b4c8c'; ctx.beginPath(); ctx.ellipse(0, 0, 12, 6, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#f4f1e6'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(-1, -6); ctx.lineTo(4, 0); ctx.lineTo(-1, 6); ctx.stroke();
+      ctx.restore();
+      ctx.strokeStyle = '#ff5a4a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s.x, s.y, 15, 0, Math.PI * 2); ctx.stroke();
+      continue;
+    }
     ctx.strokeStyle = 'rgba(255,90,74,.45)'; ctx.lineWidth = s.r * 1.3; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(s.x - s.vx * .07, s.y - s.vy * .07); ctx.lineTo(s.x, s.y); ctx.stroke();
     drawBall(s.x, s.y, s.r, s.rot);

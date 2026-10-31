@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.76 · 31 oct 2026
+
+- **Técnicas:** Rondo: las pelotas arrancan otro 15% más grandes y, cuando se alejan, llegan 30% más lejos que antes (hasta 56% más afuera de la ronda normal). Al acercarse siguen entrando hasta 20%.
+- **Rivales:** Sorpresa en La Cancha del Club: si eliminás a los dos hinchas invasores del partido, alguien viene a buscarlos. Es un mini jefe; si le ganás deja una lluvia de gemas.
+
 ## 2.75 · 31 oct 2026
 
 - **Vestuario:** Mejoras nuevas para El Árbitro: Silbato nuevo (7% menos de espera entre pitazos por nivel) y Autoridad (el pitazo llega 8% más lejos y congela 0,15 s más por nivel).
