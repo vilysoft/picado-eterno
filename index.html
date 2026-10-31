@@ -754,6 +754,8 @@ const BOSSES = {
   capitan:  { name: 'El Capitán', intro: 'Entretiempo: ¡entra el capitán rival!', beat: '¡Le ganaste al capitán!' },
   tecnico:  { name: 'El DT rival', intro: 'Minuto 80: ¡el DT rival se mete a la cancha!', beat: '¡Echaste al DT rival!' },
   estrella: { name: 'La Estrella', intro: 'Entretiempo: ¡sale a la cancha La Estrella!', beat: '¡Le ganaste a La Estrella!' },
+  vecino:   { name: 'El vecino del barrio', intro: '¡Le rompieron el vidrio al vecino del barrio!', beat: '¡Calmaste al vecino del barrio!' },
+  presi:    { name: 'El presidente del club', intro: '¡Baja del palco el presidente del club!', beat: '¡Le ganaste al presidente del club!' },
   mama:     { name: 'La mamá del invasor', intro: '¡Llegó la mamá del invasor y viene a vengarse!', beat: '¡Le ganaste a la mamá del invasor!' },
   var:      { name: 'El VAR', intro: 'Minuto 80: ¡llamaron al VAR!', beat: '¡Apagaste el VAR!' },
 };
@@ -773,6 +775,10 @@ const FOES = {
   tanque:   { r: 40, hp: 1500, speed: 60, dmg: 26, xp: 60, color: '#5b4636', nums: [], boss: true },
   tecnico:  { r: 28, hp: 1300, speed: 62, dmg: 18, xp: 60, color: '#2a2e36', nums: [], boss: true },
   estrella: { r: 30, hp: 950, speed: 118, dmg: 20, xp: 55, color: '#d4af37', nums: [10], boss: true },
+  vecino:   { r: 26, hp: 480, speed: 70, dmg: 15, xp: 40, color: '#8a8f6a', nums: [], boss: true, mini: true },
+  presi:    { r: 24, hp: 600, speed: 74, dmg: 16, xp: 45, color: '#1f2b4a', nums: [], boss: true, mini: true },
+  custodio: { r: 17, hp: 120, speed: 86, dmg: 14, xp: 6, color: '#15171b', nums: [] },
+  perro:    { r: 12, hp: 60, speed: 235, dmg: 10, xp: 4, color: '#a8703d', nums: [] },
   mama:     { r: 26, hp: 520, speed: 92, dmg: 16, xp: 40, color: '#c2477a', nums: [], boss: true, mini: true },
   var:      { r: 30, hp: 1500, speed: 58, dmg: 18, xp: 65, color: '#39ff9a', nums: [], boss: true },
 };
@@ -797,6 +803,10 @@ const KITS = {
   estrella: { shirt: '#f4f1e6', sleeve: '#f4f1e6', stripe: '#d4af37', shorts: '#d4af37', boots: '#d4af37' },
   var:      { shirt: '#111418', sleeve: '#39ff9a', shorts: '#111418' },
   mama:     { shirt: '#c2477a', sleeve: 'skin', stripe: '#f4f1e6', shorts: '#3b3f52' },
+  vecino:   { shirt: '#e8e3d3', sleeve: 'skin', stripe: '#8a8f6a', shorts: '#4a4f3a' },
+  presi:    { shirt: '#1f2b4a', sleeve: '#1f2b4a', stripe: '#f4f1e6', shorts: '#1f2b4a', boots: '#111111' },
+  custodio: { shirt: '#15171b', sleeve: '#15171b', shorts: '#15171b' },
+  perro:    { shirt: '#a8703d', sleeve: '#a8703d', shorts: '#a8703d' },
 };
 // Los rivales comunes se visten con los colores del equipo de cada cancha
 function kitFor(type) {
@@ -844,6 +854,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.79', date: '31 oct 2026', items: [
+    ['Día de lluvia', 'En El Coloso, cuando vuelve la lluvia después del techo cerrado, el cartel ahora dice "¡Se rompió el techo otra vez!".'],
+    ['Rivales', 'Dos sorpresas más, una en El Potrero y otra en El Coloso: si cumplís cierta condición durante el partido, aparece un mini jefe nuevo. Las pistas: en El Potrero, cuidado con eliminar demasiados grandotes en la primera hora; en El Coloso, llegá muy entero a la segunda pausa de hidratación. Los dos dejan una lluvia de gemas, y uno de ellos además deja fichas.'],
+  ] },
   { v: '2.78', date: '31 oct 2026', items: [
     ['Día de lluvia', 'Cuando un rayo toca un charco (aunque sea en el borde), el charco entero queda electrificado 1,5 s y chispea. Si estás en cualquier parte de ese charco, o entrás mientras chispea, te daña.'],
   ] },
@@ -1242,7 +1256,7 @@ function newGame() {
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '', tl: [[0, 0, 1, 1]], lastM: 0, ev: [], low: 1, lowM: 0 },   // estadísticas del partido
     weapons: { [CH.start || 'pelota']: 1 }, passives: {}, timers: { [CH.start || 'pelota']: .4 }, sprays: [], rojas: 0, allies: [], bombos: [], rondoAng: 0, rondoBalls: null, rondoSpin: 0, rondoCh: [],
     enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [], fenceGaps: [],
-    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invKilled: 0, mamaIn: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, dog: null, dogAt: 28 + Math.random() * 8, rain: RAIN, puddles: [], muds: [], bolts: [], wind: null, windCd: 14, boltCd: 7, rainEvAt: 50 + Math.random() * 20, dark: 0, roof: 0, dry: null, utilero: null, flash: 0, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, hitN: 0, runT: 0, garra: 0, garraCd: 0, p5T: 0, panT: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
+    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invKilled: 0, mamaIn: 0, bigKills: 0, vecinoIn: 0, presiIn: 0, presiCheck: false, bills: [], goldTok: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, dog: null, dogAt: 28 + Math.random() * 8, rain: RAIN, puddles: [], muds: [], bolts: [], wind: null, windCd: 14, boltCd: 7, rainEvAt: 50 + Math.random() * 20, dark: 0, roof: 0, dry: null, utilero: null, flash: 0, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, hitN: 0, runT: 0, garra: 0, garraCd: 0, p5T: 0, panT: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
   };
 }
 // Stats de arranque de cualquier personaje, antes del vestuario
@@ -1512,6 +1526,8 @@ const ALB_FOES = {
   hincha:    ['Hincha invasor', 'La Cancha del Club', 'Cruza la cancha a toda velocidad por la franja marcada y vuelve por el mismo camino. Si lo eliminás deja una gema celeste grande.'],
   barra:     ['La barra', 'El Potrero', 'Un grupo de hinchas con gorros que llega corriendo. Son débiles pero muchos, y cada uno deja 3 gemas.'],
   embarrado: ['Embarrado', 'Día de lluvia', 'Un grandote cubierto de barro que deja una estela por donde pasa. El barro te frena.'],
+  custodio:  ['Custodio', 'El Coloso', 'Grandote de traje que se pone entre vos y el presidente del club para cubrirlo.'],
+  perro:     ['El perro del vecino', 'El Potrero', 'Rápido y en zigzag. Lo suelta el vecino del barrio cuando está golpeado.'],
   spidercam: ['Spidercam', 'El Coloso', 'Flota sobre la cancha y baja de golpe donde marca su sombra. Solo la alcanzan los remates.'],
 };
 const ALB_BOSSES = {
@@ -1520,6 +1536,8 @@ const ALB_BOSSES = {
   capitan:  ['La Cancha del Club · entretiempo', 'Embiste en línea recta. Golpeado, grita "¡Vamos, muchachos!" y llama a 6 compañeros que embisten en fila con él. Si lo encimás, toma carrera.'],
   tecnico:  ['La Cancha del Club · minuto 80', 'Se queda lejos y hace cambios: mete rivales y acelera a los que tiene cerca. Golpeado, lo echan a la tribuna: ahí no lo podés tocar, pero cada rival suyo que eliminás le baja vida.'],
   estrella: ['El Coloso · entretiempo', 'Gambetas cortas en diagonal y un abanico de tiros. Golpeada, te tira un caño: te pasa entre las piernas y patea desde atrás tuyo.'],
+  vecino:   ['El Potrero · si eliminás 10 grandotes antes del 60\'', 'Sale enojado porque le rompieron un vidrio: te revolea macetas que marcan un círculo y caen. Golpeado, suelta al perro. Si le ganás deja una lluvia de gemas.'],
+  presi:    ['El Coloso · si llegás a la segunda pausa de hidratación con 85% de vida o más', 'Baja del palco con dos custodios que lo cubren. Tira billetes que parecen un regalo pero explotan si los agarrás. Golpeado, compra al árbitro: los rivales cercanos pegan más fuerte un rato. Deja gemas doradas que dan fichas.'],
   mama:     ['La Cancha del Club · si eliminás a los dos hinchas invasores', 'Viene a vengar a su hijo: te persigue revoleando chancletas y cada tanto sale corriendo hacia vos. Golpeada, tira de a tres y corre más. Si le ganás deja una lluvia de gemas.'],
   var:      ['El Coloso · minuto 80', 'Marca zonas de revisión alrededor tuyo que después pegan. Golpeado, marca más y retrotrae la jugada: te devuelve adonde estabas 2 s antes.'],
 };
@@ -1689,6 +1707,16 @@ function update(dt) {
   }
   // Se metió un perro (solo La Cancha del Club): una vez entre el 28' y el 36', pausa como la de hidratación
   if (LV.id === 'club' && G.dogAt && !G.hydra && minuteOf(G.t) >= G.dogAt) startDog();
+  // Mini jefes: el vecino del barrio (El Potrero) y el presidente del club (El Coloso)
+  if (G.vecinoIn > 0 && !G.hydra && (G.vecinoIn -= dt) <= 0) spawnBoss('vecino');
+  if (LV.id === 'lujo' && G.hydraDone[60] && !G.presiCheck && G.hydra > 0) {
+    G.presiCheck = true;
+    if (G.p.hp >= G.p.maxHp * PRESI_HP) G.presiIn = .6;   // sale cuando termina la pausa
+  }
+  if (G.presiIn > 0 && !G.hydra && (G.presiIn -= dt) <= 0) {
+    spawnBoss('presi'); const pr = G.enemies[G.enemies.length - 1]; pr.hair = '#b9b4a8';
+    for (let i = 0; i < 2; i++) { spawn('custodio', pr.x + (i ? 50 : -50), pr.y); const c = G.enemies[G.enemies.length - 1]; c.guard = pr; c.side = i ? 1 : -1; }
+  }
   if (G.mamaIn > 0 && !G.hydra && (G.mamaIn -= dt) <= 0) {
     spawnBoss('mama'); const m = G.enemies[G.enemies.length - 1]; m.hair = '#cfc8bb';
   }
@@ -1726,6 +1754,19 @@ function update(dt) {
   const mNow = minuteOf(G.t);
   if (mNow !== G.rec.lastM) { G.rec.lastM = mNow; G.rec.tl.push([mNow, G.kills, G.level, Math.max(0, p.hp) / p.maxHp]); }
   if (G.rain) updateRain(dt);
+  if (G.bills.length && !G.hydra) {
+    // Billetes del presidente: si los tocás explotan; se van solos al rato
+    for (const b of G.bills) {
+      b.t -= dt;
+      if (b.t > 0 && (p.x - b.x) ** 2 + (p.y - b.y) ** 2 < (p.r + 14) ** 2) {
+        b.t = 0; if (p.inv <= 0) hurt(b.dmg, true);
+        G.rings.push({ x: b.x, y: b.y, R: 60, life: .35, max: .35, col: '255,120,60' });
+        for (let i = 0; i < 12; i++) part(b.x, b.y, i % 2 ? '#3f9b4a' : '#ff8a3a');
+        G.texts.push({ x: p.x, y: p.y - p.r - 26, txt: '¡ERA TRUCHO!', life: .9, big: true }); sfx('stomp');
+      }
+    }
+    G.bills = G.bills.filter(b => b.t > 0);
+  }
   if (!G.et && G.t >= MATCH) {
     if (etOpen() && !G.etAsked) { G.t = MATCH; askExtra(); } else endScreen(true);
     return;
@@ -2069,7 +2110,7 @@ function updateRain(dt) {
   // Evento de la cancha, una vez por partido entre el 50' y el 70'
   if (G.rainEvAt && !frozen && minuteOf(G.t) >= G.rainEvAt) rainEvent();
   if (G.dark > 0) G.dark = Math.max(0, G.dark - dt);
-  if (G.roof > 0) { G.roof -= dt; if (G.roof <= 0) { banner('¡Abren el techo: vuelve la lluvia!'); sfx('thunder'); } }
+  if (G.roof > 0) { G.roof -= dt; if (G.roof <= 0) { banner('¡Se rompió el techo otra vez!'); sfx('thunder'); } }
   if (G.utilero) {
     const U = G.utilero; U.x += 300 * dt;
     // Seca la franja a medida que pasa y, al cruzarse con vos, te deja una gema celeste
@@ -2445,7 +2486,7 @@ function hitEnemy(e, dmg, kx, ky, src, exact) {
   if (e.hp <= 0) { R.kills[src] = (R.kills[src] || 0) + 1; kill(e); }
 }
 const DT_DRAIN = .02;   // cada rival que mandó el DT expulsado le saca 2% de su vida total
-const HINCHA_GEM = 60, MAMA_GEMS = 30;   // MAMA_GEMS: gemas extra de la mamá del invasor (más 3 celestes)   // experiencia de la gema celeste del hincha invasor   // cada rival que mandó el DT expulsado le saca 2,5% de su vida total
+const HINCHA_GEM = 60, MAMA_GEMS = 30, PRESI_HP = .85, VECINO_BIG = 10, GOLD_TOK = 8, BILL_S = 7;   // PRESI_HP: vida mínima en la 2da pausa; VECINO_BIG: grandotes antes del 60'; GOLD_TOK: fichas por gema dorada   // MAMA_GEMS: gemas extra de la mamá del invasor (más 3 celestes)   // experiencia de la gema celeste del hincha invasor   // cada rival que mandó el DT expulsado le saca 2,5% de su vida total
 function kill(e) {
   e.dead = true; G.kills++;
   if (CH.aliento && G.p.al < 100) { G.p.al = Math.min(100, G.p.al + (e.boss ? ALIENTO_BOSS : ALIENTO_KILL) * (1 + .08 * pv('cancionero'))); if (G.p.al >= 100) sfx('combo'); }
@@ -2474,6 +2515,13 @@ function kill(e) {
     banner('¡Seguridad se lleva al hincha!'); cheer = 2;
     if (++G.invKilled === 2) G.mamaIn = 3;   // eliminaste a los dos: viene la mamá a buscarlo
   }
+  if (e.type === 'central' && !e.elite && LV.id === 'potrero' && minuteOf(G.t) < 60 && ++G.bigKills === VECINO_BIG) G.vecinoIn = 2.5;
+  if (e.type === 'vecino' || e.type === 'presi') {
+    for (let i = 0; i < MAMA_GEMS; i++) gem(e.x + rnd(-90, 90), e.y + rnd(-90, 90), 5);
+    for (let i = 0; i < 3; i++) gem(e.x + rnd(-50, 50), e.y + rnd(-50, 50), HINCHA_GEM, true);
+    if (e.type === 'presi') { for (let i = 0; i < 5; i++) { gem(e.x + rnd(-60, 60), e.y + rnd(-60, 60), 5, true); G.gems[G.gems.length - 1].gold = true; } G.bills = []; }
+  }
+  if (e.type === 'vecino' || e.type === 'presi' || e.type === 'mama') setTimeout(() => { if (G) for (const g of G.gems) g.pull = true; }, 0);   // la recompensa va sola hacia vos
   if (e.type === 'mama') {
     // Recompensa: lluvia de gemas
     for (let i = 0; i < MAMA_GEMS; i++) gem(e.x + rnd(-90, 90), e.y + rnd(-90, 90), 5);
@@ -2966,6 +3014,15 @@ function updateEnemies(dt) {
         }
       }
     }
+    if (e.bribeT > 0 && (e.bribeT -= dt) <= 0) e.dmg /= 1.4;   // se termina el soborno del presidente
+    if (e.type === 'custodio' && e.guard && !e.guard.dead && !dz && !stn) {
+      // Se para entre vos y el presidente, uno de cada lado
+      const G2 = e.guard, gx = p.x - G2.x, gy = p.y - G2.y, gd = Math.hypot(gx, gy) || 1;
+      const tx = G2.x + gx / gd * 70 - gy / gd * 34 * e.side, ty = G2.y + gy / gd * 70 + gx / gd * 34 * e.side;
+      const vx = tx - e.x, vy = ty - e.y, vd = Math.hypot(vx, vy);
+      if (vd > 6) { ux = vx / vd; uy = vy / vd; sp = Math.min(sp * 1.6, vd * 6); } else sp = 0;
+    }
+    if (e.type === 'perro' && !dz && !stn) { const a = Math.sin(G.rt * 7 + e.phase) * .9, c = Math.cos(a), s2 = Math.sin(a); [ux, uy] = [ux * c - uy * s2, ux * s2 + uy * c]; }   // zigzag
     if (e.type === 'embarrado' && !stn && (e.trail = (e.trail || 0) - dt) <= 0) { e.trail = .3; addMud(e.x, e.y, 24, MUD_TRAIL_S); }   // deja barro
     if (e.boss) [ux, uy, sp] = bossAI(e, d, ux, uy, sp, dt);
     if (stn) sp = 0;
@@ -3159,6 +3216,25 @@ function bossAI(e, d, ux, uy, sp, dt) {
         else e.acd = .25;
       }
       break;
+    case 'vecino':  // te revolea macetas que caen donde estabas; golpeado, suelta al perro
+      if (d < 260) sp *= .3; else if (d > 420) sp *= 1.1;
+      if (e.acd <= 0 && d < 680 && onScreen(e.x, e.y)) {
+        e.mode = 'cast'; e.mt = .5; e.aimLine = false; e.acd = enr ? 1.6 : 2.3;
+      }
+      if (enr && !e.dogOut) {
+        e.dogOut = true; spawn('perro', e.x + 30, e.y); G.texts.push({ x: e.x, y: e.y - e.r - 34, txt: '¡AGARRALO, FIRULAIS!', life: 1.3, big: true }); sfx('dive');
+      }
+      break;
+    case 'presi':   // se queda lejos, tira billetes trampa; golpeado, compra al árbitro
+      if (d < 330) { ux = -ux; uy = -uy; sp *= .8; } else if (d < 450) sp = 0;
+      if (e.acd <= 0 && d < 700 && onScreen(e.x, e.y)) { e.mode = 'cast'; e.mt = .45; e.aimLine = false; e.acd = enr ? 2.6 : 3.4; }
+      if (enr && (e.bribeCd = (e.bribeCd ?? 1) - dt) <= 0) {
+        e.bribeCd = 8;
+        for (const o of G.enemies) if (!o.boss && !o.dead && (o.x - p.x) ** 2 + (o.y - p.y) ** 2 < 480 * 480) { if (!(o.bribeT > 0)) o.dmg *= 1.4; o.bribeT = 4; o.buff = 4; }
+        G.rings.push({ x: p.x, y: p.y, R: 480, life: .5, max: .5, col: '255,211,77' });
+        G.texts.push({ x: e.x, y: e.y - e.r - 34, txt: '¡COMPRÓ AL ÁRBITRO!', life: 1.3, big: true }); sfx('whistle');
+      }
+      break;
     case 'mama':    // te persigue revoleando chancletas; cada tercer ataque sale corriendo hacia vos. Golpeada: de a tres y más rápida
       if (enr) sp *= 1.2;
       if (d < 140) sp *= .6;
@@ -3235,6 +3311,19 @@ function bossCast(e, enr) {
     const n = enr ? 7 : 5;
     for (let i = 0; i < n; i++) foeShot(e.x, e.y, a + (i - (n - 1) / 2) * .17, 470, 9, e.dmg * .7);
     sfx('kick');
+  } else if (e.type === 'vecino') {
+    // Maceta: cae donde estás (y una más al costado si está golpeado)
+    const p = G.p, n = enr ? 2 : 1;
+    for (let i = 0; i < n; i++) {
+      const tx = p.x + (i ? rnd(-120, 120) : p.fx * 40), ty = p.y + (i ? rnd(-120, 120) : p.fy * 40);
+      G.hazards.push({ kind: 'maceta', x: tx, y: ty, R: 62, t: 1, max: 1, dmg: e.dmg * 1.3, sx: e.x, sy: e.y });
+    }
+    sfx('dive');
+  } else if (e.type === 'presi') {
+    // Billetes trampa alrededor tuyo: si los agarrás, explotan
+    const p = G.p, n = enr ? 5 : 3;
+    for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, r = rnd(110, 230); G.bills.push({ x: clamp(p.x + Math.cos(a) * r, -RUN + 20, FW + RUN - 20), y: clamp(p.y + Math.sin(a) * r, -RUN + 20, FH + RUN - 20), t: BILL_S, rot: rnd(-.5, .5), dmg: e.dmg * 1.2 }); }
+    G.texts.push({ x: e.x, y: e.y - e.r - 34, txt: '¡TOMÁ, PIBE!', life: 1, big: true }); sfx('gem');
   } else if (e.type === 'mama') {
     for (const s of enr ? [-.28, 0, .28] : [0]) foeShot(e.x, e.y, a + s, 520, 10, e.dmg * .8, 'chancla');
     sfx('card');
@@ -3282,7 +3371,11 @@ function updateHazards(dt) {
       ? Math.abs(p.x - h.x) < h.w / 2 && Math.abs(p.y - h.y) < h.h / 2
       : (p.x - h.x) ** 2 + (p.y - h.y) ** 2 < (h.R + p.r) ** 2;
     if (hit && p.inv <= 0) hurt(h.dmg, true);
-    if (h.kind === 'stomp') {
+    if (h.kind === 'maceta') {
+      h.fx = 0;
+      for (let i = 0; i < 14; i++) part(h.x + rnd(-20, 20), h.y + rnd(-20, 20), i % 3 ? '#b5562e' : '#4f8a3a');
+      sfx('stomp'); if (!RM) G.shake = Math.max(G.shake, 4);
+    } else if (h.kind === 'stomp') {
       h.fx = 0;
       G.rings.push({ x: h.x, y: h.y, R: h.R, life: .45, max: .45, col: '217,74,61' });
       for (let i = 0; i < 12; i++) part(h.x + rnd(-h.R, h.R) * .6, h.y + rnd(-h.R, h.R) * .6, '#6b5a3a');
@@ -3313,6 +3406,7 @@ function updateGems(dt) {
     if (!g.pull && d < R) g.pull = true;
     if (g.pull) { g.sp = Math.min(900, g.sp + 1400 * dt); g.x += dx / d * g.sp * dt; g.y += dy / d * g.sp * dt; }
     if (d < p.r + 8) {
+      if (g.gold) { G.goldTok += GOLD_TOK; G.texts.push({ x: p.x, y: p.y - p.r - 20, txt: '+' + GOLD_TOK + ' fichas', life: .9, big: false }); }
       g.got = true; gainXp(g.v * ((G.passives.hidratacion || 0) >= 6 && p.hp >= p.maxHp ? 1.1 : 1)); sfx('gem');   // Isotónica
       if (G.combos.tercer) {
         const heal = Math.min(1, p.maxHp - p.hp); p.hp += heal;
@@ -3527,6 +3621,7 @@ function endScreen(won) {
   if (won) earn.push(['Partido ganado', 40]);
   if (G.et && m > 90) earn.push(['Minutos de alargue', Math.round((m - 90) * 1.2)]);
   if (fullET) earn.push(["Aguantaste hasta el 120'", 60]);
+  if (G.goldTok) earn.push(['Gemas doradas', G.goldTok]);
   const sub = earn.reduce((a, r) => a + r[1], 0);
   if (LV.reward > 1) earn.push([`Bonus ${LV.name} ×${String(LV.reward).replace('.', ',')}`, Math.round(sub * (LV.reward - 1))]);
   if (G.rain) { const sub2 = earn.reduce((a, r) => a + r[1], 0); earn.push(['Bonus día de lluvia ×1,4', Math.round(sub2 * (RAIN_TOKENS - 1))]); }
@@ -4191,6 +4286,7 @@ function drawSprays() {
   ctx.globalAlpha = 1;
 }
 function drawFoe(e) {
+  if (e.type === 'perro') { drawDog({ x: e.x, y: e.y, t: G.rt + e.phase, dir: G.p.x >= e.x ? 1 : -1, sniff: 0 }); return; }
   if (e.type === 'camillero') { drawCamilla(e); return; }
   if (e.type === 'spidercam') { drawSpidercam(e); return; }
   if (e.type === 'hincha') {
@@ -4333,6 +4429,17 @@ function drawPlayer(p) {
 
 function drawHazard(h) {
   const k = clamp(1 - h.t / h.max, 0, 1);
+  if (h.kind === 'maceta') {
+    if (h.done) return;
+    ctx.fillStyle = 'rgba(217,74,61,.1)'; ctx.strokeStyle = 'rgba(255,90,74,.8)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(h.x, h.y, h.R, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = `rgba(0,0,0,${.15 + .25 * k})`; ctx.beginPath(); ctx.ellipse(h.x, h.y, 10 + 12 * k, 5 + 6 * k, 0, 0, Math.PI * 2); ctx.fill();
+    // La maceta viaja en parábola desde el vecino
+    const mx = h.sx + (h.x - h.sx) * k, my = h.sy + (h.y - h.sy) * k - Math.sin(k * Math.PI) * 160;
+    ctx.fillStyle = '#b5562e'; ctx.beginPath(); ctx.moveTo(mx - 10, my - 6); ctx.lineTo(mx + 10, my - 6); ctx.lineTo(mx + 7, my + 9); ctx.lineTo(mx - 7, my + 9); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#4f8a3a'; ctx.beginPath(); ctx.arc(mx - 4, my - 9, 5, 0, Math.PI * 2); ctx.arc(mx + 4, my - 10, 5, 0, Math.PI * 2); ctx.fill();
+    return;
+  }
   if (h.kind === 'stomp') {
     if (h.done) return;
     ctx.fillStyle = 'rgba(217,74,61,.12)'; ctx.strokeStyle = 'rgba(255,90,74,.85)'; ctx.lineWidth = 3;
@@ -4441,12 +4548,21 @@ function render() {
     // Gema celeste del hincha: más grande, con borde blanco y un halo que late
     if (!g.star || !vis(g.x, g.y, 20)) continue;
     const s = 13, pl = .5 + .5 * Math.sin(performance.now() / 160);
-    ctx.fillStyle = `rgba(124,196,255,${.18 + .15 * pl})`; ctx.beginPath(); ctx.arc(g.x, g.y, s + 8 + pl * 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = g.gold ? `rgba(255,211,77,${.22 + .15 * pl})` : `rgba(124,196,255,${.18 + .15 * pl})`; ctx.beginPath(); ctx.arc(g.x, g.y, s + 8 + pl * 4, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.moveTo(g.x, g.y - s); ctx.lineTo(g.x + s * .65, g.y); ctx.lineTo(g.x, g.y + s); ctx.lineTo(g.x - s * .65, g.y); ctx.closePath();
-    ctx.fillStyle = '#7cc4ff'; ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = g.gold ? '#ffd34d' : '#7cc4ff'; ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
   }
 
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const b of G.bills) {
+    if (!vis(b.x, b.y, 20)) continue;
+    const bob = Math.sin(performance.now() / 180 + b.x) * 2, fade = b.t < 1 ? b.t : 1;
+    ctx.globalAlpha = fade; ctx.save(); ctx.translate(b.x, b.y + bob); ctx.rotate(b.rot);
+    ctx.fillStyle = 'rgba(255,211,77,.25)'; ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#5fae5a'; ctx.fillRect(-13, -7, 26, 14); ctx.strokeStyle = '#2e6b34'; ctx.lineWidth = 1.5; ctx.strokeRect(-13, -7, 26, 14);
+    ctx.fillStyle = '#2e6b34'; ctx.font = '700 11px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('$', 0, 1);
+    ctx.restore(); ctx.globalAlpha = 1;
+  }
   if (G.fenceGaps.length) drawFenceGaps();
   if (G.sprays.length) drawSprays();
   for (const e of G.enemies) if (!e.fly && vis(e.x, e.y, 60)) drawFoe(e);

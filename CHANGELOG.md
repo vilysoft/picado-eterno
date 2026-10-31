@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.79 · 31 oct 2026
+
+- **Día de lluvia:** En El Coloso, cuando vuelve la lluvia después del techo cerrado, el cartel ahora dice "¡Se rompió el techo otra vez!".
+- **Rivales:** Dos sorpresas más, una en El Potrero y otra en El Coloso: si cumplís cierta condición durante el partido, aparece un mini jefe nuevo. Las pistas: en El Potrero, cuidado con eliminar demasiados grandotes en la primera hora; en El Coloso, llegá muy entero a la segunda pausa de hidratación. Los dos dejan una lluvia de gemas, y uno de ellos además deja fichas.
+
 ## 2.78 · 31 oct 2026
 
 - **Día de lluvia:** Cuando un rayo toca un charco (aunque sea en el borde), el charco entero queda electrificado 1,5 s y chispea. Si estás en cualquier parte de ese charco, o entrás mientras chispea, te daña.
