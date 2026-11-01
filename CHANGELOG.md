@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.91 · 1 nov 2026
+
+- **Sonido:** La charla de gente suena más baja (30% menos en El Potrero y 30% menos en La Cancha del Club) y cada tramo entra y sale de a poco, subiendo y bajando durante 4 segundos, para que no aparezca ni se corte de golpe.
+
 ## 2.90 · 1 nov 2026
 
 - **Técnicas:** La técnica Pelota ahora se llama Pase al pie. Funciona igual.

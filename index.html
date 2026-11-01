@@ -593,7 +593,7 @@ const AMB_SETS = {
   charla: ['audio/charla1.mp3', 'audio/charla2.mp3', 'audio/charla3.mp3', 'audio/charla4.mp3', 'audio/charla5.mp3', 'audio/charla6.mp3'],
 };
 const AMB_NEED = { potrero: ['charla'], club: ['mur', 'cheer', 'charla'], lujo: ['mur', 'cheer'] };
-const CHARLA_CLUB = .56;   // en el Club la charla suena 5 dB más baja
+const CHARLA_POT = .7, CHARLA_CLUB = .4, CHARLA_FADE = 4;   // volumen de la charla en El Potrero y en el Club (más baja) y segundos de subida/bajada
 const ambStadium = () => LV.id === 'club' || LV.id === 'lujo';
 function ambLoad(k) {
   if (AMB.bufs[k] || AMB.loading[k] || !AC) return;
@@ -601,10 +601,16 @@ function ambLoad(k) {
   const get = u => fetch(u).then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); }).then(b => new Promise((ok, no) => AC.decodeAudioData(b, ok, no)));
   Promise.all(AMB_SETS[k].map(get)).then(all => { AMB.bufs[k] = all; }).catch(() => {});   // sin archivos: el juego sigue sin ambiente
 }
-function ambPlay(buf, gain, delay = 0) {
+function ambPlay(buf, gain, delay = 0, fade = 0) {
   if (!AMB.bus) { AMB.bus = AC.createGain(); AMB.bus.gain.value = 0; AMB.bus.connect(AC.destination); }
-  const src = AC.createBufferSource(), g = AC.createGain();
-  src.buffer = buf; g.gain.value = gain; src.connect(g).connect(AMB.bus); src.start(AC.currentTime + delay);
+  const src = AC.createBufferSource(), g = AC.createGain(), t = AC.currentTime + delay, d = buf.duration;
+  src.buffer = buf; src.connect(g).connect(AMB.bus);
+  if (fade) {
+    // Entra y sale de a poco: sube durante `fade` s y baja durante los últimos `fade` s
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + fade);
+    g.gain.setValueAtTime(gain, t + d - fade); g.gain.linearRampToValueAtTime(0, t + d);
+  } else g.gain.value = gain;
+  src.start(t);
   return src;
 }
 const pickBuf = a => a[Math.random() * a.length | 0];
@@ -619,12 +625,12 @@ function ambTick(dt) {
   // A ratos: un tramo de 10-12 s y después un silencio al azar
   if ((AMB.next -= dt) > 0) return;
   let b;
-  if (LV.id === 'potrero') { b = pickBuf(AMB.bufs.charla); ambPlay(b, 1); }   // vecinos charlando
+  if (LV.id === 'potrero') { b = pickBuf(AMB.bufs.charla); ambPlay(b, CHARLA_POT, 0, CHARLA_FADE); }   // vecinos charlando
   else if (LV.id === 'club') {
     // Más o menos 1 de cada 3: charla sola o charla encima del murmullo
     const r = Math.random();
-    if (r < .17) { b = pickBuf(AMB.bufs.charla); ambPlay(b, CHARLA_CLUB); }
-    else { b = pickBuf(AMB.bufs.mur); ambPlay(b, 1); if (r < .34) ambPlay(pickBuf(AMB.bufs.charla), CHARLA_CLUB, rnd(1, 4)); }
+    if (r < .17) { b = pickBuf(AMB.bufs.charla); ambPlay(b, CHARLA_CLUB, 0, CHARLA_FADE); }
+    else { b = pickBuf(AMB.bufs.mur); ambPlay(b, 1); if (r < .34) ambPlay(pickBuf(AMB.bufs.charla), CHARLA_CLUB, rnd(1, 4), CHARLA_FADE); }
   } else { b = pickBuf(AMB.bufs.mur); ambPlay(b, 1); }
   AMB.next = b.duration + rnd(6, 16);
 }
@@ -907,6 +913,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.91', date: '1 nov 2026', items: [
+    ['Sonido', 'La charla de gente suena más baja (30% menos en El Potrero y 30% menos en La Cancha del Club) y cada tramo entra y sale de a poco, subiendo y bajando durante 4 segundos, para que no aparezca ni se corte de golpe.'],
+  ] },
   { v: '2.90', date: '1 nov 2026', items: [
     ['Técnicas', 'La técnica Pelota ahora se llama Pase al pie. Funciona igual.'],
   ] },
