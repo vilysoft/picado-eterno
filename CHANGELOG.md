@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.94 · 1 nov 2026
+
+- **Día de lluvia:** Con lluvia aparecen 10% más rivales, tanto los que van entrando como las oleadas.
+
 ## 2.93 · 1 nov 2026
 
 - **Textos:** Pase al pie: las mejoras dicen "+1 pelota en cada pase" en vez de "en cada patada".

@@ -918,6 +918,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.94', date: '1 nov 2026', items: [
+    ['Día de lluvia', 'Con lluvia aparecen 10% más rivales, tanto los que van entrando como las oleadas.'],
+  ] },
   { v: '2.93', date: '1 nov 2026', items: [
     ['Textos', 'Pase al pie: la descripción ahora dice "Golpeás a un rival con un pase: la pelota rebota de rival en rival y vuelve a tus pies".'],
     ['Textos', 'Pase al pie: las mejoras dicen "+1 pelota en cada pase" en vez de "en cada patada".'],
@@ -2116,7 +2119,7 @@ function spawning() {
   const t = G.t, tt = ht();
   if (t >= G.nextWave) {
     G.nextWave += (G.et ? 30 : 60) / PACE;   // en el alargue, contraataque cada medio minuto
-    const n = Math.round(Math.min(40, 14 + Math.floor(tt / 12)) * MOB_RATE * (LV.wave || 1)), R = Math.hypot(viewW, viewH) / 2 + 30;
+    const n = Math.round(Math.min(40, 14 + Math.floor(tt / 12)) * MOB_RATE * (LV.wave || 1) * (G.rain ? RAIN_SPAWN : 1)), R = Math.hypot(viewW, viewH) / 2 + 30;
     for (let i = 0; i < n; i++) {
       const a = i / n * Math.PI * 2;
       let wx = G.p.x + Math.cos(a) * R, wy = G.p.y + Math.sin(a) * R;
@@ -2171,6 +2174,7 @@ function startInvader() {
 // poca visibilidad, el embarrado y un evento propio de cada cancha. Da 40% más de fichas.
 let RAIN = false; try { RAIN = localStorage.getItem('picado-eterno-lluvia') === '1'; } catch (e) {}
 const WET_MULT = 1.2;   // en un charco hacés y recibís 20% más de daño
+const RAIN_SPAWN = 1.1;   // con lluvia aparecen 10% más rivales
 const RAIN_TOKENS = 1.4, PUD_MIN = 4, PUD_MAX = 20, SLIDE_GRIP = 2.2, MUD_SLOW = .3, MUD_TRAIL_S = 7;
 const BOLT_WARN = 1, BOLT_R = 70, BOLT_DMG = 22, ZAP_S = 1.5;   // ZAP_S: cuánto queda electrificado el charco entero
 const WIND_PUSH = 70, WIND_SHOT = 150, WIND_WARN = 1.5, WIND_S = 3.2, WIND_SHOTS = { pelota: 1, tiro: 1, tres: 1 };
@@ -2444,7 +2448,7 @@ function drawDog(d) {
 }
 function spawnBoss(type) { spawn(type); banner(BOSSES[type].intro); sfx('boss'); cheer = 2; }
 function spawnStep(dt) {
-  G.spawnAcc += (1.3 + ht() * .034) * PACE * LV.rate * MOB_RATE * (1 + ET_RATE * etMin()) * dt;
+  G.spawnAcc += (1.3 + ht() * .034) * PACE * LV.rate * MOB_RATE * (1 + ET_RATE * etMin()) * (G.rain ? RAIN_SPAWN : 1) * dt;
   while (G.spawnAcc >= 1) { G.spawnAcc--; if (G.enemies.length < 420) spawn(pickType(ht())); }
 }
 
