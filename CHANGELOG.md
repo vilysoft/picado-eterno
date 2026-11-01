@@ -5,6 +5,7 @@ Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 ## 2.93 · 1 nov 2026
 
 - **Textos:** Pase al pie: las mejoras dicen "+1 pelota en cada pase" en vez de "en cada patada".
+- **Textos:** Pase al pie: la descripción ahora dice "Golpeás a un rival con un pase: la pelota rebota de rival en rival y vuelve a tus pies".
 
 ## 2.92 · 1 nov 2026
 
