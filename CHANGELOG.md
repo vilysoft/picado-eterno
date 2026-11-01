@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.90 · 1 nov 2026
+
+- **Técnicas:** La técnica Pelota ahora se llama Pase al pie. Funciona igual.
+
 ## 2.89 · 1 nov 2026
 
 - **Técnicas:** Pique del Rondo: cada pelota necesita 4 vueltas sin tocar a ningún rival para picar (antes 2).

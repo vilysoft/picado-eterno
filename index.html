@@ -657,7 +657,7 @@ function audioUnlock() {
 
 // ---------- Datos del juego ----------
 const WEAPONS = {
-  pelota: { name: 'Pelota', max: 6, desc: [
+  pelota: { name: 'Pase al pie', max: 6, desc: [
     'Pateás una pelota al rival más cercano: rebota de rival en rival y vuelve a tus pies.',
     '+1 rebote por pelota.', '+1 pelota en cada patada.', '+40% de daño.',
     '+1 pelota en cada patada.', '+1 rebote y +40% de daño.'] },
@@ -907,6 +907,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.90', date: '1 nov 2026', items: [
+    ['Técnicas', 'La técnica Pelota ahora se llama Pase al pie. Funciona igual.'],
+  ] },
   { v: '2.89', date: '1 nov 2026', items: [
     ['Técnicas', 'Pique del Rondo: cada pelota necesita 4 vueltas sin tocar a ningún rival para picar (antes 2).'],
   ] },
@@ -1648,7 +1651,7 @@ function openAlbum() {
   if (albTab === 'f') items = Object.entries(ALB_FOES).map(([k, [n, w, d]]) => card(A[k], A[k] ? n : '???', w, P(A[k] ? d : 'Todavía no te lo cruzaste.')));
   else if (albTab === 'b') items = Object.entries(ALB_BOSSES).map(([k, [w, d]]) => card(A[k], A[k] ? BOSSES[k].name : '???', w, P(A[k] ? d : 'Todavía no lo enfrentaste.')));
   else if (albTab === 'w') items = Object.entries(WEAPONS).map(([k, W]) => {
-    // El nivel 6 tiene nombre propio ("Despeje: …") salvo en la Pelota
+    // El nivel 6 tiene nombre propio ("Despeje: …") salvo en el Pase al pie
     const t = W.desc[5], i = t.indexOf(':'), named = i > 0 && i < 30;
     const l6 = named ? L6(t.slice(0, i), t.slice(i + 1).trim()) : `<p><b>Nivel 6:</b> ${esc(t)}</p>`;
     return card(A[k], W.name, only(W.only), A[k] ? P(W.desc[0]) + l6 : P('Todavía no la elegiste.'));
@@ -3664,7 +3667,7 @@ function hud() {
   const w = (G.xp / G.xpNext * 100).toFixed(1) + '%';
   if (hudCache.xp !== w) { hudCache.xp = w; $('xpfill').style.width = w; }
 }
-const SRC_NAMES = { pelota: 'Pelota', rondo: 'Rondo', barrida: 'Barrida', onda: 'Onda expansiva', tiroLibre: 'Tiro libre', tresDedos: 'Tres dedos', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta', olimpico: 'Gol olímpico', contragolpe: 'Contragolpe', pique: 'Pique al vacío', barrera: 'Barrera (llamarada)', dtTeam: 'Equipo del DT desarmado', pibes: 'Los pibes', bombo: 'El Bombo', avalancha: 'Avalancha', barraAliada: 'La barra aliada', roja: 'Tarjeta roja', spray: 'Spray de distancia' };
+const SRC_NAMES = { pelota: 'Pase al pie', rondo: 'Rondo', barrida: 'Barrida', onda: 'Onda expansiva', tiroLibre: 'Tiro libre', tresDedos: 'Tres dedos', codazo: 'Codazo', amarilla: 'Doble amarilla', tapones: 'Tapones de punta', olimpico: 'Gol olímpico', contragolpe: 'Contragolpe', pique: 'Pique al vacío', barrera: 'Barrera (llamarada)', dtTeam: 'Equipo del DT desarmado', pibes: 'Los pibes', bombo: 'El Bombo', avalancha: 'Avalancha', barraAliada: 'La barra aliada', roja: 'Tarjeta roja', spray: 'Spray de distancia' };
 const nf = n => Math.round(n).toLocaleString('es-AR');
 function matchEv(txt, k) { G.rec.ev.push([minuteOf(G.t), txt, k || '']); }
 // Planilla del final: gráfico del partido, cómo quedó tu equipo y los momentos clave
