@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.93 · 1 nov 2026
+
+- **Textos:** Pase al pie: las mejoras dicen "+1 pelota en cada pase" en vez de "en cada patada".
+
 ## 2.92 · 1 nov 2026
 
 - **Rivales:** Rivales nuevos para el segundo tiempo, en todas las canchas. Desde el 60' entra el lateral: corre pegado a la línea de costado y cada tanto saca un lateral, una pelota larga en línea recta que se ve venir. Desde el 70' entra el suplente: llega con la pechera, rápido y con poca vida, y un círculo naranja marca cuánto le falta para calentarse; si no lo eliminás en 6 s se pone la camiseta y queda con 4 veces más vida y pegando mucho más.

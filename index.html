@@ -665,8 +665,8 @@ function audioUnlock() {
 const WEAPONS = {
   pelota: { name: 'Pase al pie', max: 6, desc: [
     'Pateás una pelota al rival más cercano: rebota de rival en rival y vuelve a tus pies.',
-    '+1 rebote por pelota.', '+1 pelota en cada patada.', '+40% de daño.',
-    '+1 pelota en cada patada.', '+1 rebote y +40% de daño.'] },
+    '+1 rebote por pelota.', '+1 pelota en cada pase.', '+40% de daño.',
+    '+1 pelota en cada pase.', '+1 rebote y +40% de daño.'] },
   rondo: { name: 'Rondo', max: 6, desc: [
     'Tres pelotas giran a tu alrededor y golpean a quien se acerque. Cada vuelta sin tocar a nadie carga una pelota: su próximo golpe pega 30% más y marea.',
     '+1 pelota girando.', '+35% de daño.', '+1 pelota y giran más rápido.', '+1 pelota y +35% de daño.',
@@ -918,6 +918,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.93', date: '1 nov 2026', items: [
+    ['Textos', 'Pase al pie: las mejoras dicen "+1 pelota en cada pase" en vez de "en cada patada".'],
+  ] },
   { v: '2.92', date: '1 nov 2026', items: [
     ['Rivales', 'Rivales nuevos para el segundo tiempo, en todas las canchas. Desde el 60\' entra el lateral: corre pegado a la línea de costado y cada tanto saca un lateral, una pelota larga en línea recta que se ve venir. Desde el 70\' entra el suplente: llega con la pechera, rápido y con poca vida, y un círculo naranja marca cuánto le falta para calentarse; si no lo eliminás en 6 s se pone la camiseta y queda con 4 veces más vida y pegando mucho más.'],
     ['Rivales', 'Rival nuevo en La Cancha del Club desde el 55\': el fotógrafo. Se para en la línea, enfoca (la cámara titila en rojo) y saca la foto: si estás cerca, el flash te deja la pantalla blanca un instante.'],
