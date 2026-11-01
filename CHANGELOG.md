@@ -2,6 +2,13 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.84 · 31 oct 2026
+
+- **Rivales:** El vecino del barrio ya no viste ropa deportiva: sale con camisa a cuadros, pantalón largo y zapatos.
+- **Rivales:** La sorpresa de El Potrero pide más: ahora hay que eliminar el doble de grandotes, y un poco antes que hasta ahora.
+- **Rivales:** La mamá del invasor ahora tiene pelo largo y un vestido floreado.
+- **Técnicas:** Pique del Rondo: las pelotas ya no caen todas juntas, pican de a una, con al menos 0,6 s entre una y otra. Donde explotan, el piso queda prendido fuego 3 s, como el spray: los rivales que lo pisan se queman (60% del daño del rondo por segundo, y siguen ardiendo 1,5 s después de salir).
+
 ## 2.83 · 31 oct 2026
 
 - **Técnicas:** Rondo con pique: cada pelota que da 2 vueltas sin tocar a ningún rival se cae sobre el rival más cercano y explota en área, con 60% más de daño que un golpe normal (si estaba cargada, además pega 30% más y marea). Al ratito, 1,2 s, la pelota vuelve a la ronda.

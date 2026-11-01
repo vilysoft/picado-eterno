@@ -841,8 +841,8 @@ const KITS = {
   tecnico:  { shirt: '#2a2e36', sleeve: '#2a2e36', shorts: '#2a2e36' },
   estrella: { shirt: '#f4f1e6', sleeve: '#f4f1e6', stripe: '#d4af37', shorts: '#d4af37', boots: '#d4af37' },
   var:      { shirt: '#111418', sleeve: '#39ff9a', shorts: '#111418' },
-  mama:     { shirt: '#c2477a', sleeve: 'skin', stripe: '#f4f1e6', shorts: '#3b3f52' },
-  vecino:   { shirt: '#e8e3d3', sleeve: 'skin', stripe: '#8a8f6a', shorts: '#4a4f3a' },
+  mama:     { shirt: '#c2477a', sleeve: 'skin', shorts: '#c2477a', dress: '#c2477a', flowers: '#ffe36e', longHair: true },
+  vecino:   { shirt: '#6f9fd0', sleeve: '#6f9fd0', plaid: 'rgba(30,50,90,.45)', shorts: '#5b5246', pants: '#5b5246', boots: '#4a3020' },
   presi:    { shirt: '#1f2b4a', sleeve: '#1f2b4a', stripe: '#f4f1e6', shorts: '#1f2b4a', boots: '#111111' },
   custodio: { shirt: '#15171b', sleeve: '#15171b', shorts: '#15171b' },
   perro:    { shirt: '#a8703d', sleeve: '#a8703d', shorts: '#a8703d' },
@@ -893,6 +893,12 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.84', date: '31 oct 2026', items: [
+    ['Rivales', 'El vecino del barrio ya no viste ropa deportiva: sale con camisa a cuadros, pantalón largo y zapatos.'],
+    ['Rivales', 'La sorpresa de El Potrero pide más: ahora hay que eliminar el doble de grandotes, y un poco antes que hasta ahora.'],
+    ['Rivales', 'La mamá del invasor ahora tiene pelo largo y un vestido floreado.'],
+    ['Técnicas', 'Pique del Rondo: las pelotas ya no caen todas juntas, pican de a una, con al menos 0,6 s entre una y otra. Donde explotan, el piso queda prendido fuego 3 s, como el spray: los rivales que lo pisan se queman (60% del daño del rondo por segundo, y siguen ardiendo 1,5 s después de salir).'],
+  ] },
   { v: '2.83', date: '31 oct 2026', items: [
     ['Técnicas', 'Rondo con pique: cada pelota que da 2 vueltas sin tocar a ningún rival se cae sobre el rival más cercano y explota en área, con 60% más de daño que un golpe normal (si estaba cargada, además pega 30% más y marea). Al ratito, 1,2 s, la pelota vuelve a la ronda.'],
   ] },
@@ -1307,7 +1313,7 @@ function newGame() {
     stats: { armor: 1, thorns: 0, dmg: 1, speed: 1, cd: 1, magnet: 1, regen: 0, area: 1, xp: 1, sprint: 1.4, stRegen: 16, stDrain: 1 },
     bossKills: 0, free: 0, revives: 0, rerolls: 0, combos: {},
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '', tl: [[0, 0, 1, 1]], lastM: 0, ev: [], low: 1, lowM: 0 },   // estadísticas del partido
-    weapons: { [CH.start || 'pelota']: 1 }, passives: {}, timers: { [CH.start || 'pelota']: .4 }, sprays: [], rojas: 0, allies: [], bombos: [], rondoAng: 0, rondoBalls: null, rondoSpin: 0, rondoCh: [], rondoIdle: [], rondoOut: [],
+    weapons: { [CH.start || 'pelota']: 1 }, passives: {}, timers: { [CH.start || 'pelota']: .4 }, sprays: [], rojas: 0, allies: [], bombos: [], rondoAng: 0, rondoBalls: null, rondoSpin: 0, rondoCh: [], rondoIdle: [], rondoOut: [], rondoDropCd: 0, rondoFires: [],
     enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [], fenceGaps: [],
     spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invKilled: 0, mamaIn: 0, bigKills: 0, vecinoIn: 0, presiIn: 0, presiCheck: false, bills: [], goldTok: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, dog: null, dogAt: 28 + Math.random() * 8, rain: RAIN, puddles: [], muds: [], bolts: [], wind: null, windCd: 14, boltCd: 7, rainEvAt: 50 + Math.random() * 20, dark: 0, roof: 0, drys: [], utileros: [], flash: 0, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, hitN: 0, runT: 0, garra: 0, garraCd: 0, p5T: 0, panT: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
   };
@@ -1589,7 +1595,7 @@ const ALB_BOSSES = {
   capitan:  ['La Cancha del Club · entretiempo', 'Embiste en línea recta. Golpeado, grita "¡Vamos, muchachos!" y llama a 6 compañeros que embisten en fila con él. Si lo encimás, toma carrera.'],
   tecnico:  ['La Cancha del Club · minuto 80', 'Se queda lejos y hace cambios: mete rivales y acelera a los que tiene cerca. Golpeado, lo echan a la tribuna: ahí no lo podés tocar, pero cada rival suyo que eliminás le baja vida.'],
   estrella: ['El Coloso · entretiempo', 'Gambetas cortas en diagonal y un abanico de tiros. Golpeada, te tira un caño: te pasa entre las piernas y patea desde atrás tuyo.'],
-  vecino:   ['El Potrero · si eliminás 10 grandotes antes del 60\'', 'Sale enojado porque le rompieron un vidrio: te revolea macetas que marcan un círculo y caen. Golpeado, suelta al perro. Si le ganás deja una lluvia de gemas.'],
+  vecino:   ['El Potrero · si eliminás 20 grandotes antes del 55\'', 'Sale enojado porque le rompieron un vidrio: te revolea macetas que marcan un círculo y caen. Golpeado, suelta al perro. Si le ganás deja una lluvia de gemas.'],
   presi:    ['El Coloso · si llegás a la segunda pausa de hidratación con 85% de vida o más', 'Baja del palco con dos custodios que lo cubren. Tira billetes que parecen un regalo pero explotan si los agarrás. Golpeado, compra al árbitro: los rivales cercanos pegan más fuerte un rato. Si le ganás deja una lluvia de gemas y 8 celestes.'],
   mama:     ['La Cancha del Club · si eliminás a los dos hinchas invasores', 'Viene a vengar a su hijo: te persigue revoleando chancletas y cada tanto sale corriendo hacia vos. Golpeada, tira de a tres y corre más. Si le ganás deja una lluvia de gemas.'],
   var:      ['El Coloso · minuto 80', 'Marca zonas de revisión alrededor tuyo que después pegan. Golpeado, marca más y retrotrae la jugada: te devuelve adonde estabas 2 s antes.'],
@@ -1771,7 +1777,7 @@ function update(dt) {
     for (let i = 0; i < 2; i++) { spawn('custodio', pr.x + (i ? 50 : -50), pr.y); const c = G.enemies[G.enemies.length - 1]; c.guard = pr; c.side = i ? 1 : -1; }
   }
   if (G.mamaIn > 0 && !G.hydra && (G.mamaIn -= dt) <= 0) {
-    spawnBoss('mama'); const m = G.enemies[G.enemies.length - 1]; m.hair = '#cfc8bb';
+    spawnBoss('mama'); const m = G.enemies[G.enemies.length - 1]; m.hair = '#5a3520';
   }
   if (LV.id === 'club' && G.invaders < 2 && minuteOf(G.t) >= 60) {
     if (G.invNext == null) G.invNext = G.t + rnd(2, 10);
@@ -2419,7 +2425,7 @@ function fireWeapons(dt) {
       const t = clamp(((e.x - L.x1) * vx + (e.y - L.y1) * vy) / l2, 0, 1), qx = L.x1 + vx * t, qy = L.y1 + vy * t;
       if ((e.x - qx) ** 2 + (e.y - qy) ** 2 < (e.r + 9) ** 2) {
         const centro = L.cross && (e.x - L.cx) ** 2 + (e.y - L.cy) ** 2 < 40 * 40;   // Barrera de fuego: el cruce quema el doble
-        e.burn = 1.5; e.burnDps = Math.max(e.burn > 0 && e.burnDps || 0, L.dps * (centro ? 2 : 1));
+        e.burn = 1.5; e.burnDps = Math.max(e.burn > 0 && e.burnDps || 0, L.dps * (centro ? 2 : 1)); e.burnSrc = 'spray';
       }
     }
   }
@@ -2437,10 +2443,14 @@ function fireWeapons(dt) {
       }
       // Pique: la pelota que da 2 vueltas sin tocar a nadie se cae sobre el rival más cercano y explota;
       // al ratito vuelve a la ronda
+      // Pican de a una: hace falta que no haya otra en el aire y un respiro entre pique y pique
+      G.rondoDropCd -= dt;
       for (let i = 0; i < w.count; i++) {
         const o = G.rondoOut[i];
         if (!o) {
           if ((G.rondoIdle[i] = (G.rondoIdle[i] || 0) + da) < Math.PI * 4 || !G.rondoBalls || !G.rondoBalls[i]) continue;
+          if (G.rondoDropCd > 0 || G.rondoOut.some(q => q && q.ph === 'fly')) continue;
+          G.rondoDropCd = RONDO_GAP;
           const [bx, by] = G.rondoBalls[i], t = nearestEnemy(bx, by, null, RONDO_DROP_R), fly = t && !t.fly;
           G.rondoOut[i] = { ph: 'fly', t: 0, x0: bx, y0: by, tx: fly ? t.x : bx, ty: fly ? t.y : by, ch: !!G.rondoCh[i] };
           G.rondoCh[i] = false; G.rondoIdle[i] = 0;
@@ -2458,12 +2468,24 @@ function fireWeapons(dt) {
           G.rings.push({ x: o.tx, y: o.ty, R, life: .4, max: .4, col: o.ch ? '255,211,77' : '255,182,39' });
           for (let k2 = 0; k2 < 12; k2++) part(o.tx + rnd(-R, R) * .4, o.ty + rnd(-R, R) * .4, k2 % 2 ? '#ffb627' : '#fbfbf7');
           if (!RM) G.shake = Math.max(G.shake, 3); sfx('kick');
+          // Deja el lugar prendido fuego un rato, como el spray
+          G.rondoFires.push({ x: o.tx, y: o.ty, R: R * .85, life: RONDO_FIRE_S, max: RONDO_FIRE_S, dps: w.dmg * S.dmg * RONDO_FIRE_DPS });
           o.ph = 'back'; o.t = 0;
         } else if (o.ph === 'back' && o.t >= RONDO_BACK) {
           G.rondoOut[i] = null; G.rondoIdle[i] = 0;
           if (G.rondoBalls && G.rondoBalls[i]) G.rings.push({ x: G.rondoBalls[i][0], y: G.rondoBalls[i][1], R: 16 * S.area, life: .25, max: .25 });
         }
       }
+      // Fuego del pique: los que lo pisan se queman
+      for (const F of G.rondoFires) {
+        F.life -= dt;
+        for (const e of G.enemies) {
+          if (e.dead || e.fly || e.away) continue;
+          if ((e.x - F.x) ** 2 + (e.y - F.y) ** 2 < (F.R + e.r) ** 2) { if (!(e.burn > 0) || e.burnSrc === 'rondo' || F.dps > e.burnDps) e.burnSrc = 'rondo'; e.burn = 1.5; e.burnDps = Math.max(e.burn > 0 && e.burnDps || 0, F.dps); }
+        }
+        if (!RM && Math.random() < dt * 14) part(F.x + rnd(-F.R, F.R) * .7, F.y + rnd(-F.R, F.R) * .5, Math.random() < .5 ? '#ffb35a' : '#ff6a2a');
+      }
+      G.rondoFires = G.rondoFires.filter(F => F.life > 0);
       continue;
     }
     G.timers[k] = (G.timers[k] || 0) - dt;
@@ -2576,7 +2598,7 @@ function hitEnemy(e, dmg, kx, ky, src, exact) {
   if (e.hp <= 0) { R.kills[src] = (R.kills[src] || 0) + 1; kill(e); }
 }
 const DT_DRAIN = .02;   // cada rival que mandó el DT expulsado le saca 2% de su vida total
-const HINCHA_GEM = 60, MAMA_GEMS = 30, PRESI_HP = .85, VECINO_BIG = 10, GOLD_TOK = 8, BILL_S = 7;   // PRESI_HP: vida mínima en la 2da pausa; VECINO_BIG: grandotes antes del 60'; GOLD_TOK: fichas por gema dorada   // MAMA_GEMS: gemas extra de la mamá del invasor (más 3 celestes)   // experiencia de la gema celeste del hincha invasor   // cada rival que mandó el DT expulsado le saca 2,5% de su vida total
+const HINCHA_GEM = 60, MAMA_GEMS = 30, PRESI_HP = .85, VECINO_BIG = 20, VECINO_MIN = 55, GOLD_TOK = 8, BILL_S = 7;   // PRESI_HP: vida mínima en la 2da pausa; VECINO_BIG: grandotes antes del 60'; GOLD_TOK: fichas por gema dorada   // MAMA_GEMS: gemas extra de la mamá del invasor (más 3 celestes)   // experiencia de la gema celeste del hincha invasor   // cada rival que mandó el DT expulsado le saca 2,5% de su vida total
 function kill(e) {
   e.dead = true; G.kills++;
   if (CH.aliento && G.p.al < 100) { G.p.al = Math.min(100, G.p.al + (e.boss ? ALIENTO_BOSS : ALIENTO_KILL) * (1 + .08 * pv('cancionero'))); if (G.p.al >= 100) sfx('combo'); }
@@ -2605,7 +2627,7 @@ function kill(e) {
     banner('¡Seguridad se lleva al hincha!'); cheer = 2; ambCheer();
     if (++G.invKilled === 2) G.mamaIn = rnd(3, 8) * MATCH / 90;   // eliminaste a los dos: entre 3 y 8 minutos de partido después viene la mamá a vengarse
   }
-  if (e.type === 'central' && !e.elite && LV.id === 'potrero' && minuteOf(G.t) < 60 && ++G.bigKills === VECINO_BIG) G.vecinoIn = 2.5;
+  if (e.type === 'central' && !e.elite && LV.id === 'potrero' && minuteOf(G.t) < VECINO_MIN && ++G.bigKills === VECINO_BIG) G.vecinoIn = 2.5;
   if (e.type === 'vecino' || e.type === 'presi') {
     for (let i = 0; i < MAMA_GEMS; i++) gem(e.x + rnd(-90, 90), e.y + rnd(-90, 90), 5);
     for (let i = 0; i < 3; i++) gem(e.x + rnd(-50, 50), e.y + rnd(-50, 50), HINCHA_GEM, true);
@@ -2939,7 +2961,7 @@ function sprayFlare(x, y, dmg) {
     for (let i = 0; i < 12; i++) part(qx + rnd(-30, 30), qy + rnd(-30, 30), i % 2 ? '#ffb35a' : '#ffffff');
     for (const e of G.enemies) {
       if (e.dead || e.fly) continue;
-      if ((e.x - qx) ** 2 + (e.y - qy) ** 2 < (R + e.r) ** 2) { hitEnemy(e, dmg * 1.5, 0, 0, 'barrera'); e.burn = 1.5; e.burnDps = Math.max(e.burnDps || 0, L.dps); }
+      if ((e.x - qx) ** 2 + (e.y - qy) ** 2 < (R + e.r) ** 2) { hitEnemy(e, dmg * 1.5, 0, 0, 'barrera'); e.burn = 1.5; e.burnDps = Math.max(e.burnDps || 0, L.dps); e.burnSrc = 'spray'; }
     }
     sfx('stomp');
     return;
@@ -2961,7 +2983,8 @@ function rondoGeom() {
 }
 const RONDO_CH = 1.3, RONDO_DIZZY = 1.2;
 // Pique del rondo: busca rivales a esta distancia, vuela RONDO_FLY s, explota en RONDO_BOOM_R con RONDO_BOOM veces el daño y vuelve a la ronda a los RONDO_BACK s
-const RONDO_DROP_R = 280, RONDO_FLY = .35, RONDO_BOOM_R = 75, RONDO_BOOM = 1.6, RONDO_BACK = 1.2;   // pelota cargada del rondo: daño extra y segundos de mareo
+const RONDO_DROP_R = 280, RONDO_FLY = .35, RONDO_BOOM_R = 75, RONDO_BOOM = 1.6, RONDO_BACK = 1.2;
+const RONDO_GAP = .6, RONDO_FIRE_S = 3, RONDO_FIRE_DPS = .6;   // de a una cada 0,6 s como mínimo; fuego de 3 s que quema 60% del daño del rondo por segundo   // pelota cargada del rondo: daño extra y segundos de mareo
 function rondoHit(e, dx, dy, d, RG) {
   const { rb, rw, rR, rbr } = RG, S = G.stats;
   if (e.rcd > 0 || Math.abs(d - rR) >= e.r + rbr) return;
@@ -3020,7 +3043,7 @@ function updateEnemies(dt) {
     if (e.burn > 0) {
       // Quemadura del spray: daño cada 0,25 s mientras dure
       e.burn -= dt; e.burnT = (e.burnT || 0) - dt;
-      if (e.burnT <= 0) { e.burnT = .25; hitEnemy(e, e.burnDps * .25, 0, 0, 'spray', true); }
+      if (e.burnT <= 0) { e.burnT = .25; hitEnemy(e, e.burnDps * .25, 0, 0, e.burnSrc || 'spray', true); }
       if (!RM && Math.random() < dt * 8) part(e.x + rnd(-6, 6), e.y + rnd(-6, 6), Math.random() < .5 ? '#ffffff' : '#ffb35a');
       if (e.dead) continue;
     }
@@ -4236,9 +4259,19 @@ function drawPerson(x, y, r, ang, step, o) {
   ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.scale(s, s);
   if (o.dive) ctx.scale(1.3, .85);
   // Piernas y botines: un pie adelante y el otro atrás al correr
-  ell(fo * .5, -4.5, 4, 2.6, o.skin); ell(-fo * .5, 4.5, 4, 2.6, o.skin);
+  ell(fo * .5, -4.5, 4, 2.6, o.pants || o.skin); ell(-fo * .5, 4.5, 4, 2.6, o.pants || o.skin);   // pants: pantalón largo (las piernas no se ven)
   const bt = o.boots || '#161616'; ell(fo + 3, -4.5, 4.8, 3, bt); ell(-fo + 3, 4.5, 4.8, 3, bt);
-  ell(-1, 0, 5.5, 8.5, o.shorts);
+  if (o.dress) {
+    // Vestido: pollera ancha con flores
+    ctx.beginPath(); ctx.ellipse(-2, 0, 9.5, 12.5, 0, 0, Math.PI * 2); ctx.fillStyle = o.dress; ctx.fill();
+    if (o.flowers) {
+      ctx.save(); ctx.clip();
+      for (const [fx, fy, c] of [[-8, -7, 0], [-6, 5, 1], [-3, -1, 0], [-9, 1, 1], [-4, 9, 0], [-4, -10, 1]]) {
+        ctx.fillStyle = c ? '#ffffff' : o.flowers; ctx.beginPath(); ctx.arc(fx, fy, 2.2, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    }
+  } else ell(-1, 0, 5.5, 8.5, o.shorts);
   // Brazos: se balancean al revés que las piernas (o hacia adelante si se tira)
   const ay = 12.5, axL = o.dive ? 13 : -fo * .7, axR = o.dive ? 13 : fo * .7, hy = o.dive ? 6 : ay;
   const hand = o.gloves || o.skin, hr = o.gloves ? 4.2 : 3;
@@ -4253,7 +4286,21 @@ function drawPerson(x, y, r, ang, step, o) {
     for (const yy of [-8.5, -3.5, 1.5, 6.5]) ctx.fillRect(-8, yy, 16, 2.4);
     ctx.restore();
   }
+  if (o.plaid) {
+    // Camisa a cuadros con cuello
+    ctx.save(); ctx.clip(); ctx.fillStyle = o.plaid;
+    for (const yy of [-9, -4.5, 0, 4.5, 9]) ctx.fillRect(-8, yy - .8, 16, 1.6);
+    for (const xx of [-4.5, 0, 4.5]) ctx.fillRect(xx - .8, -12, 1.6, 24);
+    ctx.restore();
+    ctx.fillStyle = '#f4f1e6'; ctx.beginPath(); ctx.moveTo(4.5, -5); ctx.lineTo(8, -1.5); ctx.lineTo(8, 1.5); ctx.lineTo(4.5, 5); ctx.closePath(); ctx.fill();
+  }
   ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.stroke();
+  if (o.dress && o.flowers) {
+    // Flores también en el torso del vestido
+    for (const [fx, fy, c] of [[2, -6, 0], [3, 5, 1], [4, 0, 0], [1, 8, 0], [1, -9, 1]]) { ctx.fillStyle = c ? '#ffffff' : o.flowers; ctx.beginPath(); ctx.arc(fx, fy, 1.9, 0, Math.PI * 2); ctx.fill(); }
+  }
+  // Pelo largo: cae sobre la espalda
+  if (o.longHair) { ctx.fillStyle = o.hair; ctx.beginPath(); ctx.ellipse(-6.5, 0, 6.5, 4.6, 0, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.ellipse(-11, 0, 3, 3.4, 0, 0, Math.PI * 2); ctx.fill(); }
   // Cabeza: cara hacia adelante, pelo en la nuca
   ell(1.5, 0, 5.6, 5.6, o.skin);
   ctx.fillStyle = o.hair; ctx.beginPath(); ctx.arc(1.5, 0, 5.9, Math.PI * .5, Math.PI * 1.5); ctx.closePath(); ctx.fill();
@@ -4398,7 +4445,8 @@ function drawFoe(e) {
   if (e.buff > 0) { ctx.strokeStyle = 'rgba(255,211,77,.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 5, 0, Math.PI * 2); ctx.stroke(); }
   drawPerson(e.x, e.y, e.r, ang, still ? 0 : G.t * Math.min(e.speed, 300) * .09 + e.phase, {
     shirt: fl ? fc : K.shirt, sleeve: fl ? fc : (K.sleeve === 'skin' ? e.skin : K.sleeve), stripe: fl ? null : K.stripe, shorts: K.shorts,
-    boots: K.boots, skin: e.skin, hair: e.hair, hat: e.hat, gloves: K.gloves, dive: e.mode === 'dive' || e.mode === 'down', band: e.boss,
+    boots: K.boots, skin: e.skin, hair: e.hair, hat: e.hat, gloves: K.gloves, plaid: fl ? null : K.plaid, pants: K.pants, dress: K.dress && (fl ? fc : K.dress), flowers: K.flowers, longHair: K.longHair, dive: e.mode === 'dive' || e.mode === 'down', band: e.boss && !FOES[e.type].mini,   // los mini jefes no llevan cinta de capitán
+   
   });
   if (e.type === 'tanque' && e.ripped) {
     // lleva el pedazo de alambrado; lo levanta cuando apunta para tirarlo
@@ -4659,6 +4707,21 @@ function render() {
   }
   if (G.fenceGaps.length) drawFenceGaps();
   if (G.sprays.length) drawSprays();
+  for (const F of G.rondoFires) {
+    // Fuego del pique del rondo: mancha naranja que late, con llamitas
+    if (!vis(F.x, F.y, F.R)) continue;
+    const a = Math.min(1, F.life / .6), pulse = .5 + .5 * Math.sin(performance.now() / 110 + F.x);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = `rgba(255,120,40,${.18 + .12 * pulse})`; ctx.beginPath(); ctx.ellipse(F.x, F.y, F.R, F.R * .7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = `rgba(255,180,80,${.5 + .3 * pulse})`; ctx.lineWidth = 2; ctx.stroke();
+    for (let i = 0; i < 7; i++) {
+      const h = hash2(F.x | 0, i), ang = h * 6.28, rr = F.R * .6 * hash2(i, F.y | 0), fx = F.x + Math.cos(ang) * rr, fy = F.y + Math.sin(ang) * rr * .7;
+      const fl = 6 + 5 * Math.abs(Math.sin(performance.now() / 90 + i * 2));
+      ctx.fillStyle = i % 2 ? '#ffb35a' : '#ff6a2a';
+      ctx.beginPath(); ctx.moveTo(fx - 4, fy); ctx.quadraticCurveTo(fx, fy - fl * 2, fx + 4, fy); ctx.closePath(); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
   for (const e of G.enemies) if (!e.fly && vis(e.x, e.y, 60)) drawFoe(e);
 
   for (const c of G.cards) {
