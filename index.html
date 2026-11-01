@@ -918,6 +918,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.95', date: '1 nov 2026', items: [
+    ['Arreglos', 'Día de lluvia: con las ráfagas de viento hacia la izquierda la lluvia dejaba de verse en pantalla. Ahora sigue lloviendo y las gotas caen inclinadas por el viento.'],
+  ] },
   { v: '2.94', date: '1 nov 2026', items: [
     ['Día de lluvia', 'Con lluvia aparecen 10% más rivales, tanto los que van entrando como las oleadas.'],
   ] },
@@ -2367,7 +2370,8 @@ function drawRainScreen(px, py) {
     const n = Math.round(60 + 170 * I), wx = G.wind && G.wind.on ? G.wind.dx * 10 : 0;
     ctx.strokeStyle = 'rgba(200,220,245,.35)'; ctx.lineWidth = 1; ctx.beginPath();
     for (let i = 0; i < n; i++) {
-      const sp = 700 + hash2(i, 3) * 500, x = (hash2(i, 1) * (VW + 200) + tnow * wx * 30) % (VW + 200) - 100, y = (hash2(i, 2) * VH + tnow * sp) % (VH + 20) - 10;
+      const sp = 700 + hash2(i, 3) * 500, W2 = VW + 200, x = (((hash2(i, 1) * W2 + tnow * wx * 30) % W2) + W2) % W2 - 100,   // el módulo siempre positivo: con viento hacia la izquierda las gotas no se van de la pantalla
+        y = (hash2(i, 2) * VH + tnow * sp) % (VH + 20) - 10;
       ctx.moveTo(x, y); ctx.lineTo(x - 3 - wx, y + 14);
     }
     ctx.stroke();

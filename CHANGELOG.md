@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.95 · 1 nov 2026
+
+- **Arreglos:** Día de lluvia: con las ráfagas de viento hacia la izquierda la lluvia dejaba de verse en pantalla. Ahora sigue lloviendo y las gotas caen inclinadas por el viento.
+
 ## 2.94 · 1 nov 2026
 
 - **Día de lluvia:** Con lluvia aparecen 10% más rivales, tanto los que van entrando como las oleadas.
