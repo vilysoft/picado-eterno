@@ -4,9 +4,9 @@ Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
 ## 2.84 · 31 oct 2026
 
-- **Rivales:** El vecino del barrio ya no viste ropa deportiva: sale con camisa a cuadros, pantalón largo y zapatos.
+- **Rivales:** El mini jefe sorpresa de El Potrero ya no viste ropa deportiva: sale con camisa a cuadros, pantalón largo y zapatos.
 - **Rivales:** La sorpresa de El Potrero pide más: ahora hay que eliminar el doble de grandotes, y un poco antes que hasta ahora.
-- **Rivales:** La mamá del invasor ahora tiene pelo largo y un vestido floreado.
+- **Rivales:** El mini jefe sorpresa de La Cancha del Club ahora tiene pelo largo y un vestido floreado.
 - **Técnicas:** Pique del Rondo: las pelotas ya no caen todas juntas, pican de a una, con al menos 0,6 s entre una y otra. Donde explotan, el piso queda prendido fuego 3 s, como el spray: los rivales que lo pisan se queman (60% del daño del rondo por segundo, y siguen ardiendo 1,5 s después de salir).
 
 ## 2.83 · 31 oct 2026
@@ -39,7 +39,7 @@ Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 ## 2.77 · 31 oct 2026
 
 - **Técnicas:** Rondo: el empuje de las pelotas baja mucho (de 200 a 40) en los niveles 1 a 5, así los rivales se quedan cerca y reciben varios golpes seguidos. Para que también les pegue a los que tenés pegados, al acercarse las pelotas ahora entran hasta casi tocarte (antes entraban solo 20%). El nivel 6 (Despeje) sigue empujando lejos.
-- **Rivales:** La mamá del invasor ahora llega a vengarse.
+- **Rivales:** El mini jefe sorpresa de La Cancha del Club ahora llega con ganas de vengarse.
 
 ## 2.76 · 31 oct 2026
 
