@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.85 · 31 oct 2026
+
+- **Rivales:** El mini jefe sorpresa de La Cancha del Club ya no tiene la mancha marrón en el medio: piel más clara, pelo oscuro y la melena alrededor de la cabeza, con mechones sobre los hombros.
+- **Jugadores:** El Barra ya no usa el gorro blanco, que desde arriba parecía pelo blanco: ahora se le ve el pelo colorado.
+
 ## 2.84 · 31 oct 2026
 
 - **Rivales:** El mini jefe sorpresa de El Potrero ya no viste ropa deportiva: sale con camisa a cuadros, pantalón largo y zapatos.

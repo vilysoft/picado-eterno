@@ -709,7 +709,7 @@ const CHARS = {
     traits: ['<b>Silbato</b> con Shift', 'Arranca con <b>Tarjeta roja</b>', '<i>15% menos de vida</i>', '<i>Sin sprint</i>'] },
 };
 CHARS.barra = { name: 'El Barra', desc: 'Nunca pelea solo: llama a su gente para que pegue por él.', r: 14, speed: 1, area: 1, sprint: false, shield: 0, aliento: true, hp: .9, start: 'pibes',
-  kit: { shirt: '#7cc4ff', sleeve: '#7cc4ff', stripe: '#f4f7fb', shorts: '#1d1f1c' }, skin: '#b97d55', hair: '#1b1410', hat: '#f4f7fb',
+  kit: { shirt: '#7cc4ff', sleeve: '#7cc4ff', stripe: '#f4f7fb', shorts: '#1d1f1c' }, skin: '#b97d55', hair: '#b5481e',
   swatch: 'repeating-linear-gradient(90deg,#7cc4ff 0 10px,#f4f7fb 10px 20px,#1d1f1c 20px 24px)',
   traits: ['<b>Avalancha</b> con Shift', 'Arranca con <b>Los pibes</b>', '<i>25% menos de daño en técnicas comunes</i>', '<i>10% menos de vida</i>'] };
 // Daño de las técnicas propias de El Barra (las demás le pegan 25% menos)
@@ -893,6 +893,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.85', date: '31 oct 2026', items: [
+    ['Rivales', 'El mini jefe sorpresa de La Cancha del Club ya no tiene la mancha marrón en el medio: piel más clara, pelo oscuro y la melena alrededor de la cabeza, con mechones sobre los hombros.'],
+    ['Jugadores', 'El Barra ya no usa el gorro blanco, que desde arriba parecía pelo blanco: ahora se le ve el pelo colorado.'],
+  ] },
   { v: '2.84', date: '31 oct 2026', items: [
     ['Rivales', 'El mini jefe sorpresa de El Potrero ya no viste ropa deportiva: sale con camisa a cuadros, pantalón largo y zapatos.'],
     ['Rivales', 'La sorpresa de El Potrero pide más: ahora hay que eliminar el doble de grandotes, y un poco antes que hasta ahora.'],
@@ -1777,7 +1781,7 @@ function update(dt) {
     for (let i = 0; i < 2; i++) { spawn('custodio', pr.x + (i ? 50 : -50), pr.y); const c = G.enemies[G.enemies.length - 1]; c.guard = pr; c.side = i ? 1 : -1; }
   }
   if (G.mamaIn > 0 && !G.hydra && (G.mamaIn -= dt) <= 0) {
-    spawnBoss('mama'); const m = G.enemies[G.enemies.length - 1]; m.hair = '#5a3520';
+    spawnBoss('mama'); const m = G.enemies[G.enemies.length - 1]; m.hair = '#2b1a10'; m.skin = '#f0c8a0';
   }
   if (LV.id === 'club' && G.invaders < 2 && minuteOf(G.t) >= 60) {
     if (G.invNext == null) G.invNext = G.t + rnd(2, 10);
@@ -4300,7 +4304,8 @@ function drawPerson(x, y, r, ang, step, o) {
     for (const [fx, fy, c] of [[2, -6, 0], [3, 5, 1], [4, 0, 0], [1, 8, 0], [1, -9, 1]]) { ctx.fillStyle = c ? '#ffffff' : o.flowers; ctx.beginPath(); ctx.arc(fx, fy, 1.9, 0, Math.PI * 2); ctx.fill(); }
   }
   // Pelo largo: cae sobre la espalda
-  if (o.longHair) { ctx.fillStyle = o.hair; ctx.beginPath(); ctx.ellipse(-6.5, 0, 6.5, 4.6, 0, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.ellipse(-11, 0, 3, 3.4, 0, 0, Math.PI * 2); ctx.fill(); }
+  // Pelo largo: melena alrededor de la cabeza y dos mechones sobre los hombros (sin tapar la espalda)
+  if (o.longHair) { ctx.fillStyle = o.hair; ctx.beginPath(); ctx.arc(1, 0, 7.2, Math.PI * .45, Math.PI * 1.55); ctx.closePath(); ctx.fill(); ell(-1.5, -6.6, 2.4, 2, o.hair); ell(-1.5, 6.6, 2.4, 2, o.hair); }
   // Cabeza: cara hacia adelante, pelo en la nuca
   ell(1.5, 0, 5.6, 5.6, o.skin);
   ctx.fillStyle = o.hair; ctx.beginPath(); ctx.arc(1.5, 0, 5.9, Math.PI * .5, Math.PI * 1.5); ctx.closePath(); ctx.fill();
