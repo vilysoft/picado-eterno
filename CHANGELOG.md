@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.96 · 1 nov 2026
+
+- **Rivales:** Rival nuevo en El Coloso, una vez por partido entre el 55' y el 70': un famoso con anteojos de sol baja del palco con su custodio. No te ataca: te persigue para sacarse una selfie. Si te alcanza, te quedás posando 1,5 s ("¡SONREÍ!") mientras los rivales siguen viniendo, y después se va saludando. Esquivalo o eliminalo: tiene bastante vida y deja una gema celeste. Si en 40 s no te alcanza, se va solo.
+
 ## 2.95 · 1 nov 2026
 
 - **Arreglos:** Día de lluvia: con las ráfagas de viento hacia la izquierda la lluvia dejaba de verse en pantalla. Ahora sigue lloviendo y las gotas caen inclinadas por el viento.

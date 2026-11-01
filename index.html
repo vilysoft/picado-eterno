@@ -827,6 +827,7 @@ const FOES = {
   camillero: { r: 32, hp: 60, speed: 62, dmg: 12, xp: 5, color: '#f2f2ec', nums: [] },
   hincha:    { r: 13, hp: 40, speed: 820, dmg: 26, xp: 20, color: '#7b4bc9', nums: [] },
   barra:     { r: 12, hp: 16, speed: 165, dmg: 5, xp: 2, color: '#22262e', nums: [] },
+  famoso:    { r: 14, hp: 220, speed: 128, dmg: 0, xp: 10, color: '#c9ced8', nums: [] },
   lateral:   { r: 13, hp: 30, speed: 95, dmg: 9, xp: 3, color: '#f07b3f', nums: [3, 4] },
   suplente:  { r: 12, hp: 14, speed: 150, dmg: 6, xp: 3, color: '#ff8a1a', nums: [] },
   fotografo: { r: 14, hp: 40, speed: 70, dmg: 8, xp: 5, color: '#3a3f47', nums: [] },
@@ -857,6 +858,7 @@ const KITS = {
   guardia:   { shirt: '#ffd34d', sleeve: '#ffd34d', shorts: '#1d1f1c' },
   spidercam: { shirt: '#2b2f36', sleeve: '#2b2f36', shorts: '#2b2f36' },
   barra:     { shirt: '#22262e', sleeve: '#22262e', shorts: '#3b5a8a' },
+  famoso:    { shirt: '#c9ced8', sleeve: '#c9ced8', stripe: '#f4e3a1', shorts: '#14181f', boots: '#f4f4f4', shades: true },
   suplente:  { shirt: '#ff8a1a', sleeve: '#ff8a1a', stripe: '#ffb35a', shorts: '#1d1f1c' },
   fotografo: { shirt: '#3a3f47', sleeve: '#3a3f47', shorts: '#2b2f36' },
   embarrado: { shirt: '#6b4a2b', sleeve: '#5a3d22', stripe: '#8a6440', shorts: '#4a3420' },
@@ -918,6 +920,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.96', date: '1 nov 2026', items: [
+    ['Rivales', 'Rival nuevo en El Coloso, una vez por partido entre el 55\' y el 70\': un famoso con anteojos de sol baja del palco con su custodio. No te ataca: te persigue para sacarse una selfie. Si te alcanza, te quedás posando 1,5 s ("¡SONREÍ!") mientras los rivales siguen viniendo, y después se va saludando. Esquivalo o eliminalo: tiene bastante vida y deja una gema celeste. Si en 40 s no te alcanza, se va solo.'],
+  ] },
   { v: '2.95', date: '1 nov 2026', items: [
     ['Arreglos', 'Día de lluvia: con las ráfagas de viento hacia la izquierda la lluvia dejaba de verse en pantalla. Ahora sigue lloviendo y las gotas caen inclinadas por el viento.'],
   ] },
@@ -1376,7 +1381,7 @@ function newGame() {
     rec: { dmg: {}, hits: {}, kills: {}, taken: 0, blocked: 0, shield: 0, maxHit: 0, maxSrc: '', tl: [[0, 0, 1, 1]], lastM: 0, ev: [], low: 1, lowM: 0 },   // estadísticas del partido
     weapons: { [CH.start || 'pelota']: 1 }, passives: {}, timers: { [CH.start || 'pelota']: .4 }, sprays: [], rojas: 0, allies: [], bombos: [], rondoAng: 0, rondoBalls: null, rondoSpin: 0, rondoCh: [], rondoIdle: [], rondoOut: [], rondoDropCd: 0, rondoFires: [],
     enemies: [], shots: [], gems: [], texts: [], parts: [], rings: [], cards: [], hazards: [], foeShots: [], shocks: [], fenceGaps: [],
-    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invKilled: 0, mamaIn: 0, bigKills: 0, vecinoIn: 0, presiIn: 0, presiCheck: false, bills: [], goldTok: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, dog: null, dogAt: 28 + Math.random() * 8, rain: RAIN, puddles: [], muds: [], bolts: [], wind: null, windCd: 14, boltCd: 7, rainEvAt: 50 + Math.random() * 20, dark: 0, roof: 0, drys: [], utileros: [], flash: 0, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, hitN: 0, runT: 0, garra: 0, garraCd: 0, p5T: 0, panT: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
+    spawnAcc: 0, nextWave: 60 / PACE, lane: null, invaders: 0, invKilled: 0, mamaIn: 0, bigKills: 0, vecinoIn: 0, presiIn: 0, presiCheck: false, bills: [], goldTok: 0, famAt: 55 + Math.random() * 15, famDone: false, selfie: 0, invNext: null, barras: 0, barraNext: null, hydra: 0, hydraDone: {}, dog: null, dogAt: 28 + Math.random() * 8, rain: RAIN, puddles: [], muds: [], bolts: [], wind: null, windCd: 14, boltCd: 7, rainEvAt: 50 + Math.random() * 20, dark: 0, roof: 0, drys: [], utileros: [], flash: 0, boss1: false, boss2: false, shake: 0, hurtFlash: 0, options: [], rewind: null, hist: [], rt: 0, hitN: 0, runT: 0, garra: 0, garraCd: 0, p5T: 0, panT: 0, cgCd: 0, paredCd: 0, paredOn: false, ttBank: 0, ttOn: false, piqueT: 0, piqueCd: 0, piqueHit: null,
   };
 }
 // Stats de arranque de cualquier personaje, antes del vestuario
@@ -1645,6 +1650,7 @@ const ALB_FOES = {
   camillero: ['Camilleros', 'La Cancha del Club y El Coloso', 'Dos figuras con una camilla atravesada. Cuando la lona titila se estira para barrer, y la camilla entera pega.'],
   hincha:    ['Hincha invasor', 'La Cancha del Club', 'Cruza la cancha a toda velocidad por la franja marcada y vuelve por el mismo camino. Si lo eliminás deja una gema celeste grande.'],
   barra:     ['La barra', 'El Potrero', 'Un grupo de hinchas con gorros que llega corriendo. Son débiles pero muchos, y cada uno deja 3 gemas.'],
+  famoso:    ['El famoso', 'El Coloso · desde el 55\'', 'Una estrella de la tele con anteojos de sol y su custodio. No te ataca: te persigue para sacarse una selfie. Si te alcanza te quedás posando 1,5 s mientras los rivales siguen viniendo. Esquivalo o eliminalo (tiene bastante vida).'],
   lateral:   ['Lateral', 'Todas las canchas · desde el 60\'', 'Corre pegado a la línea de costado y cada tanto saca un lateral: te tira una pelota larga en línea recta.'],
   suplente:  ['Suplente', 'Todas las canchas · desde el 70\'', 'Entra con la pechera, rápido y con poca vida. Si no lo eliminás a tiempo se pone la camiseta: 4 veces más vida y pega mucho más.'],
   fotografo: ['Fotógrafo', 'La Cancha del Club · desde el 55\'', 'Se para en la línea y te saca fotos: si estás cerca, el flash te encandila un instante.'],
@@ -1831,6 +1837,12 @@ function update(dt) {
   // Se metió un perro (solo La Cancha del Club): una vez entre el 28' y el 36', pausa como la de hidratación
   if (LV.id === 'club' && G.dogAt && !G.hydra && minuteOf(G.t) >= G.dogAt) startDog();
   // Mini jefes: el vecino del barrio (El Potrero) y el presidente del club (El Coloso)
+  if (LV.id === 'lujo' && !G.famDone && !G.hydra && minuteOf(G.t) >= G.famAt) {
+    // Baja del palco un famoso con su custodio
+    G.famDone = true; spawn('famoso'); const fm = G.enemies[G.enemies.length - 1]; fm.hair = '#d8b04a'; fm.skin = '#e9b98f'; fm.life = FAM_S;
+    spawn('custodio', fm.x + 40, fm.y); const c = G.enemies[G.enemies.length - 1]; c.guard = fm; c.side = 1;
+    banner('¡Baja del palco un famoso: quiere una selfie con vos!', true); sfx('whistle'); cheer = 2;
+  }
   if (G.vecinoIn > 0 && !G.hydra && (G.vecinoIn -= dt) <= 0) { spawnBoss('vecino'); const v = G.enemies[G.enemies.length - 1]; v.hair = '#2b2622'; v.skin = '#f5d6bf'; }
   if (LV.id === 'lujo' && G.hydraDone[60] && !G.presiCheck && G.hydra > 0) {
     G.presiCheck = true;
@@ -1981,7 +1993,8 @@ function update(dt) {
   if (mag > 0) { p.fx = mx; p.fy = my; p.step += dt * mag * 12 * (p.sprinting ? 1.45 : 1); }
   G.runT = mag > 0 ? G.runT + dt : 0;
   const oro = (G.passives.botines || 0) >= 6 && G.runT > 2 ? 1.15 : 1;   // Botines de oro
-  const spd = 175 * S.speed * mag * boost * oro;
+  if (G.selfie > 0) G.selfie -= dt;
+  const spd = G.selfie > 0 ? 0 : 175 * S.speed * mag * boost * oro;   // posando para la selfie no te movés
   let pvx = mx * spd, pvy = my * spd;
   if (G.rain) {
     // Día de lluvia: el barro frena, en los charcos resbalás (seguís de largo) y el viento te empuja
@@ -2695,7 +2708,7 @@ function kill(e) {
     banner(BOSSES[e.type].beat); cheer = 3; ambCheer(); matchEv('Eliminaste a ' + BOSSES[e.type].name, 'boss');
     if (e.type === 'var') G.rewind = null;
     if (e.type === 'tecnico') for (const o of G.enemies) if (o.dtTeam) o.buff = 0;
-  } else if (e.type === 'hincha' || e.elite) gem(e.x, e.y, HINCHA_GEM, true);   // gema celeste grande
+  } else if (e.type === 'hincha' || e.elite || e.type === 'famoso') gem(e.x, e.y, HINCHA_GEM, true);   // gema celeste grande
   else if (e.type === 'barra') { for (let i = 0; i < 3; i++) gem(e.x + rnd(-14, 14), e.y + rnd(-14, 14), e.xp); }
   else gem(e.x, e.y, e.xp);
   if (e.type === 'hincha') {
@@ -2849,6 +2862,7 @@ function whistle() {
   if (n && G.texts.length < 70) G.texts.push({ x: p.x, y: p.y - p.r - 26, txt: '¡PRRRT!', life: .9, big: true });
   sfx('whistle');
 }
+const FAM_S = 40, SELFIE_S = 1.5;   // cuánto te persigue el famoso y cuánto quedás posando
 const LAT_CD = 3.5, FOTO_CD = 4.5, SUP_WARM = 6, BLIND_S = .9, FOTO_R = 420;   // espera del lateral y del fotógrafo, segundos para que el suplente se caliente, encandilamiento
 function photoFlash(e, d) {
   G.rings.push({ x: e.x, y: e.y, R: 70, life: .3, max: .3, col: '255,255,255' }); sfx('zap');
@@ -3239,6 +3253,19 @@ function updateEnemies(dt) {
         if (e.acd <= 0 && d < 650 && onScreen(e.x, e.y)) { e.mode = 'aimL'; e.mt = e.type === 'lateral' ? .6 : .8; }
       }
     }
+    if (e.type === 'famoso') {
+      // Te persigue para la selfie; después (o si pasa mucho tiempo) se va saludando
+      if (!RM && Math.random() < dt * 6) part(e.x + rnd(-10, 10), e.y + rnd(-10, 10), '#fff2b0');
+      if (!e.leaving && (e.life -= dt) <= 0) e.leaving = true;
+      if (e.leaving) { ux = -ux; uy = -uy; sp = 210; if (d > 1100) { e.dead = true; continue; } }
+      else if (!stn && d < e.r + p.r + 4 && G.selfie <= 0) {
+        G.selfie = SELFIE_S; e.leaving = true;
+        G.blind = Math.max(G.blind || 0, .35);
+        G.rings.push({ x: p.x, y: p.y, R: 60, life: .35, max: .35, col: '255,255,255' });
+        G.texts.push({ x: p.x, y: p.y - p.r - 26, txt: '¡SONREÍ!', life: SELFIE_S, big: true }); sfx('zap');
+        if (G.texts.length < 70) G.texts.push({ x: e.x, y: e.y - e.r - 20, txt: '¡Gracias, crack!', life: 1.4, big: false });
+      }
+    }
     if (e.type === 'suplente' && !e.hot && !stn) {
       // Si no lo eliminás a tiempo, se pone la camiseta
       if (e.warm == null) e.warm = SUP_WARM;
@@ -3269,7 +3296,7 @@ function updateEnemies(dt) {
     if (G.combos.barrera && G.sprays.length && !e.boss && !e.fly && e.type !== 'hincha') barrierBlock(e, ox, oy);
     e.kx *= decay; e.ky *= decay;
     e.flash -= dt; e.rcd -= dt; e.tcd = (e.tcd || 0) - dt; e.pushCd = (e.pushCd || 0) - dt;
-    if (e.type !== 'camillero' && !e.fly && !stn && e.mode !== 'cano' && d < e.r + p.r - 2) {   // la Spidercam vuela: no choca
+    if (e.type !== 'camillero' && e.type !== 'famoso' && !e.fly && !stn && e.mode !== 'cano' && d < e.r + p.r - 2) {   // la Spidercam vuela: no choca
       const behind = p.sprinting && (G.passives.arranque || 0) >= 6 && ((e.x - p.x) * p.fx + (e.y - p.y) * p.fy) < 0;   // Pique corto
       if (p.inv <= 0 && !behind) hurt(e.mode === 'dive' || e.mode === 'charge' ? e.dmg * 1.6 : e.dmg, e.boss && e.mode === 'charge');
       codazo(e, dx / d, dy / d);
@@ -4415,6 +4442,12 @@ function drawPerson(x, y, r, ang, step, o) {
   // Cabeza: cara hacia adelante, pelo en la nuca
   ell(1.5, 0, 5.6, 5.6, o.skin);
   ctx.fillStyle = o.hair; ctx.beginPath(); ctx.arc(1.5, 0, 5.9, Math.PI * .5, Math.PI * 1.5); ctx.closePath(); ctx.fill();
+  if (o.shades) {
+    // Anteojos de sol
+    ell(5.4, -2.4, 1.9, 2.1, '#0d0f12'); ell(5.4, 2.4, 1.9, 2.1, '#0d0f12');
+    ctx.fillStyle = '#0d0f12'; ctx.fillRect(4.8, -.6, 1.2, 1.2);
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(5.6, -3.4, .8, .8); ctx.fillRect(5.6, 1.4, .8, .8);
+  }
   if (o.hat) {
     // Gorro de lana visto desde arriba, con pompón
     ell(1, 0, 6.6, 6.6, o.hat);
@@ -4556,9 +4589,13 @@ function drawFoe(e) {
   if (e.buff > 0) { ctx.strokeStyle = 'rgba(255,211,77,.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 5, 0, Math.PI * 2); ctx.stroke(); }
   drawPerson(e.x, e.y, e.r, ang, still ? 0 : G.t * Math.min(e.speed, 300) * .09 + e.phase, {
     shirt: fl ? fc : K.shirt, sleeve: fl ? fc : (K.sleeve === 'skin' ? e.skin : K.sleeve), stripe: fl ? null : K.stripe, shorts: K.shorts,
-    boots: K.boots, skin: e.skin, hair: e.hair, hat: e.hat, gloves: K.gloves, plaid: fl ? null : K.plaid, pants: K.pants, dress: K.dress && (fl ? fc : K.dress), flowers: K.flowers, longHair: K.longHair, dive: e.mode === 'dive' || e.mode === 'down', band: e.boss && !FOES[e.type].mini,   // los mini jefes no llevan cinta de capitán
+    boots: K.boots, skin: e.skin, hair: e.hair, hat: e.hat, gloves: K.gloves, plaid: fl ? null : K.plaid, pants: K.pants, shades: K.shades, dress: K.dress && (fl ? fc : K.dress), flowers: K.flowers, longHair: K.longHair, dive: e.mode === 'dive' || e.mode === 'down', band: e.boss && !FOES[e.type].mini,   // los mini jefes no llevan cinta de capitán
    
   });
+  if (e.type === 'famoso') {
+    ctx.font = '700 16px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffd34d'; ctx.fillText('★', e.x, e.y - e.r - 12 + Math.sin(G.rt * 5) * 2);
+  }
   if (e.type === 'suplente' && !e.hot && e.warm != null) {
     // Cuánto le falta para ponerse la camiseta
     const k = Math.max(0, e.warm / SUP_WARM);
