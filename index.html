@@ -907,6 +907,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.89', date: '1 nov 2026', items: [
+    ['Técnicas', 'Pique del Rondo: cada pelota necesita 4 vueltas sin tocar a ningún rival para picar (antes 2).'],
+  ] },
   { v: '2.88', date: '1 nov 2026', items: [
     ['Rivales', 'El mini jefe sorpresa de El Potrero tiene la piel más blanca.'],
   ] },
@@ -2475,7 +2478,7 @@ function fireWeapons(dt) {
       for (let i = 0; i < w.count; i++) {
         const o = G.rondoOut[i];
         if (!o) {
-          if ((G.rondoIdle[i] = (G.rondoIdle[i] || 0) + da) < Math.PI * 4 || !G.rondoBalls || !G.rondoBalls[i]) continue;
+          if ((G.rondoIdle[i] = (G.rondoIdle[i] || 0) + da) < Math.PI * 2 * RONDO_DROP_TURNS || !G.rondoBalls || !G.rondoBalls[i]) continue;
           if (G.rondoDropCd > 0 || G.rondoOut.some(q => q && q.ph === 'fly')) continue;
           G.rondoDropCd = RONDO_GAP;
           const [bx, by] = G.rondoBalls[i], t = nearestEnemy(bx, by, null, RONDO_DROP_R), fly = t && !t.fly;
@@ -3011,6 +3014,7 @@ function rondoGeom() {
 const RONDO_CH = 1.3, RONDO_DIZZY = 1.2;
 // Pique del rondo: busca rivales a esta distancia, vuela RONDO_FLY s, explota en RONDO_BOOM_R con RONDO_BOOM veces el daño y vuelve a la ronda a los RONDO_BACK s
 const RONDO_DROP_R = 280, RONDO_FLY = .35, RONDO_BOOM_R = 75, RONDO_BOOM = 1.6, RONDO_BACK = 1.2;
+const RONDO_DROP_TURNS = 4;   // vueltas sin tocar a nadie antes de que la pelota pique
 const RONDO_GAP = .6, RONDO_FIRE_S = 3, RONDO_FIRE_DPS = .6;   // de a una cada 0,6 s como mínimo; fuego de 3 s que quema 60% del daño del rondo por segundo   // pelota cargada del rondo: daño extra y segundos de mareo
 function rondoHit(e, dx, dy, d, RG) {
   const { rb, rw, rR, rbr } = RG, S = G.stats;
