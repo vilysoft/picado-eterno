@@ -585,39 +585,53 @@ function musicStep(i, t) {
 // ---------- Ambiente de estadio (La Cancha del Club y El Coloso) ----------
 // Grabaciones en audio/: murmullo a ratos (con silencios al azar) y una ovación en los momentos clave.
 // Suena solo durante el partido; en pausa, el menú o el final se apaga despacio.
-const AMB = { bufs: null, loading: false, bus: null, next: 4, src: null, cheerAt: -99, on: false };
-const AMB_FILES = ['audio/murmullo1.mp3', 'audio/murmullo2.mp3', 'audio/murmullo3.mp3', 'audio/murmullo4.mp3'], AMB_CHEER = 'audio/ovacion.mp3';
-const ambCancha = () => LV.id === 'club' || LV.id === 'lujo';
-function ambLoad() {
-  if (AMB.bufs || AMB.loading || !AC) return;
-  AMB.loading = true;
+const AMB = { bufs: {}, loading: {}, bus: null, next: 4, cheerAt: -99, on: false };
+// Juegos de sonidos: murmullo de tribuna, ovación y charla de gente (vecinos en El Potrero, mezclada en el Club)
+const AMB_SETS = {
+  mur: ['audio/murmullo1.mp3', 'audio/murmullo2.mp3', 'audio/murmullo3.mp3', 'audio/murmullo4.mp3'],
+  cheer: ['audio/ovacion.mp3'],
+  charla: ['audio/charla1.mp3', 'audio/charla2.mp3', 'audio/charla3.mp3', 'audio/charla4.mp3', 'audio/charla5.mp3', 'audio/charla6.mp3'],
+};
+const AMB_NEED = { potrero: ['charla'], club: ['mur', 'cheer', 'charla'], lujo: ['mur', 'cheer'] };
+const CHARLA_CLUB = .56;   // en el Club la charla suena 5 dB más baja
+const ambStadium = () => LV.id === 'club' || LV.id === 'lujo';
+function ambLoad(k) {
+  if (AMB.bufs[k] || AMB.loading[k] || !AC) return;
+  AMB.loading[k] = true;
   const get = u => fetch(u).then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); }).then(b => new Promise((ok, no) => AC.decodeAudioData(b, ok, no)));
-  Promise.all([...AMB_FILES, AMB_CHEER].map(get)).then(all => { AMB.bufs = { mur: all.slice(0, 4), cheer: all[4] }; }).catch(() => {});   // sin archivos: el juego sigue sin ambiente
+  Promise.all(AMB_SETS[k].map(get)).then(all => { AMB.bufs[k] = all; }).catch(() => {});   // sin archivos: el juego sigue sin ambiente
 }
-function ambPlay(buf, gain) {
+function ambPlay(buf, gain, delay = 0) {
   if (!AMB.bus) { AMB.bus = AC.createGain(); AMB.bus.gain.value = 0; AMB.bus.connect(AC.destination); }
   const src = AC.createBufferSource(), g = AC.createGain();
-  src.buffer = buf; g.gain.value = gain; src.connect(g).connect(AMB.bus); src.start();
+  src.buffer = buf; g.gain.value = gain; src.connect(g).connect(AMB.bus); src.start(AC.currentTime + delay);
   return src;
 }
+const pickBuf = a => a[Math.random() * a.length | 0];
 function ambTick(dt) {
   if (!AC || !G) return;
-  const want = !muted && VOL.amb > 0 && ambCancha() && (state === 'play' || state === 'levelup' || state === 'resume');
-  if (want && !AMB.bufs) ambLoad();
+  const need = AMB_NEED[LV.id] || [];
+  const want = !muted && VOL.amb > 0 && need.length > 0 && (state === 'play' || state === 'levelup' || state === 'resume');
+  if (want) for (const k of need) ambLoad(k);
   if (AMB.bus && want !== AMB.on) { AMB.on = want; AMB.bus.gain.setTargetAtTime(want ? VOL.amb : 0, AC.currentTime, want ? .4 : .25); }
   else if (AMB.bus && want && Math.abs(AMB.bus.gain.value - VOL.amb) > .01) AMB.bus.gain.setTargetAtTime(VOL.amb, AC.currentTime, .1);
-  if (!want || !AMB.bufs) return;
-  // Murmullo a ratos: un tramo de 10-12 s y después un silencio al azar
-  if ((AMB.next -= dt) <= 0) {
-    const b = AMB.bufs.mur[Math.random() * 4 | 0];
-    AMB.src = ambPlay(b, 1);
-    AMB.next = b.duration + rnd(6, 16);
-  }
+  if (!want || !need.every(k => k === 'cheer' || AMB.bufs[k])) return;
+  // A ratos: un tramo de 10-12 s y después un silencio al azar
+  if ((AMB.next -= dt) > 0) return;
+  let b;
+  if (LV.id === 'potrero') { b = pickBuf(AMB.bufs.charla); ambPlay(b, 1); }   // vecinos charlando
+  else if (LV.id === 'club') {
+    // Más o menos 1 de cada 3: charla sola o charla encima del murmullo
+    const r = Math.random();
+    if (r < .17) { b = pickBuf(AMB.bufs.charla); ambPlay(b, CHARLA_CLUB); }
+    else { b = pickBuf(AMB.bufs.mur); ambPlay(b, 1); if (r < .34) ambPlay(pickBuf(AMB.bufs.charla), CHARLA_CLUB, rnd(1, 4)); }
+  } else { b = pickBuf(AMB.bufs.mur); ambPlay(b, 1); }
+  AMB.next = b.duration + rnd(6, 16);
 }
 function ambCheer() {
-  // Ovación en los momentos clave, como mucho una cada 20 s
-  if (!AC || !AMB.bufs || !AMB.on || !ambCancha() || G.rt - AMB.cheerAt < 20) return;
-  AMB.cheerAt = G.rt; ambPlay(AMB.bufs.cheer, 1);
+  // Ovación en los momentos clave, como mucho una cada 20 s (solo en las canchas con tribuna)
+  if (!AC || !AMB.bufs.cheer || !AMB.on || !ambStadium() || G.rt - AMB.cheerAt < 20) return;
+  AMB.cheerAt = G.rt; ambPlay(AMB.bufs.cheer[0], 1);
 }
 function musicWanted() { return MUS.on && !muted && VOL.music > 0 && (state === 'menu' || state === 'shop' || state === 'changes' || state === 'album'); }
 function musicTick() {
@@ -893,6 +907,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.87', date: '1 nov 2026', items: [
+    ['Sonido', 'Ambiente nuevo en El Potrero: charla de vecinos a lo lejos, a ratos y con silencios al azar, sin palabras claras. En La Cancha del Club, más o menos una de cada tres veces se mezcla esa charla, más baja, con el murmullo de la tribuna. Se controla con el mismo deslizador de Ambiente.'],
+  ] },
   { v: '2.86', date: '31 oct 2026', items: [
     ['Rivales', 'El mini jefe sorpresa de El Potrero se ve mejor: piel más clara y pelo oscuro (sin la mancha marrón en el medio), camisa a cuadros más fina que sigue por las mangas, cuello blanco y pantalón largo.'],
   ] },

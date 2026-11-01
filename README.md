@@ -29,4 +29,4 @@ Todo el juego es un solo archivo, [`index.html`](index.html), sin dependencias, 
 
 ## Sonidos
 
-El ambiente de estadio sale de dos grabaciones de la comunidad, recortadas y niveladas: "Soccer Stadium" (freesound_community) y "Live Football Match Stadium Crowd Cheering" (arunangshubanerjee).
+El ambiente de estadio sale de dos grabaciones de la comunidad, recortadas y niveladas: "Soccer Stadium" (freesound_community) y "Live Football Match Stadium Crowd Cheering" (arunangshubanerjee). La charla de gente sale de "People Ambient" (freesound_community), "People Talking From Distant" (kunal_acharjee) y "People Talking" (perymarques).
