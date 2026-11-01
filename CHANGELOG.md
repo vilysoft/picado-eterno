@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.92 · 1 nov 2026
+
+- **Rivales:** Rivales nuevos para el segundo tiempo, en todas las canchas. Desde el 60' entra el lateral: corre pegado a la línea de costado y cada tanto saca un lateral, una pelota larga en línea recta que se ve venir. Desde el 70' entra el suplente: llega con la pechera, rápido y con poca vida, y un círculo naranja marca cuánto le falta para calentarse; si no lo eliminás en 6 s se pone la camiseta y queda con 4 veces más vida y pegando mucho más.
+- **Rivales:** Rival nuevo en La Cancha del Club desde el 55': el fotógrafo. Se para en la línea, enfoca (la cámara titila en rojo) y saca la foto: si estás cerca, el flash te deja la pantalla blanca un instante.
+
 ## 2.91 · 1 nov 2026
 
 - **Sonido:** La charla de gente suena más baja (30% menos en El Potrero y 30% menos en La Cancha del Club) y cada tramo entra y sale de a poco, subiendo y bajando durante 4 segundos, para que no aparezca ni se corte de golpe.

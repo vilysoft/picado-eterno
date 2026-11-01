@@ -827,6 +827,9 @@ const FOES = {
   camillero: { r: 32, hp: 60, speed: 62, dmg: 12, xp: 5, color: '#f2f2ec', nums: [] },
   hincha:    { r: 13, hp: 40, speed: 820, dmg: 26, xp: 20, color: '#7b4bc9', nums: [] },
   barra:     { r: 12, hp: 16, speed: 165, dmg: 5, xp: 2, color: '#22262e', nums: [] },
+  lateral:   { r: 13, hp: 30, speed: 95, dmg: 9, xp: 3, color: '#f07b3f', nums: [3, 4] },
+  suplente:  { r: 12, hp: 14, speed: 150, dmg: 6, xp: 3, color: '#ff8a1a', nums: [] },
+  fotografo: { r: 14, hp: 40, speed: 70, dmg: 8, xp: 5, color: '#3a3f47', nums: [] },
   embarrado: { r: 19, hp: 55, speed: 56, dmg: 13, xp: 4, color: '#6b4a2b', nums: [] },
   spidercam: { r: 16, hp: 70, speed: 76, dmg: 14, xp: 8, color: '#2b2f36', nums: [], fly: true },
   capitan:  { r: 34, hp: 900, speed: 78, dmg: 22, xp: 50, color: '#5b34a8', nums: [9], boss: true },
@@ -854,6 +857,8 @@ const KITS = {
   guardia:   { shirt: '#ffd34d', sleeve: '#ffd34d', shorts: '#1d1f1c' },
   spidercam: { shirt: '#2b2f36', sleeve: '#2b2f36', shorts: '#2b2f36' },
   barra:     { shirt: '#22262e', sleeve: '#22262e', shorts: '#3b5a8a' },
+  suplente:  { shirt: '#ff8a1a', sleeve: '#ff8a1a', stripe: '#ffb35a', shorts: '#1d1f1c' },
+  fotografo: { shirt: '#3a3f47', sleeve: '#3a3f47', shorts: '#2b2f36' },
   embarrado: { shirt: '#6b4a2b', sleeve: '#5a3d22', stripe: '#8a6440', shorts: '#4a3420' },
   capitan:  { shirt: '#5b34a8', sleeve: '#5b34a8', stripe: '#4a2a85', shorts: '#1d1f1c' },
   dueno:    { shirt: '#e8e1cf', sleeve: 'skin', shorts: '#2b4c8c' },
@@ -869,7 +874,7 @@ const KITS = {
 };
 // Los rivales comunes se visten con los colores del equipo de cada cancha
 function kitFor(type) {
-  const R = LV.rival[type];
+  const R = LV.rival[type] || (type === 'lateral' ? LV.rival.extremo : null);   // el lateral juega con la camiseta del equipo rival
   return R ? { shirt: R, sleeve: R, shorts: LV.rival.shorts } : KITS[type];
 }
 const SKINS = ['#f1c9a5', '#dcab82', '#b97d55', '#8a5636', '#5e3a24'];
@@ -913,6 +918,10 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.92', date: '1 nov 2026', items: [
+    ['Rivales', 'Rivales nuevos para el segundo tiempo, en todas las canchas. Desde el 60\' entra el lateral: corre pegado a la línea de costado y cada tanto saca un lateral, una pelota larga en línea recta que se ve venir. Desde el 70\' entra el suplente: llega con la pechera, rápido y con poca vida, y un círculo naranja marca cuánto le falta para calentarse; si no lo eliminás en 6 s se pone la camiseta y queda con 4 veces más vida y pegando mucho más.'],
+    ['Rivales', 'Rival nuevo en La Cancha del Club desde el 55\': el fotógrafo. Se para en la línea, enfoca (la cámara titila en rojo) y saca la foto: si estás cerca, el flash te deja la pantalla blanca un instante.'],
+  ] },
   { v: '2.91', date: '1 nov 2026', items: [
     ['Sonido', 'La charla de gente suena más baja (30% menos en El Potrero y 30% menos en La Cancha del Club) y cada tramo entra y sale de a poco, subiendo y bajando durante 4 segundos, para que no aparezca ni se corte de golpe.'],
   ] },
@@ -1626,6 +1635,9 @@ const ALB_FOES = {
   camillero: ['Camilleros', 'La Cancha del Club y El Coloso', 'Dos figuras con una camilla atravesada. Cuando la lona titila se estira para barrer, y la camilla entera pega.'],
   hincha:    ['Hincha invasor', 'La Cancha del Club', 'Cruza la cancha a toda velocidad por la franja marcada y vuelve por el mismo camino. Si lo eliminás deja una gema celeste grande.'],
   barra:     ['La barra', 'El Potrero', 'Un grupo de hinchas con gorros que llega corriendo. Son débiles pero muchos, y cada uno deja 3 gemas.'],
+  lateral:   ['Lateral', 'Todas las canchas · desde el 60\'', 'Corre pegado a la línea de costado y cada tanto saca un lateral: te tira una pelota larga en línea recta.'],
+  suplente:  ['Suplente', 'Todas las canchas · desde el 70\'', 'Entra con la pechera, rápido y con poca vida. Si no lo eliminás a tiempo se pone la camiseta: 4 veces más vida y pega mucho más.'],
+  fotografo: ['Fotógrafo', 'La Cancha del Club · desde el 55\'', 'Se para en la línea y te saca fotos: si estás cerca, el flash te encandila un instante.'],
   embarrado: ['Embarrado', 'Día de lluvia', 'Un grandote cubierto de barro que deja una estela por donde pasa. El barro te frena.'],
   custodio:  ['Custodio', 'El Coloso', 'Grandote de traje que se pone entre vos y el presidente del club para cubrirlo.'],
   perro:     ['El perro del vecino', 'El Potrero', 'Rápido y en zigzag. Lo suelta el vecino del barrio cuando está golpeado.'],
@@ -1988,6 +2000,7 @@ function update(dt) {
   if ((G.passives.vision || 0) >= 6 && (G.panT += dt) >= 15) { G.panT = 0; for (const g of G.gems) g.pull = true; if (G.gems.length) G.rings.push({ x: p.x, y: p.y, R: 120, life: .4, max: .4, col: '124,240,208' }); }
   G.shake = Math.max(0, G.shake - dt * 30);
   G.hurtFlash = Math.max(0, G.hurtFlash - dt);
+  if (G.blind > 0) G.blind = Math.max(0, G.blind - dt);
 
   const frozen = G.hydra > 0;
   if (!frozen) { spawning(); spawnStep(dt); }
@@ -2052,6 +2065,11 @@ function pickType(t) {
   if (LV.id !== 'potrero' && after(110) && r > .84 && G.enemies.reduce((n, e) => n + (e.type === 'camillero'), 0) < 6) return 'camillero';
   // Spidercam: solo en El Coloso, como mucho 2 a la vez
   if (LV.id === 'lujo' && after(220) && r > .808 && r <= .84 && G.enemies.reduce((n, e) => n + (e.type === 'spidercam'), 0) < 2) return 'spidercam';
+  // Segundo tiempo: rivales nuevos (el lateral desde el 60', el suplente desde el 70', el fotógrafo del Club desde el 55')
+  const mn = minuteOf(G.t), cnt = ty => G.enemies.reduce((n, e) => n + (e.type === ty), 0);
+  if (mn >= 60 && r >= .2 && r < .235 && cnt('lateral') < 4) return 'lateral';
+  if (mn >= 70 && r >= .235 && r < .28 && cnt('suplente') < 10) return 'suplente';
+  if (LV.id === 'club' && mn >= 55 && r >= .28 && r < .3 && cnt('fotografo') < 2) return 'fotografo';
   if ((LV.id === 'potrero' ? t > 45 : after(150)) && r < .2 * f) return 'central';
   if (t > 60 && r < .45) return 'extremo';
   return 'defensor';
@@ -2080,6 +2098,9 @@ function spawn(type, x, y, baseHp) {
     mode: 'run', mt: type === 'camillero' ? rnd(2, 3.5) : 0, L: CAM_MIN, ang: Math.atan2(G.p.y - y, G.p.x - x), diveCd: 0, ddx: 1, ddy: 0, acd: 2.5, buff: 0, still: false, aimLine: false, fly: !!d.fly,
   });
   albumSee(d.boss ? 'b' : 'f', type);
+  if (type === 'lateral' && !G.seenLat) { G.seenLat = true; banner('¡Entran los laterales: ojo con el saque largo!'); }
+  if (type === 'suplente' && !G.seenSup) { G.seenSup = true; banner('¡Entra el suplente: liquidalo antes de que se caliente!'); }
+  if (type === 'fotografo' && !G.seenFoto) { G.seenFoto = true; banner('¡Bajó un fotógrafo a la cancha: cuidado con el flash!'); }
   if (type === 'embarrado' && !G.seenMud) { G.seenMud = true; banner('¡Llega el embarrado: deja barro por donde pasa!'); }
   if (type === 'arquero' && !G.seenGk) { G.seenGk = true; banner('¡Cuidado: el arquero se te tira a los pies!'); }
   if (type === 'spidercam' && !G.seenCamTV) { G.seenCamTV = true; banner('¡Baja la Spidercam: ojo con la sombra!'); }
@@ -2816,6 +2837,11 @@ function whistle() {
   if (n && G.texts.length < 70) G.texts.push({ x: p.x, y: p.y - p.r - 26, txt: '¡PRRRT!', life: .9, big: true });
   sfx('whistle');
 }
+const LAT_CD = 3.5, FOTO_CD = 4.5, SUP_WARM = 6, BLIND_S = .9, FOTO_R = 420;   // espera del lateral y del fotógrafo, segundos para que el suplente se caliente, encandilamiento
+function photoFlash(e, d) {
+  G.rings.push({ x: e.x, y: e.y, R: 70, life: .3, max: .3, col: '255,255,255' }); sfx('zap');
+  if (d < FOTO_R && onScreen(e.x, e.y)) { G.blind = BLIND_S; G.texts.push({ x: G.p.x, y: G.p.y - G.p.r - 26, txt: '¡FLASH!', life: .8, big: true }); }
+}
 function hurt(n, heavy) {
   const p = G.p;
   if (G.piqueT > 0) return;   // Pique al vacío: atravesás sin recibir daño
@@ -3183,6 +3209,33 @@ function updateEnemies(dt) {
       if (vd > 6) { ux = vx / vd; uy = vy / vd; sp = Math.min(sp * 1.6, vd * 6); } else sp = 0;
     }
     if (e.type === 'perro' && !dz && !stn) { const a = Math.sin(G.rt * 7 + e.phase) * .9, c = Math.cos(a), s2 = Math.sin(a); [ux, uy] = [ux * c - uy * s2, ux * s2 + uy * c]; }   // zigzag
+    if ((e.type === 'lateral' || e.type === 'fotografo') && !dz && !stn) {
+      // Se acomodan sobre la línea de costado del lado tuyo, cerca, y cada tanto atacan desde ahí
+      const sideY = p.y < FH / 2 ? -RUN * .4 : FH + RUN * .4, lim = Math.max(120, Math.min(300, viewH / 2 - 110)), ty = clamp(sideY, p.y - lim, p.y + lim);   // que quede dentro de la pantalla
+      if (e.off == null) e.off = rnd(-260, 260);
+      const tx = clamp(p.x + e.off, -RUN + 20, FW + RUN - 20), vx = tx - e.x, vy = ty - e.y, vd = Math.hypot(vx, vy);
+      e.acd -= dt;
+      if (e.mode === 'aimL') {
+        sp = 0; e.mt -= dt;
+        if (e.mt <= 0) {
+          e.mode = 'run'; e.acd = e.type === 'lateral' ? LAT_CD : FOTO_CD;
+          if (e.type === 'lateral') { foeShot(e.x, e.y, Math.atan2(p.y - e.y, p.x - e.x), 520, 9, e.dmg * 1.2); sfx('kick'); }
+          else photoFlash(e, d);
+        }
+      } else {
+        if (vd > 14) { ux = vx / vd; uy = vy / vd; } else sp = 0;
+        if (e.acd <= 0 && d < 650 && onScreen(e.x, e.y)) { e.mode = 'aimL'; e.mt = e.type === 'lateral' ? .6 : .8; }
+      }
+    }
+    if (e.type === 'suplente' && !e.hot && !stn) {
+      // Si no lo eliminás a tiempo, se pone la camiseta
+      if (e.warm == null) e.warm = SUP_WARM;
+      if ((e.warm -= dt) <= 0) {
+        e.hot = true; e.maxHp *= 4; e.hp = e.maxHp; e.dmg *= 1.8; e.speed *= .75; e.r *= 1.2; e.xp *= 3;
+        if (G.texts.length < 70) G.texts.push({ x: e.x, y: e.y - e.r - 24, txt: '¡SE PUSO LA CAMISETA!', life: 1.1, big: true });
+        for (let i = 0; i < 8; i++) part(e.x, e.y, '#ff8a1a');
+      }
+    }
     if (e.type === 'embarrado' && !stn && (e.trail = (e.trail || 0) - dt) <= 0) { e.trail = .3; addMud(e.x, e.y, 24, MUD_TRAIL_S); }   // deja barro
     if (e.boss) [ux, uy, sp] = bossAI(e, d, ux, uy, sp, dt);
     if (stn) sp = 0;
@@ -4483,7 +4536,7 @@ function drawFoe(e) {
     drawPerson(gx, gy, 13, Math.atan2(e.ddy, e.ddx), G.t * 40 + 1, { shirt: K.shirt, sleeve: K.sleeve, shorts: K.shorts, skin: '#b97d55', hair: '#111111' });
   }
   shadow(e.x, e.y, e.r);
-  const K = kitFor(e.type), still = e.still;
+  const K = kitFor(e.hot ? 'defensor' : e.type), still = e.still;   // el suplente caliente ya juega con la camiseta
   const useDir = e.type === 'hincha' || e.mode === 'cano' || e.mode === 'canoAim' || e.mode === 'dive' || e.mode === 'down' || e.mode === 'charge' || e.mode === 'aimCharge' || (e.mode === 'cast' && e.aimLine);
   const ang = useDir ? Math.atan2(e.ddy, e.ddx) : Math.atan2(G.p.y - e.y, G.p.x - e.x);
   const fl = e.flash > 0, fc = LV.flash;
@@ -4494,6 +4547,26 @@ function drawFoe(e) {
     boots: K.boots, skin: e.skin, hair: e.hair, hat: e.hat, gloves: K.gloves, plaid: fl ? null : K.plaid, pants: K.pants, dress: K.dress && (fl ? fc : K.dress), flowers: K.flowers, longHair: K.longHair, dive: e.mode === 'dive' || e.mode === 'down', band: e.boss && !FOES[e.type].mini,   // los mini jefes no llevan cinta de capitán
    
   });
+  if (e.type === 'suplente' && !e.hot && e.warm != null) {
+    // Cuánto le falta para ponerse la camiseta
+    const k = Math.max(0, e.warm / SUP_WARM);
+    ctx.strokeStyle = k < .3 ? 'rgba(255,90,74,.9)' : 'rgba(255,138,26,.85)'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * k); ctx.stroke();
+  }
+  if (e.type === 'lateral' && e.mode === 'aimL') {
+    // Pelota arriba de la cabeza y la línea del saque
+    drawBall(e.x, e.y - e.r - 6, 7, 0);
+    ctx.strokeStyle = 'rgba(255,90,74,.55)'; ctx.lineWidth = 2; ctx.setLineDash([10, 8]);
+    ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(G.p.x, G.p.y); ctx.stroke(); ctx.setLineDash([]);
+  }
+  if (e.type === 'fotografo') {
+    // La cámara adelante; titila en rojo mientras enfoca
+    const a = Math.atan2(G.p.y - e.y, G.p.x - e.x), cx = e.x + Math.cos(a) * (e.r + 4), cy = e.y + Math.sin(a) * (e.r + 4);
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(a);
+    ctx.fillStyle = '#111418'; ctx.fillRect(-5, -6, 10, 12); ctx.fillStyle = '#444a52'; ctx.fillRect(4, -3, 5, 6);
+    if (e.mode === 'aimL' && Math.floor(e.mt * 12) % 2 === 0) { ctx.fillStyle = '#ff3b30'; ctx.beginPath(); ctx.arc(-2, -4, 2, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+  }
   if (e.type === 'tanque' && e.ripped) {
     // lleva el pedazo de alambrado; lo levanta cuando apunta para tirarlo
     const up = e.mode === 'cast';
@@ -4911,6 +4984,7 @@ function render() {
     ctx.strokeText('◀◀ RETROTRAE LA JUGADA', VW / 2, VH * .7); ctx.fillStyle = '#39ff9a'; ctx.fillText('◀◀ RETROTRAE LA JUGADA', VW / 2, VH * .7);
   }
   if (G.rain) drawRainScreen((p.x - cx) * ZOOM, (p.y - cy) * ZOOM);
+  if (G.blind > 0) { ctx.fillStyle = `rgba(255,255,255,${.88 * Math.min(1, G.blind / (BLIND_S * .6))})`; ctx.fillRect(0, 0, VW, VH); }   // flash del fotógrafo
   if (G.hurtFlash > 0) { ctx.fillStyle = `rgba(217,74,61,${G.hurtFlash})`; ctx.fillRect(0, 0, VW, VH); }
   if (joy && state === 'play') {
     const dx = joy.x - joy.ox, dy = joy.y - joy.oy, d = Math.hypot(dx, dy), m = Math.min(d, 55) / (d || 1);
