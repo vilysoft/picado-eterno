@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.86 · 31 oct 2026
+
+- **Rivales:** El mini jefe sorpresa de El Potrero se ve mejor: piel más clara y pelo oscuro (sin la mancha marrón en el medio), camisa a cuadros más fina que sigue por las mangas, cuello blanco y pantalón largo.
+
 ## 2.85 · 31 oct 2026
 
 - **Rivales:** El mini jefe sorpresa de La Cancha del Club ya no tiene la mancha marrón en el medio: piel más clara, pelo oscuro y la melena alrededor de la cabeza, con mechones sobre los hombros.
