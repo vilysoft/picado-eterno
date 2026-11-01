@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.88 · 1 nov 2026
+
+- **Rivales:** El mini jefe sorpresa de El Potrero tiene la piel más blanca.
+
 ## 2.87 · 1 nov 2026
 
 - **Sonido:** Ambiente nuevo en El Potrero: charla de vecinos a lo lejos, a ratos y con silencios al azar, sin palabras claras. En La Cancha del Club, más o menos una de cada tres veces se mezcla esa charla, más baja, con el murmullo de la tribuna. Se controla con el mismo deslizador de Ambiente.

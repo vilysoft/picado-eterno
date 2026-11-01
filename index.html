@@ -907,6 +907,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.88', date: '1 nov 2026', items: [
+    ['Rivales', 'El mini jefe sorpresa de El Potrero tiene la piel más blanca.'],
+  ] },
   { v: '2.87', date: '1 nov 2026', items: [
     ['Sonido', 'Ambiente nuevo en El Potrero: charla de vecinos a lo lejos, a ratos y con silencios al azar, sin palabras claras. En La Cancha del Club, más o menos una de cada tres veces se mezcla esa charla, más baja, con el murmullo de la tribuna. Se controla con el mismo deslizador de Ambiente.'],
   ] },
@@ -1791,7 +1794,7 @@ function update(dt) {
   // Se metió un perro (solo La Cancha del Club): una vez entre el 28' y el 36', pausa como la de hidratación
   if (LV.id === 'club' && G.dogAt && !G.hydra && minuteOf(G.t) >= G.dogAt) startDog();
   // Mini jefes: el vecino del barrio (El Potrero) y el presidente del club (El Coloso)
-  if (G.vecinoIn > 0 && !G.hydra && (G.vecinoIn -= dt) <= 0) { spawnBoss('vecino'); const v = G.enemies[G.enemies.length - 1]; v.hair = '#2b2622'; v.skin = '#e6b48c'; }
+  if (G.vecinoIn > 0 && !G.hydra && (G.vecinoIn -= dt) <= 0) { spawnBoss('vecino'); const v = G.enemies[G.enemies.length - 1]; v.hair = '#2b2622'; v.skin = '#f5d6bf'; }
   if (LV.id === 'lujo' && G.hydraDone[60] && !G.presiCheck && G.hydra > 0) {
     G.presiCheck = true;
     if (G.p.hp >= G.p.maxHp * PRESI_HP) G.presiIn = .6;   // sale cuando termina la pausa
