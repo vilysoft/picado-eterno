@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.97 · 2 nov 2026
+
+- **Jugadores:** El Barra cambia la camiseta por una campera deportiva azul oscuro, con franjas celestes a los costados y en las mangas, cierre y cuello alto. Los pibes y los del bombo siguen con la camiseta.
+
 ## 2.96 · 1 nov 2026
 
 - **Rivales:** Rival nuevo en El Coloso, una vez por partido entre el 55' y el 70': un famoso con anteojos de sol baja del palco con su custodio. No te ataca: te persigue para sacarse una selfie. Si te alcanza, te quedás posando 1,5 s ("¡SONREÍ!") mientras los rivales siguen viniendo, y después se va saludando. Esquivalo o eliminalo: tiene bastante vida y deja una gema celeste. Si en 40 s no te alcanza, se va solo.

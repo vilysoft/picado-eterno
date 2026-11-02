@@ -729,7 +729,7 @@ const CHARS = {
     traits: ['<b>Silbato</b> con Shift', 'Arranca con <b>Tarjeta roja</b>', '<i>15% menos de vida</i>', '<i>Sin sprint</i>'] },
 };
 CHARS.barra = { name: 'El Barra', desc: 'Nunca pelea solo: llama a su gente para que pegue por él.', r: 14, speed: 1, area: 1, sprint: false, shield: 0, aliento: true, hp: .9, start: 'pibes',
-  kit: { shirt: '#7cc4ff', sleeve: '#7cc4ff', stripe: '#f4f7fb', shorts: '#1d1f1c' }, skin: '#b97d55', hair: '#b5481e',
+  kit: { shirt: '#7cc4ff', sleeve: '#7cc4ff', stripe: '#f4f7fb', shorts: '#1d1f1c' }, skin: '#b97d55', hair: '#b5481e', jacket: { body: '#1f2f55', trim: '#7cc4ff', line: '#f4f7fb' },
   swatch: 'repeating-linear-gradient(90deg,#7cc4ff 0 10px,#f4f7fb 10px 20px,#1d1f1c 20px 24px)',
   traits: ['<b>Avalancha</b> con Shift', 'Arranca con <b>Los pibes</b>', '<i>25% menos de daño en técnicas comunes</i>', '<i>10% menos de vida</i>'] };
 // Daño de las técnicas propias de El Barra (las demás le pegan 25% menos)
@@ -920,6 +920,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.97', date: '2 nov 2026', items: [
+    ['Jugadores', 'El Barra cambia la camiseta por una campera deportiva azul oscuro, con franjas celestes a los costados y en las mangas, cierre y cuello alto. Los pibes y los del bombo siguen con la camiseta.'],
+  ] },
   { v: '2.96', date: '1 nov 2026', items: [
     ['Rivales', 'Rival nuevo en El Coloso, una vez por partido entre el 55\' y el 70\': un famoso con anteojos de sol baja del palco con su custodio. No te ataca: te persigue para sacarse una selfie. Si te alcanza, te quedás posando 1,5 s ("¡SONREÍ!") mientras los rivales siguen viniendo, y después se va saludando. Esquivalo o eliminalo: tiene bastante vida y deja una gema celeste. Si en 40 s no te alcanza, se va solo.'],
   ] },
@@ -4412,6 +4415,7 @@ function drawPerson(x, y, r, ang, step, o) {
   const hand = o.gloves || o.skin, hr = o.gloves ? 4.2 : 3;
   ell(axL + 3.5, -hy, hr, hr, hand); if (!o.armOut) ell(axR + 3.5, hy, hr, hr, hand);   // armOut: ese brazo lo dibuja quien llama (el árbitro con la tarjeta)
   ell(axL * .4, -ay + 1, 4, 3.8, o.sleeve); if (!o.armOut) ell(axR * .4, ay - 1, 4, 3.8, o.sleeve);
+  if (o.jacket) { ctx.fillStyle = o.jacket.trim; ctx.fillRect(axL * .4 - 3.6, -ay - .3, 7.2, 1.4); ctx.fillRect(axR * .4 - 3.6, ay - 1.1, 7.2, 1.4); }
   if (o.plaid) { ctx.fillStyle = o.plaid; for (const sy of [-ay + 1, ay - 1]) { ctx.fillRect(axL * .4 * (sy < 0 ? 1 : 0) + axR * .4 * (sy > 0 ? 1 : 0) - 3.2, sy - .55, 6.4, 1.1); ctx.fillRect(axL * .4 * (sy < 0 ? 1 : 0) + axR * .4 * (sy > 0 ? 1 : 0) - .55, sy - 3, 1.1, 6); } }
   if (o.band) { ctx.fillStyle = '#ffb627'; ctx.fillRect(axL * .4 - 1.5, -ay - 2.5, 3, 7); }
   // Torso con camiseta
@@ -4421,6 +4425,16 @@ function drawPerson(x, y, r, ang, step, o) {
     ctx.save(); ctx.clip(); ctx.fillStyle = o.stripe;
     for (const yy of [-8.5, -3.5, 1.5, 6.5]) ctx.fillRect(-8, yy, 16, 2.4);
     ctx.restore();
+  }
+  if (o.jacket) {
+    // Campera deportiva: franjas a los costados (de hombro a cintura), cierre adelante y cuello alto
+    const J = o.jacket;
+    ctx.save(); ctx.clip();
+    ctx.fillStyle = J.trim; ctx.fillRect(-8, -11.5, 16, 2.2); ctx.fillRect(-8, 9.3, 16, 2.2);
+    ctx.fillStyle = J.line; ctx.fillRect(-8, -9.1, 16, .9); ctx.fillRect(-8, 8.2, 16, .9);
+    ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillRect(4.6, -.45, 3, .9);   // cierre
+    ctx.restore();
+    ctx.strokeStyle = J.trim; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(1.5, 0, 6.4, Math.PI * .55, Math.PI * 1.45); ctx.stroke();
   }
   if (o.plaid) {
     // Camisa a cuadros con cuello
@@ -4682,7 +4696,7 @@ function drawPlayer(p) {
   if (!blink) {
     const K = CH.kit;
     drawPerson(p.x, p.y, p.r, Math.atan2(p.fy, p.fx), p.step, {
-      shirt: K.shirt, sleeve: K.sleeve, stripe: K.stripe, shorts: K.shorts, skin: CH.skin, hair: CH.hair, band: !!CH.shield, armOut: !!CH.whistle, hat: CH.hat,
+      ...(CH.jacket ? { shirt: CH.jacket.body, sleeve: CH.jacket.body, stripe: null, jacket: CH.jacket } : { shirt: K.shirt, sleeve: K.sleeve, stripe: K.stripe }), shorts: K.shorts, skin: CH.skin, hair: CH.hair, band: !!CH.shield, armOut: !!CH.whistle, hat: CH.hat,
     });
     if (CH.whistle) {
       // El Árbitro: brazo estirado hacia adelante mostrando la tarjeta roja
