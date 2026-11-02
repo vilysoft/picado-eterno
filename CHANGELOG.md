@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.98 · 2 nov 2026
+
+- **Día de lluvia:** El apagón de El Potrero dura 10 segundos (antes 7).
+
 ## 2.97 · 2 nov 2026
 
 - **Jugadores:** El Barra cambia la camiseta por una campera deportiva azul oscuro, con franjas celestes a los costados y en las mangas, cierre y cuello alto. Los pibes y los del bombo siguen con la camiseta.

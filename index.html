@@ -920,6 +920,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.98', date: '2 nov 2026', items: [
+    ['Día de lluvia', 'El apagón de El Potrero dura 10 segundos (antes 7).'],
+  ] },
   { v: '2.97', date: '2 nov 2026', items: [
     ['Jugadores', 'El Barra cambia la camiseta por una campera deportiva azul oscuro, con franjas celestes a los costados y en las mangas, cierre y cuello alto. Los pibes y los del bombo siguen con la camiseta.'],
   ] },
@@ -2197,7 +2200,7 @@ const RAIN_SPAWN = 1.1;   // con lluvia aparecen 10% más rivales
 const RAIN_TOKENS = 1.4, PUD_MIN = 4, PUD_MAX = 20, SLIDE_GRIP = 2.2, MUD_SLOW = .3, MUD_TRAIL_S = 7;
 const BOLT_WARN = 1, BOLT_R = 70, BOLT_DMG = 22, ZAP_S = 1.5;   // ZAP_S: cuánto queda electrificado el charco entero
 const WIND_PUSH = 70, WIND_SHOT = 150, WIND_WARN = 1.5, WIND_S = 3.2, WIND_SHOTS = { pelota: 1, tiro: 1, tres: 1 };
-const DARK_S = 7, ROOF_S = 25, DRY_S = 25, DRY_H = 85, UTILEROS = 4;
+const DARK_S = 10, ROOF_S = 25, DRY_S = 25, DRY_H = 85, UTILEROS = 4;
 const inDry = (y, pad) => G.drys.some(D => Math.abs(y - D.y) < D.h + pad);
 // La tormenta crece: arranca en llovizna y en el 90' (y en el alargue) está al máximo. Con el techo cerrado no llueve
 const rainI = () => !G.rain || G.roof > 0 ? 0 : G.et ? 1 : .35 + .65 * Math.min(1, G.t / MATCH);
