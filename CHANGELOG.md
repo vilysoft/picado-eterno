@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 2.99 · 2 nov 2026
+
+- **Arreglos:** En pantallas chicas (o en celular) el lateral y el fotógrafo se quedaban justo afuera de la pantalla, debajo del marcador, y nunca atacaban. Ahora se acomodan siempre a la vista.
+
 ## 2.98 · 2 nov 2026
 
 - **Día de lluvia:** El apagón de El Potrero dura 10 segundos (antes 7).

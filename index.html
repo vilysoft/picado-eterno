@@ -920,6 +920,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '2.99', date: '2 nov 2026', items: [
+    ['Arreglos', 'En pantallas chicas (o en celular) el lateral y el fotógrafo se quedaban justo afuera de la pantalla, debajo del marcador, y nunca atacaban. Ahora se acomodan siempre a la vista.'],
+  ] },
   { v: '2.98', date: '2 nov 2026', items: [
     ['Día de lluvia', 'El apagón de El Potrero dura 10 segundos (antes 7).'],
   ] },
@@ -3243,7 +3246,7 @@ function updateEnemies(dt) {
     if (e.type === 'perro' && !dz && !stn) { const a = Math.sin(G.rt * 7 + e.phase) * .9, c = Math.cos(a), s2 = Math.sin(a); [ux, uy] = [ux * c - uy * s2, ux * s2 + uy * c]; }   // zigzag
     if ((e.type === 'lateral' || e.type === 'fotografo') && !dz && !stn) {
       // Se acomodan sobre la línea de costado del lado tuyo, cerca, y cada tanto atacan desde ahí
-      const sideY = p.y < FH / 2 ? -RUN * .4 : FH + RUN * .4, lim = Math.max(120, Math.min(300, viewH / 2 - 110)), ty = clamp(sideY, p.y - lim, p.y + lim);   // que quede dentro de la pantalla
+      const sideY = p.y < FH / 2 ? -RUN * .4 : FH + RUN * .4, lim = Math.max(60, Math.min(300, (VH / 2 - 130) / ZOOM)), ty = clamp(sideY, p.y - lim, p.y + lim);   // que quede dentro de la pantalla
       if (e.off == null) e.off = rnd(-260, 260);
       const tx = clamp(p.x + e.off, -RUN + 20, FW + RUN - 20), vx = tx - e.x, vy = ty - e.y, vd = Math.hypot(vx, vy);
       e.acd -= dt;
