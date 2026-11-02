@@ -920,6 +920,9 @@ const PERMS = {
 };
 // Changelog que se ve desde el menú (los jefes no se nombran, para no spoilear)
 const CHANGELOG = [
+  { v: '3.0', date: '2 nov 2026', items: [
+    ['Rivales', 'El lateral ahora lleva brazaletes amarillos para reconocerlo de lejos y corre por la línea lateral de la cancha de un arco al otro, ida y vuelta. Cuando pasa cerca tuyo y está a la vista, saca el lateral.'],
+  ] },
   { v: '2.99', date: '2 nov 2026', items: [
     ['Arreglos', 'En pantallas chicas (o en celular) el lateral y el fotógrafo se quedaban justo afuera de la pantalla, debajo del marcador, y nunca atacaban. Ahora se acomodan siempre a la vista.'],
   ] },
@@ -1660,7 +1663,7 @@ const ALB_FOES = {
   hincha:    ['Hincha invasor', 'La Cancha del Club', 'Cruza la cancha a toda velocidad por la franja marcada y vuelve por el mismo camino. Si lo eliminás deja una gema celeste grande.'],
   barra:     ['La barra', 'El Potrero', 'Un grupo de hinchas con gorros que llega corriendo. Son débiles pero muchos, y cada uno deja 3 gemas.'],
   famoso:    ['El famoso', 'El Coloso · desde el 55\'', 'Una estrella de la tele con anteojos de sol y su custodio. No te ataca: te persigue para sacarse una selfie. Si te alcanza te quedás posando 1,5 s mientras los rivales siguen viniendo. Esquivalo o eliminalo (tiene bastante vida).'],
-  lateral:   ['Lateral', 'Todas las canchas · desde el 60\'', 'Corre pegado a la línea de costado y cada tanto saca un lateral: te tira una pelota larga en línea recta.'],
+  lateral:   ['Lateral', 'Todas las canchas · desde el 60\'', 'Lleva brazaletes amarillos y corre por la línea lateral de un arco al otro. Cuando pasa cerca tuyo saca un lateral: te tira una pelota larga en línea recta.'],
   suplente:  ['Suplente', 'Todas las canchas · desde el 70\'', 'Entra con la pechera, rápido y con poca vida. Si no lo eliminás a tiempo se pone la camiseta: 4 veces más vida y pega mucho más.'],
   fotografo: ['Fotógrafo', 'La Cancha del Club · desde el 55\'', 'Se para en la línea y te saca fotos: si estás cerca, el flash te encandila un instante.'],
   embarrado: ['Embarrado', 'Día de lluvia', 'Un grandote cubierto de barro que deja una estela por donde pasa. El barro te frena.'],
@@ -2120,6 +2123,7 @@ function ringPos() {
 }
 function spawn(type, x, y, baseHp) {
   const d = FOES[type];
+  const auto = x == null;   // sin posición: aparece en el anillo de afuera de la pantalla
   if (x == null) [x, y] = ringPos();
   const hp = (baseHp || d.hp) * hpMult() * LV.hp;
   G.enemies.push({
@@ -2130,6 +2134,11 @@ function spawn(type, x, y, baseHp) {
     mode: 'run', mt: type === 'camillero' ? rnd(2, 3.5) : 0, L: CAM_MIN, ang: Math.atan2(G.p.y - y, G.p.x - x), diveCd: 0, ddx: 1, ddy: 0, acd: 2.5, buff: 0, still: false, aimLine: false, fly: !!d.fly,
   });
   albumSee(d.boss ? 'b' : 'f', type);
+  if (type === 'lateral' && auto) {
+    // Entra por la línea lateral más cercana a vos, a un costado de la pantalla
+    const e = G.enemies[G.enemies.length - 1], side = G.p.y < FH / 2 ? -RUN * .3 : FH + RUN * .3;
+    e.x = clamp(G.p.x + (Math.random() < .5 ? -1 : 1) * rnd(500, 800), 40, FW - 40); e.y = side;
+  }
   if (type === 'lateral' && !G.seenLat) { G.seenLat = true; banner('¡Entran los laterales: ojo con el saque largo!'); }
   if (type === 'suplente' && !G.seenSup) { G.seenSup = true; banner('¡Entra el suplente: liquidalo antes de que se caliente!'); }
   if (type === 'fotografo' && !G.seenFoto) { G.seenFoto = true; banner('¡Bajó un fotógrafo a la cancha: cuidado con el flash!'); }
@@ -3245,10 +3254,20 @@ function updateEnemies(dt) {
     }
     if (e.type === 'perro' && !dz && !stn) { const a = Math.sin(G.rt * 7 + e.phase) * .9, c = Math.cos(a), s2 = Math.sin(a); [ux, uy] = [ux * c - uy * s2, ux * s2 + uy * c]; }   // zigzag
     if ((e.type === 'lateral' || e.type === 'fotografo') && !dz && !stn) {
-      // Se acomodan sobre la línea de costado del lado tuyo, cerca, y cada tanto atacan desde ahí
-      const sideY = p.y < FH / 2 ? -RUN * .4 : FH + RUN * .4, lim = Math.max(60, Math.min(300, (VH / 2 - 130) / ZOOM)), ty = clamp(sideY, p.y - lim, p.y + lim);   // que quede dentro de la pantalla
-      if (e.off == null) e.off = rnd(-260, 260);
-      const tx = clamp(p.x + e.off, -RUN + 20, FW + RUN - 20), vx = tx - e.x, vy = ty - e.y, vd = Math.hypot(vx, vy);
+      let tx, ty;
+      if (e.type === 'lateral') {
+        // El lateral corre por la línea lateral de un arco al otro, ida y vuelta
+        if (e.lineY == null) { e.lineY = e.y < FH / 2 ? -RUN * .3 : FH + RUN * .3; e.dir = p.x > e.x ? 1 : -1; }
+        if (e.x > FW - 40) e.dir = -1; else if (e.x < 40) e.dir = 1;
+        tx = e.x + e.dir * 200; ty = e.lineY;
+      } else {
+        // El fotógrafo se acomoda sobre la línea de costado del lado tuyo, cerca y a la vista
+        const sideY = p.y < FH / 2 ? -RUN * .4 : FH + RUN * .4, lim = Math.max(60, Math.min(300, (VH / 2 - 130) / ZOOM));
+        ty = clamp(sideY, p.y - lim, p.y + lim);
+        if (e.off == null) e.off = rnd(-260, 260);
+        tx = clamp(p.x + e.off, -RUN + 20, FW + RUN - 20);
+      }
+      const vx = tx - e.x, vy = ty - e.y, vd = Math.hypot(vx, vy);
       e.acd -= dt;
       if (e.mode === 'aimL') {
         sp = 0; e.mt -= dt;
@@ -4423,7 +4442,7 @@ function drawPerson(x, y, r, ang, step, o) {
   ell(axL * .4, -ay + 1, 4, 3.8, o.sleeve); if (!o.armOut) ell(axR * .4, ay - 1, 4, 3.8, o.sleeve);
   if (o.jacket) { ctx.fillStyle = o.jacket.trim; ctx.fillRect(axL * .4 - 3.6, -ay - .3, 7.2, 1.4); ctx.fillRect(axR * .4 - 3.6, ay - 1.1, 7.2, 1.4); }
   if (o.plaid) { ctx.fillStyle = o.plaid; for (const sy of [-ay + 1, ay - 1]) { ctx.fillRect(axL * .4 * (sy < 0 ? 1 : 0) + axR * .4 * (sy > 0 ? 1 : 0) - 3.2, sy - .55, 6.4, 1.1); ctx.fillRect(axL * .4 * (sy < 0 ? 1 : 0) + axR * .4 * (sy > 0 ? 1 : 0) - .55, sy - 3, 1.1, 6); } }
-  if (o.band) { ctx.fillStyle = '#ffb627'; ctx.fillRect(axL * .4 - 1.5, -ay - 2.5, 3, 7); }
+  if (o.band) { ctx.fillStyle = o.bandCol || '#ffb627'; ctx.fillRect(axL * .4 - 1.5, -ay - 2.5, 3, 7); if (o.bandCol) ctx.fillRect(axR * .4 - 1.5, ay - 4.5, 3, 7); }   // bandCol: brazalete de color en los dos brazos
   // Torso con camiseta
   ctx.beginPath(); ctx.ellipse(0, 0, 6.8, 11.5, 0, 0, Math.PI * 2);
   ctx.fillStyle = o.shirt; ctx.fill();
@@ -4609,7 +4628,7 @@ function drawFoe(e) {
   if (e.buff > 0) { ctx.strokeStyle = 'rgba(255,211,77,.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 5, 0, Math.PI * 2); ctx.stroke(); }
   drawPerson(e.x, e.y, e.r, ang, still ? 0 : G.t * Math.min(e.speed, 300) * .09 + e.phase, {
     shirt: fl ? fc : K.shirt, sleeve: fl ? fc : (K.sleeve === 'skin' ? e.skin : K.sleeve), stripe: fl ? null : K.stripe, shorts: K.shorts,
-    boots: K.boots, skin: e.skin, hair: e.hair, hat: e.hat, gloves: K.gloves, plaid: fl ? null : K.plaid, pants: K.pants, shades: K.shades, dress: K.dress && (fl ? fc : K.dress), flowers: K.flowers, longHair: K.longHair, dive: e.mode === 'dive' || e.mode === 'down', band: e.boss && !FOES[e.type].mini,   // los mini jefes no llevan cinta de capitán
+    boots: K.boots, skin: e.skin, hair: e.hair, hat: e.hat, gloves: K.gloves, plaid: fl ? null : K.plaid, pants: K.pants, shades: K.shades, dress: K.dress && (fl ? fc : K.dress), flowers: K.flowers, longHair: K.longHair, dive: e.mode === 'dive' || e.mode === 'down', band: (e.boss && !FOES[e.type].mini) || e.type === 'lateral', bandCol: e.type === 'lateral' ? '#ffe600' : null,   // los mini jefes no llevan cinta de capitán; el lateral, brazaletes amarillos
    
   });
   if (e.type === 'famoso') {

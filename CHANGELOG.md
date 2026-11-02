@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 3.0 · 2 nov 2026
+
+- **Rivales:** El lateral ahora lleva brazaletes amarillos para reconocerlo de lejos y corre por la línea lateral de la cancha de un arco al otro, ida y vuelta. Cuando pasa cerca tuyo y está a la vista, saca el lateral.
+
 ## 2.99 · 2 nov 2026
 
 - **Arreglos:** En pantallas chicas (o en celular) el lateral y el fotógrafo se quedaban justo afuera de la pantalla, debajo del marcador, y nunca atacaban. Ahora se acomodan siempre a la vista.
