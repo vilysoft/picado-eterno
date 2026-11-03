@@ -2,6 +2,10 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 3.1 · 3 nov 2026
+
+- **Arreglos:** Pase al pie (y su salida del Tiki-taka): si vas muy rápido y la pelota no llega a volver a tus pies, ya no te persigue: a los 1,5 s de estar volviendo se desvanece.
+
 ## 3.0 · 2 nov 2026
 
 - **Rivales:** El lateral ahora lleva brazaletes amarillos para reconocerlo de lejos y corre por la línea lateral de la cancha de un arco al otro, ida y vuelta. Cuando pasa cerca tuyo y está a la vista, saca el lateral.
