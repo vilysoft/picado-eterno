@@ -2,6 +2,11 @@
 
 Todos los cambios de Picado Eterno, de la versión más nueva a la más vieja.
 
+## 3.2 · 3 nov 2026
+
+- **Arreglos:** Después de mover un deslizador de volumen en la pausa, Esc o P no reanudaban el partido hasta hacer clic en otro lado. Ahora sí.
+- **Arreglos:** En celular, el cuadro de Tiempo, Nivel y Rivales del final quedaba con un hueco vacío: ahora van los tres en una fila.
+
 ## 3.1 · 3 nov 2026
 
 - **Arreglos:** Pase al pie (y su salida del Tiki-taka): si vas muy rápido y la pelota no llega a volver a tus pies, ya no te persigue: a los 1,5 s de estar volviendo se desvanece.
